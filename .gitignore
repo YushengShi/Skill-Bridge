@@ -28,6 +28,7 @@ Thumbs.db
 .env.development
 .env.production
 .env.test
+**/.env
 
 # Vite cache
 frontend/.vite/
