@@ -7,7 +7,7 @@ const app = express();
 const PORT = 3000;
 
 // mongoDB connection
-const mongoDB_URI = 'mongodb://localhost:27017/a8';
+const mongoDB_URI = 'mongodb://localhost:27017/skillbridge';
 
 mongoose
   .connect(mongoDB_URI)
