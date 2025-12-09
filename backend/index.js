@@ -22,11 +22,8 @@ app.use(cors({
 app.use(express.json());
 
 // we write our routes here
-// import userRoutes from './routes/userRoutes.js';
-// import jobRoutes from './routes/jobRoutes.js';
-
-// app.use('/user', userRoutes);
-// app.use('/api/jobs', jobRoutes);
+import paymentRoutes from './api/payment.js';
+app.use('/api/payment', paymentRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });

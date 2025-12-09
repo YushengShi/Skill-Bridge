@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './components/Login'
 import Home from './components/Home'
 import './App.css'
+import PaymentForm from './pages/PaymentForm.jsx'
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -30,6 +31,7 @@ function App() {
             )
           } 
         />
+        <Route path="/checkout" element={<PaymentForm />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
