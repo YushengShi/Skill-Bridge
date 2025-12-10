@@ -1,12 +1,19 @@
-import React, { useState } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import Login from './components/Login'
-import Home from './components/Home'
-import './App.css'
-import PaymentForm from './pages/PaymentForm.jsx'
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './components/Login';
+import Home from './components/Home';
+import PaymentForm from './pages/PaymentForm';
+import TeacherHome from './components/TeacherHome';
+import './App.css';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('isAuth') === 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('isAuth', isAuthenticated);
+  }, [isAuthenticated]);
 
   return (
     <Router>
@@ -32,11 +39,12 @@ function App() {
           } 
         />
         <Route path="/checkout" element={<PaymentForm />} />
+        <Route path="/teachers" element={<TeacherHome />} />
+        
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
   )
 }
 
-export default App
-
+export default App;
