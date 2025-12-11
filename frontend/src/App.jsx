@@ -4,6 +4,8 @@ import Login from './components/Login';
 import Home from './components/Home';
 import PaymentForm from './pages/PaymentForm';
 import TeacherHome from './components/TeacherHome';
+import TeacherListPage from './pages/TeacherListPage'; // Added
+import TeacherDetailPage from './pages/TeacherDetailPage'; // Added
 import './App.css';
 
 function App() {
@@ -49,7 +51,12 @@ function App() {
             )
           } 
         />
+        {/* Add this dynamic route for individual teacher pages */}
+        <Route path="/teachers/:id" element={<TeacherDetailPage />} />
+        
         <Route path="/teachers" element={<TeacherHome />} />
+        <Route path="/japanese-teachers" element={<TeacherListPage />} />
+        <Route path="/teacher-detail" element={<TeacherDetailPage />} />
         
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
