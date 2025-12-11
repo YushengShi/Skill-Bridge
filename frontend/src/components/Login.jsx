@@ -226,7 +226,7 @@ function Login({ setIsAuthenticated }) {
         }
         setTimeout(() => {
           setIsAuthenticated(true)
-          navigate('/home')
+          navigate('/teacherhome') /* for home page, navigate('/home')*/
         }, 1500)
       } else {
         setErrorMessage('Invalid email or password. Please try again.')
@@ -306,7 +306,7 @@ function Login({ setIsAuthenticated }) {
     <div className="login-wrapper">
       <div className="login-container">
       <div className="login-header">
-        <h1 className="login-title">SPM Motors</h1>
+        <h1 className="login-title">Skill Bridge</h1>
         <p className="login-subtitle">
           {isSignupMode ? 'Create your account' : 'Sign in to your account'}
         </p>

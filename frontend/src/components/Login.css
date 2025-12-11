@@ -4,10 +4,7 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  /* If you have a background image, uncomment and update the path:
-  background: url('/ducati_bg.jpg') center center/cover no-repeat fixed;
-  */
+  background: white; /*for image background: url('background.jpg') center center/cover no-repeat fixed;*/
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
