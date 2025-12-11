@@ -3,7 +3,7 @@ import Teacher from '../models/Teacher.js';
 
 const router = Router();
 
-// GET /api/teachers - 获取所有教师列表
+// GET /api/teachers
 router.get('/', async (req, res) => {
   try {
     const teachers = await Teacher.find();
@@ -13,15 +13,14 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/teachers/seed - 初始化测试数据
-// 访问 http://localhost:3000/api/teachers/seed 即可重置数据
+// GET /api/teachers/seed 
 router.get('/seed', async (req, res) => {
   const mockTeachers = [
     {
       name: "English Teacher Roz",
       tagline: "Professional Teacher",
       bio: "I am extremely patient and I love working with beginners.",
-      avatar: "https://i.pravatar.cc/150?img=5", // 随机头像
+      avatar: "https://i.pravatar.cc/150?img=5",
       rating: 5.0,
       lessonCount: 1377,
       prices: { trial: 8, standard: 24 }

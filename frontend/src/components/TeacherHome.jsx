@@ -89,7 +89,7 @@ export default function TeacherHome({ setIsAuthenticated }) {
               <div className="btn-group">
                 <button 
                   className="details-btn"
-                  onClick={() => window.location.href = `/teachers/${teacher.id}`}
+                  onClick={() => navigate(`/teachers/${teacher._id}`)}
                 >
                   See Details
                 </button>
