@@ -1,6 +1,7 @@
 import "dotenv/config";
 import Stripe from "stripe";
 import { Router } from "express";
+import Booking from "../models/Booking.js";
 
 const router = Router();
 
@@ -8,22 +9,42 @@ const router = Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 router.post("/create-checkout-session", async (req, res) => {
-    // TODO: replace this url
+  // TODO: replace this url
   const YOUR_DOMAIN = "http://localhost:5173"; // replace with frontend domain
-  const session = await stripe.checkout.sessions.create({
-    line_items: [
-      {
-        // Provide the exact Price ID (for example, price_1234) of the product you want to sell
-        price: "price_1ScH4OLVqB101fVdlIwC9ei5",
-        quantity: 2,
-      },
-    ],
-    mode: "payment",
-    success_url: `${YOUR_DOMAIN}/checkout?success=true`,
-    cancel_url: `${YOUR_DOMAIN}/checkout?canceled=true`,
-  });
+  const { teacherId, lessonType, price, teacherName } = req.body;
+  try {
+    // 1. create a new booking in the database with status 'pending'
+    const newBooking = await Booking.create({
+      teacherId,
+      lessonType,
+      amount: price,
+      status: "pending",
+    });
+    // 2. create a checkout session with Stripe
+    const session = await stripe.checkout.sessions.create({
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: `${lessonType.toUpperCase()} Lesson with ${teacherName}`,
+              description: `Booking ID: ${newBooking._id}`,
+            },
+            unit_amount: Math.round(price * 100),
+          },
+          quantity: 1,
+        },
+      ],
+      mode: "payment",
+      success_url: `${YOUR_DOMAIN}/teachers?success=true&bookingId=${newBooking._id}`,
+      cancel_url: `${YOUR_DOMAIN}/teachers?canceled=true`,
+    });
 
-  res.redirect(303, session.url);
+    res.json({ url: session.url });
+  } catch (error) {
+    console.error("Error creating checkout session:", error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 export default router;
