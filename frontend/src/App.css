@@ -195,3 +195,38 @@
   color: #666;
   line-height: 1.5;
 }
+
+.btn-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+
+}
+
+
+.details-btn,
+.book-btn {
+  padding: 10px 20px; 
+  border-radius: 8px;
+  font-weight: 600; 
+  font-size: 14px; 
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  white-space: nowrap;
+
+}
+
+
+.details-btn {
+  background-color: transparent;
+  border: 1px solid #ff554b;
+  color: #ff554b; 
+}
+
+.details-btn:hover {
+  background-color: #fff5f5;
+  border-color: #e04b42;
+  color: #e04b42;  
+  box-shadow: 0 2px 4px rgba(255, 85, 75, 0.1);
+}
