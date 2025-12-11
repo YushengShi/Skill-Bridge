@@ -60,9 +60,7 @@ export default function TeacherHome({ setIsAuthenticated }) {
     setIsAuthenticated(false);
     localStorage.removeItem('isAuth');
   };
-console.log("Teachers from backend:", teachers);
-console.log("TEACHERS FROM TeacherHome:", teachers);
-console.log("Final teacher list used for UI:", teachers);
+
 
   return (
     <div className="home-container">
@@ -72,7 +70,7 @@ console.log("Final teacher list used for UI:", teachers);
       </header>
 
       <div className="teacher-list">
-        console.log("Teachers in TeacherHome:", teachers);
+       
 
         {teachers.map(teacher => (
           <div key={teacher._id} className="teacher-card">
