@@ -22,7 +22,7 @@ function App() {
           path="/login" 
           element={
             isAuthenticated ? (
-              <Navigate to="/home" replace />
+              <Navigate to="/teacherhome" replace />
             ) : (
               <Login setIsAuthenticated={setIsAuthenticated} />
             )
@@ -39,6 +39,16 @@ function App() {
           } 
         />
         <Route path="/checkout" element={<PaymentForm />} />
+        <Route 
+          path="/teacherhome" 
+          element={
+            isAuthenticated ? (
+              <TeacherHome setIsAuthenticated={setIsAuthenticated} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } 
+        />
         <Route path="/teachers" element={<TeacherHome />} />
         
         <Route path="/" element={<Navigate to="/login" replace />} />
