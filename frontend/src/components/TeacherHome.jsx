@@ -86,12 +86,21 @@ export default function TeacherHome({ setIsAuthenticated }) {
                 <span className="label">Trial Price</span>
                 <span className="price">${teacher.prices.trial}</span>
               </div>
-              <button 
-                className="book-btn"
-                onClick={() => setSelectedTeacher(teacher)}
-              >
-                Book Trial
-              </button>
+              <div className="btn-group">
+                <button 
+                  className="details-btn"
+                  onClick={() => window.location.href = `/teachers/${teacher.id}`}
+                >
+                  See Details
+                </button>
+
+                <button 
+                  className="book-btn"
+                  onClick={() => setSelectedTeacher(teacher)}
+                >
+                  Book Trial
+                </button>
+              </div>
             </div>
           </div>
         ))}
