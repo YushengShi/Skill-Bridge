@@ -56,7 +56,7 @@ function App() {
         
         <Route path="/teachers" element={<TeacherHome />} />
         <Route path="/japanese-teachers" element={<TeacherListPage />} />
-        <Route path="/teacher-detail" element={<TeacherDetailPage />} />
+        
         
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>

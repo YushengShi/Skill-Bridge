@@ -30,7 +30,7 @@ export default function TeacherHome({ setIsAuthenticated }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch('/api/teachers')
+    fetch('http://localhost:3000/api/teachers')
       .then(res => res.json())
       .then(data => setTeachers(data))
       .catch(err => console.error("Error fetching teachers:", err));
@@ -60,6 +60,9 @@ export default function TeacherHome({ setIsAuthenticated }) {
     setIsAuthenticated(false);
     localStorage.removeItem('isAuth');
   };
+console.log("Teachers from backend:", teachers);
+console.log("TEACHERS FROM TeacherHome:", teachers);
+console.log("Final teacher list used for UI:", teachers);
 
   return (
     <div className="home-container">
@@ -69,6 +72,8 @@ export default function TeacherHome({ setIsAuthenticated }) {
       </header>
 
       <div className="teacher-list">
+        console.log("Teachers in TeacherHome:", teachers);
+
         {teachers.map(teacher => (
           <div key={teacher._id} className="teacher-card">
             <div className="card-left">
