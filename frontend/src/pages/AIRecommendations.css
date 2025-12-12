@@ -1,0 +1,547 @@
+/**
+ * ================================================================================
+ * AI RECOMMENDATIONS PAGE STYLES
+ * ================================================================================
+ *
+ * Styles for the AI-powered teacher recommendation questionnaire and results.
+ * Features a modern, engaging design with smooth animations.
+ */
+
+.ai-recommendations {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem;
+}
+
+.ai-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* ==================== HEADER ==================== */
+
+.ai-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: white;
+}
+
+.ai-header .back-btn {
+  position: absolute;
+  left: 2rem;
+  top: 2rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.3s;
+}
+
+.ai-header .back-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.ai-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ai-header .subtitle {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+/* ==================== LOADING STATE ==================== */
+
+.ai-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  color: white;
+}
+
+.ai-loading .spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==================== PROGRESS BAR ==================== */
+
+.progress-container {
+  margin-bottom: 2rem;
+}
+
+.progress-bar {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: white;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  display: block;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+/* ==================== QUESTION CARD ==================== */
+
+.question-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: fadeInUp 0.5s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.question-card h2 {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+/* ==================== OPTIONS GRID ==================== */
+
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.option-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.option-card:hover {
+  border-color: #667eea;
+  background: #f0f4ff;
+  transform: translateY(-2px);
+}
+
+.option-card.selected {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.option-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.option-description {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+/* ==================== TEXT INPUTS ==================== */
+
+.text-input,
+.textarea-input {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.text-input:focus,
+.textarea-input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.textarea-input {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* ==================== NAVIGATION BUTTONS ==================== */
+
+.navigation-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+}
+
+.nav-btn {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-btn.back {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.nav-btn.back:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.nav-btn.next,
+.nav-btn.submit {
+  background: white;
+  color: #667eea;
+}
+
+.nav-btn.next:hover:not(:disabled),
+.nav-btn.submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.nav-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #667eea;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+/* ==================== ERROR MESSAGE ==================== */
+
+.error-message {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+/* ==================== RESULTS CONTAINER ==================== */
+
+.results-container {
+  animation: fadeInUp 0.5s ease;
+}
+
+/* AI Insight Card */
+.ai-insight-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.insight-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.insight-content h3 {
+  color: #667eea;
+  margin-bottom: 0.5rem;
+}
+
+.insight-content p {
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+/* ==================== RECOMMENDATIONS GRID ==================== */
+
+.recommendations-grid {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.recommendations-grid h2 {
+  color: #333;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.teacher-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.teacher-rec-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 1.5rem;
+  align-items: start;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  position: relative;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.teacher-rec-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.match-badge {
+  position: absolute;
+  top: -10px;
+  left: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.teacher-rec-card .teacher-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.teacher-info h3 {
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+
+.teacher-info .tagline {
+  color: #667eea;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.teacher-info .bio {
+  color: #6b7280;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+}
+
+.teacher-meta {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.teacher-meta span {
+  color: #4b5563;
+}
+
+.teacher-skills {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.skill-tag {
+  background: #f3f4f6;
+  color: #4b5563;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+}
+
+.teacher-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.view-profile-btn,
+.book-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.view-profile-btn {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.view-profile-btn:hover {
+  background: #e5e7eb;
+}
+
+.book-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.book-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.no-recommendations {
+  text-align: center;
+  padding: 3rem;
+  color: #6b7280;
+}
+
+/* ==================== RESULTS ACTIONS ==================== */
+
+.results-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.secondary-btn,
+.primary-btn {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.secondary-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.secondary-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.primary-btn {
+  background: white;
+  color: #667eea;
+}
+
+.primary-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* ==================== RESPONSIVE DESIGN ==================== */
+
+@media (max-width: 768px) {
+  .ai-recommendations {
+    padding: 1rem;
+  }
+
+  .ai-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .ai-header .back-btn {
+    position: relative;
+    left: auto;
+    top: auto;
+    margin-bottom: 1rem;
+  }
+
+  .question-card {
+    padding: 1.5rem;
+  }
+
+  .options-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-rec-card {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .teacher-rec-card .teacher-avatar {
+    margin: 0 auto;
+  }
+
+  .teacher-meta {
+    justify-content: center;
+  }
+
+  .teacher-skills {
+    justify-content: center;
+  }
+
+  .teacher-actions {
+    flex-direction: row;
+    justify-content: center;
+  }
+
+  .navigation-buttons {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .nav-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
