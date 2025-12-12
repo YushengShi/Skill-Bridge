@@ -50,132 +50,92 @@ export default function StudentDashboard({ setIsAuthenticated }) {
   // Recommended teachers based on interests
   const [recommendedTeachers, setRecommendedTeachers] = useState([]);
 
+  // Learning progress data - array of { subject, progress } for skill tracking bars
+  const [learningProgress, setLearningProgress] = useState([]);
+
   // ==================== DATA FETCHING ====================
 
   /**
-   * Fetch dashboard data on component mount.
-   * In production, replace with actual API calls.
+   * Fetches all dashboard data from the backend API on component mount.
+   *
+   * This single API call retrieves:
+   * - stats: Summary metrics (lessons count, hours, teachers)
+   * - upcomingLessons: Next scheduled lessons with teacher info
+   * - recentActivity: Recent booking/payment activity feed
+   * - recommendedTeachers: AI-suggested teachers based on interests
+   * - learningProgress: Subject progress percentages for visualization
+   *
+   * Authentication is validated via JWT token in localStorage.
+   * On auth failure (401/403), user is redirected to login.
    */
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // TODO: Replace with actual API calls
-        // Simulating API delay
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        // Retrieve authentication credentials from localStorage
+        const token = localStorage.getItem("token");
+        const userStr = localStorage.getItem("user");
 
-        // Mock stats data
-        setStats({
-          upcomingLessons: 3,
-          completedLessons: 12,
-          totalHours: 18,
-          teachersWorkedWith: 4,
-        });
+        // Redirect to login if no valid auth found
+        if (!token || !userStr) {
+          console.error("No authentication found");
+          navigate("/login");
+          return;
+        }
 
-        // Mock upcoming lessons
-        setUpcomingLessons([
-          {
-            id: 1,
-            teacherName: "English Teacher Roz",
-            teacherAvatar: "https://i.pravatar.cc/150?img=5",
-            subject: "English Conversation",
-            date: "2024-12-15",
-            time: "10:00 AM",
-            duration: 60,
-            status: "confirmed",
-            meetingLink: "https://meet.google.com/abc-defg-hij",
-          },
-          {
-            id: 2,
-            teacherName: "Paul Interview Coach",
-            teacherAvatar: "https://i.pravatar.cc/150?img=11",
-            subject: "Interview Preparation",
-            date: "2024-12-16",
-            time: "2:00 PM",
-            duration: 45,
-            status: "confirmed",
-            meetingLink: "https://zoom.us/j/123456789",
-          },
-          {
-            id: 3,
-            teacherName: "Maria Spanish Tutor",
-            teacherAvatar: "https://i.pravatar.cc/150?img=9",
-            subject: "Spanish Basics",
-            date: "2024-12-18",
-            time: "4:00 PM",
-            duration: 60,
-            status: "pending",
-            meetingLink: null,
-          },
-        ]);
+        // Parse user data to get the student ID for the API call
+        const user = JSON.parse(userStr);
+        const userId = user._id || user.id;
 
-        // Mock recent activity
-        setRecentActivity([
+        // Fetch dashboard data with auth header
+        const response = await fetch(
+          `http://localhost:3000/api/students/${userId}/dashboard`,
           {
-            id: 1,
-            type: "lesson_completed",
-            message: "Completed lesson with English Teacher Roz",
-            time: "2 hours ago",
-            icon: "✅",
-          },
-          {
-            id: 2,
-            type: "file_reviewed",
-            message: "Your homework was reviewed by Paul",
-            time: "5 hours ago",
-            icon: "📝",
-          },
-          {
-            id: 3,
-            type: "booking_confirmed",
-            message: "Booking confirmed for Spanish Basics",
-            time: "1 day ago",
-            icon: "📅",
-          },
-          {
-            id: 4,
-            type: "payment_success",
-            message: "Payment of $24 processed successfully",
-            time: "2 days ago",
-            icon: "💳",
-          },
-        ]);
+            headers: {
+              Authorization: `Bearer ${token}`, // JWT for protected route
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
-        // Mock recommended teachers
-        setRecommendedTeachers([
-          {
-            id: "1",
-            name: "Sarah Language Pro",
-            avatar: "https://i.pravatar.cc/150?img=32",
-            subject: "Business English",
-            rating: 4.9,
-            price: 25,
-          },
-          {
-            id: "2",
-            name: "Mike Code Master",
-            avatar: "https://i.pravatar.cc/150?img=12",
-            subject: "Python Programming",
-            rating: 5.0,
-            price: 35,
-          },
-          {
-            id: "3",
-            name: "Lisa Music Teacher",
-            avatar: "https://i.pravatar.cc/150?img=23",
-            subject: "Piano Lessons",
-            rating: 4.8,
-            price: 30,
-          },
-        ]);
+        // Handle authentication errors - clear local storage and redirect
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            navigate("/login");
+            return;
+          }
+          throw new Error("Failed to fetch dashboard data");
+        }
+
+        const data = await response.json();
+
+        // Populate all state variables from the API response
+        setStats(data.stats);
+        setUpcomingLessons(data.upcomingLessons);
+        setRecentActivity(data.recentActivity);
+        setRecommendedTeachers(data.recommendedTeachers);
+        setLearningProgress(data.learningProgress || []);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
+        // Set default empty states on error
+        setStats({
+          upcomingLessons: 0,
+          completedLessons: 0,
+          totalHours: 0,
+          teachersWorkedWith: 0,
+        });
+        setUpcomingLessons([]);
+        setRecentActivity([]);
+        setRecommendedTeachers([]);
+        setLearningProgress([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchDashboardData();
-  }, []);
+  }, [navigate]);
 
   // ==================== EVENT HANDLERS ====================
 
@@ -455,37 +415,39 @@ export default function StudentDashboard({ setIsAuthenticated }) {
             </div>
           </section>
 
-          {/* Learning Progress Section */}
+          {/*
+            Learning Progress Section
+            Displays the student's progress in each subject they're learning.
+            Data is fetched from the backend and stored in the learningProgress state.
+            Each item has a subject name and a percentage (0-100) rendered as a progress bar.
+          */}
           <section className="sidebar-section">
             <h3>📈 Learning Progress</h3>
             <div className="progress-card">
-              <div className="progress-item">
-                <div className="progress-header">
-                  <span>English</span>
-                  <span>75%</span>
+              {/* Render progress bars if data exists, otherwise show empty state */}
+              {learningProgress.length > 0 ? (
+                learningProgress.map((item, index) => (
+                  <div key={index} className="progress-item">
+                    {/* Header shows subject name and percentage value */}
+                    <div className="progress-header">
+                      <span>{item.subject}</span>
+                      <span>{item.progress}%</span>
+                    </div>
+                    {/* Visual progress bar - width is dynamically set to match progress % */}
+                    <div className="progress-bar">
+                      <div
+                        className="progress-fill"
+                        style={{ width: `${item.progress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                // Empty state shown when student has no learning progress recorded
+                <div className="empty-progress">
+                  <p>No learning progress yet. Book a lesson to get started!</p>
                 </div>
-                <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: "75%" }}></div>
-                </div>
-              </div>
-              <div className="progress-item">
-                <div className="progress-header">
-                  <span>Interview Skills</span>
-                  <span>40%</span>
-                </div>
-                <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: "40%" }}></div>
-                </div>
-              </div>
-              <div className="progress-item">
-                <div className="progress-header">
-                  <span>Spanish</span>
-                  <span>20%</span>
-                </div>
-                <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: "20%" }}></div>
-                </div>
-              </div>
+              )}
             </div>
           </section>
 
