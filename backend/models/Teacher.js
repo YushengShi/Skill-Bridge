@@ -43,6 +43,7 @@ const teacherSchema = new mongoose.Schema({
     type: String,
     unique: true,
     sparse: true,
+    required: true,
     lowercase: true,
     trim: true,
   },
@@ -50,6 +51,14 @@ const teacherSchema = new mongoose.Schema({
     type: String,
     trim: true,
   }, // e.g. "Professional Teacher"
+  role: {
+    type: String,
+    default: "teacher",
+  },
+  password: {
+    type: String,
+    required: true,
+  },
   bio: {
     type: String,
     maxlength: 1000,

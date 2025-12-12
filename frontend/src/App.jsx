@@ -1,24 +1,3 @@
-/**
- * ================================================================================
- * APP.JSX - MAIN APPLICATION COMPONENT
- * ================================================================================
- *
- * Root component for the SkillBridge application.
- * Handles routing, authentication state, and protected routes.
- *
- * Route Structure:
- * - /login - Authentication page
- * - /home - Student home page (browse teachers)
- * - /teacherhome - Teacher listing page
- * - /teachers/:id - Individual teacher profile
- * - /profile - Student's own profile page
- * - /student-dashboard - Student dashboard (protected)
- * - /teacher-dashboard - Teacher dashboard (protected)
- * - /checkout - Payment processing
- *
- * ================================================================================
- */
-
 import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
@@ -26,6 +5,9 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+// 🌟 引入解析库
+import { jwtDecode } from "jwt-decode"; 
+
 import Login from "./components/Login";
 import Home from "./components/Home";
 import PaymentForm from "./pages/PaymentForm";
@@ -37,17 +19,49 @@ import TeacherDashboard from "./pages/TeacherDashboard";
 import "./App.css";
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    // Check for JWT token in localStorage
-    const token = localStorage.getItem("token");
-    return !!token;
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState(null); 
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
-    // Update isAuth flag for backward compatibility, but primary check is token
-    const token = localStorage.getItem("token");
-    localStorage.setItem("isAuth", token ? "true" : "false");
-  }, [isAuthenticated]);
+    const checkAuth = () => {
+      const token = localStorage.getItem("token");
+      
+      if (token) {
+        try {
+          const decoded = jwtDecode(token);
+          
+          if (decoded.exp * 1000 < Date.now()) {
+            throw new Error("Token expired");
+          }
+
+          setIsAuthenticated(true);
+          setUserRole(decoded.role);
+        } catch (error) {
+          console.error("Invalid token:", error);
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          setIsAuthenticated(false);
+          setUserRole(null);
+        }
+      } else {
+        setIsAuthenticated(false);
+        setUserRole(null);
+      }
+      setIsCheckingAuth(false);
+    };
+
+    checkAuth();
+  }, []);
+
+  const getHomeRoute = () => {
+    if (userRole === 'teacher') return "/teacher-dashboard";
+    return "/teacherhome"; 
+  };
+
+  if (isCheckingAuth) {
+    return <div className="loading">Loading...</div>;
+  }
 
   return (
     <Router>
@@ -56,23 +70,19 @@ function App() {
           path="/login"
           element={
             isAuthenticated ? (
-              <Navigate to="/teacherhome" replace />
+              <Navigate to={getHomeRoute()} replace />
             ) : (
-              <Login setIsAuthenticated={setIsAuthenticated} />
+              <Login setIsAuthenticated={setIsAuthenticated} setUserRole={setUserRole} />
             )
           }
         />
-        <Route
-          path="/home"
-          element={
-            isAuthenticated ? (
-              <Home setIsAuthenticated={setIsAuthenticated} />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
+
+        <Route 
+          path="/" 
+          element={<Navigate to={isAuthenticated ? getHomeRoute() : "/login"} replace />} 
         />
-        <Route path="/checkout" element={<PaymentForm />} />
+
+        {/* Public Routes */}
         <Route
           path="/teacherhome"
           element={
@@ -83,8 +93,21 @@ function App() {
             )
           }
         />
-        <Route path="/teachers" element={<TeacherHome />} />
+        <Route path="/teachers" element={<Navigate to="/teacherhome" replace />} />
         <Route path="/teachers/:id" element={<TeacherProfile />} />
+        <Route path="/checkout" element={<PaymentForm />} />
+
+        {/* Protected Routes - Student */}
+        <Route
+          path="/student-dashboard"
+          element={
+            isAuthenticated && userRole === 'student' ? (
+              <StudentDashboard setIsAuthenticated={setIsAuthenticated} />
+            ) : (
+              <Navigate to={isAuthenticated ? "/teacher-dashboard" : "/login"} replace />
+            )
+          }
+        />
         <Route
           path="/profile"
           element={
@@ -96,31 +119,19 @@ function App() {
           }
         />
 
-        {/* Student Dashboard - Protected Route */}
-        <Route
-          path="/student-dashboard"
-          element={
-            isAuthenticated ? (
-              <StudentDashboard setIsAuthenticated={setIsAuthenticated} />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
-
-        {/* Teacher Dashboard - Protected Route */}
+        {/* Protected Routes - Teacher */}
         <Route
           path="/teacher-dashboard"
           element={
-            isAuthenticated ? (
+            isAuthenticated && userRole === 'teacher' ? (
               <TeacherDashboard setIsAuthenticated={setIsAuthenticated} />
             ) : (
-              <Navigate to="/login" replace />
+              <Navigate to={isAuthenticated ? "/teacherhome" : "/login"} replace />
             )
           }
         />
 
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
   );

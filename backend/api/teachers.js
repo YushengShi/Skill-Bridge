@@ -1,5 +1,9 @@
 import { Router } from "express";
 import Teacher from "../models/Teacher.js";
+import Student from "../models/Student.js";
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET || "your_jwt"
 
 const router = Router();
 
@@ -33,7 +37,7 @@ const router = Router();
  */
 router.get("/", async (req, res) => {
   try {
-    const teachers = await Teacher.find();
+    const teachers = await Teacher.find().select("-password");
     res.json(teachers);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -147,24 +151,79 @@ router.post("/", async (req, res) => {
  */
 router.get("/:id", async (req, res) => {
   try {
-    // Attempt to find teacher by MongoDB ObjectId
-    const teacher = await Teacher.findById(req.params.id);
-
-    // Return 404 if no teacher found with this ID
-    if (!teacher) {
-      return res.status(404).json({ message: "Teacher not found" });
-    }
-
+    const teacher = await Teacher.findById(req.params.id).select("-password");
+    if (!teacher) return res.status(404).json({ message: "Teacher not found" });
     res.json(teacher);
   } catch (error) {
-    // MongoDB throws a specific error for invalid ObjectId format
-    // (e.g., "abc" instead of valid 24-character hex string)
-    if (error.kind === "ObjectId") {
-      return res.status(404).json({ message: "Teacher not found" });
-    }
-    // Other database errors
+    if (error.kind === "ObjectId") return res.status(404).json({ message: "Teacher not found" });
     res.status(500).json({ message: error.message });
   }
 });
+
+/**
+ * POST /api/teachers/register
+ * Public: Teacher Registration
+ */
+router.post("/register", async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    const existingTeacher = await Teacher.findOne({ email });
+    if (existingTeacher) {
+      return res.status(400).json({ message: "Email already exists as a Teacher" });
+    }
+
+    const existingStudent = await Student.findOne({ email });
+    if (existingStudent) {
+        return res.status(400).json({ message: "This email is registered as a Student. Accounts cannot be both." });
+    }
+
+    const teacher = new Teacher({
+      name,
+      email,
+      password,
+      role: "teacher",
+      prices: { trial: 15, standard: 30 } 
+    });
+
+    await teacher.save();
+
+    res.status(201).json({ message: "Teacher registered successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+/**
+ * POST /api/teachers/login
+ * Public: Teacher Login
+ */
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const teacher = await Teacher.findOne({ email });
+    if (!teacher) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    if (teacher.password !== password) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    const token = jwt.sign(
+      { id: teacher._id, email: teacher.email, role: "teacher" },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    const teacherData = teacher.toObject();
+    delete teacherData.password;
+
+    res.json({ token, user: teacherData });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 
 export default router;

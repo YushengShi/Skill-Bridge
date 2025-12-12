@@ -1,6 +1,7 @@
 import { Router } from "express";
 import jwt from "jsonwebtoken";
 import Student from "../models/Student.js";
+import Teacher from "../models/Teacher.js";
 
 const router = Router();
 
@@ -107,33 +108,34 @@ router.get("/:id", async (req, res) => {
  * @returns {Object} 400 for validation/duplicate errors
  */
 router.post("/", async (req, res) => {
-  // Create new student document from request body
-  const student = new Student({
-    firstName: req.body.firstName,
-    lastName: req.body.lastName,
-    email: req.body.email,
-    password: req.body.password, // Note: Should be hashed with bcrypt in production
-    phone: req.body.phone,
-    avatar: req.body.avatar,
-    bio: req.body.bio,
-    learningGoals: req.body.learningGoals,
-    preferredLanguage: req.body.preferredLanguage,
-    timezone: req.body.timezone,
-    skillLevel: req.body.skillLevel,
-    interests: req.body.interests,
-    notifications: req.body.notifications,
-  });
+  const { email } = req.body;
 
   try {
-    const newStudent = await student.save();
-    // Remove password from response
-    const studentResponse = newStudent.toObject();
-    delete studentResponse.password;
-    res.status(201).json(studentResponse);
+      if (email) {
+          const existingTeacher = await Teacher.findOne({ email });
+          if (existingTeacher) {
+              return res.status(400).json({ message: "This email is registered as a Teacher. Accounts cannot be both." });
+          }
+      }
+
+      const student = new Student({
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        email: req.body.email,
+        password: req.body.password,
+        role: "student",
+        notifications: req.body.notifications,
+      });
+
+      const newStudent = await student.save();
+      const studentResponse = newStudent.toObject();
+      delete studentResponse.password;
+
+      res.status(201).json(studentResponse);
+
   } catch (error) {
-    // Handle duplicate email
     if (error.code === 11000) {
-      return res.status(400).json({ message: "Email already exists" });
+      return res.status(400).json({ message: "Email already exists as a Student" });
     }
     res.status(400).json({ message: error.message });
   }
@@ -258,35 +260,29 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Email and password are required" });
     }
 
-    // Find student by email (include password for comparison)
     const student = await Student.findOne({ email: email.toLowerCase().trim() });
-
     if (!student) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // Compare passwords (plain text for now - TODO: use bcrypt.compare in production)
     if (student.password !== password) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // Check if account is active
     if (!student.isActive) {
       return res.status(401).json({ message: "Account is inactive" });
     }
 
-    // Generate JWT token
     const token = jwt.sign(
       {
         id: student._id,
         email: student.email,
-        role: student.role || "student",
+        role: "student",
       },
       JWT_SECRET,
-      { expiresIn: "7d" } // Token expires in 7 days
+      { expiresIn: "7d" }
     );
 
-    // Return token and user info (without password)
     const studentResponse = student.toObject();
     delete studentResponse.password;
 
