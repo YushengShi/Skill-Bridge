@@ -72,6 +72,7 @@ export default function TeacherHome({ setIsAuthenticated }) {
                 console.error("API did not return an array:", data);
             }
         })
+
         .catch(err => console.error("Error fetching teachers:", err));
     }
   }, []);
@@ -96,59 +97,65 @@ export default function TeacherHome({ setIsAuthenticated }) {
     }
   }, [location, navigate]);
 
+
+
+
+
+
   return (
     <div className="home-container">
       <div className="teacher-list">
         {teachers.length > 0 ? (
-            teachers.map(teacher => (
+          teachers.map((teacher) => (
             <div key={teacher._id} className="teacher-card">
-                <div className="card-left">
+              <div className="card-left">
                 <img src={teacher.avatar} alt={teacher.name} className="avatar" />
                 <div className="info">
-                    <h3>{teacher.name}</h3>
-                    <span className="tag">{teacher.tagline}</span>
-                    <div className="stats">⭐ {teacher.rating} • {teacher.lessonCount} lessons</div>
-                    <p className="bio">{teacher.bio}</p>
+                  <h3>{teacher.name}</h3>
+                  <span className="tag">{teacher.tagline}</span>
+                  <div className="stats">
+                    ⭐ {teacher.rating} • {teacher.lessonCount} lessons
+                  </div>
+                  <p className="bio">{teacher.bio}</p>
                 </div>
-                </div>
-                
-                <div className="card-right">
+              </div>
+
+              <div className="card-right">
                 <div className="price-box">
-                    <span className="label">Trial Price</span>
-                    <span className="price">${teacher.prices.trial}</span>
+                  <span className="label">Trial Price</span>
+                  <span className="price">${teacher.prices.trial}</span>
                 </div>
                 <div className="btn-group">
-                    <button 
+                  <button
                     className="details-btn"
                     onClick={() => navigate(`/teachers/${teacher._id}`)}
-                    >
+                  >
                     See Details
-                    </button>
-
-                    <button 
+                  </button>
+                  <button
                     className="book-btn"
                     onClick={() => setSelectedTeacher(teacher)}
-                    >
+                  >
                     Book Trial
-                    </button>
+                  </button>
                 </div>
-                </div>
+              </div>
             </div>
-            ))
+          ))
         ) : (
-            <p className="no-teachers">Loading teachers...</p>
+          <p className="no-teachers">Loading teachers...</p>
         )}
       </div>
 
       {selectedTeacher && (
-        <BookingModal 
-          teacher={selectedTeacher} 
-          onClose={() => setSelectedTeacher(null)} 
+        <BookingModal
+          teacher={selectedTeacher}
+          onClose={() => setSelectedTeacher(null)}
         />
       )}
 
       {notification && (
-        <NotificationModal 
+        <NotificationModal
           type={notification.type}
           message={notification.message}
           onClose={() => setNotification(null)}

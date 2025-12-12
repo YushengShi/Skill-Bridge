@@ -8,7 +8,8 @@ import protect from "../middleware/auth.js";
 const router = Router();
 
 // JWT secret - in production, use environment variable
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+const JWT_SECRET =
+  process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 /**
  * ================================================================================
@@ -88,31 +89,35 @@ router.post("/", async (req, res) => {
   const { email } = req.body;
 
   try {
-      if (email) {
-          const existingTeacher = await Teacher.findOne({ email });
-          if (existingTeacher) {
-              return res.status(400).json({ message: "This email is registered as a Teacher. Accounts cannot be both." });
-          }
+    if (email) {
+      const existingTeacher = await Teacher.findOne({ email });
+      if (existingTeacher) {
+        return res.status(400).json({
+          message:
+            "This email is registered as a Teacher. Accounts cannot be both.",
+        });
       }
+    }
 
-      const student = new Student({
-        firstName: req.body.firstName,
-        lastName: req.body.lastName,
-        email: req.body.email,
-        password: req.body.password,
-        role: "student",
-        notifications: req.body.notifications,
-      });
+    const student = new Student({
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      email: req.body.email,
+      password: req.body.password,
+      role: "student",
+      notifications: req.body.notifications,
+    });
 
-      const newStudent = await student.save();
-      const studentResponse = newStudent.toObject();
-      delete studentResponse.password;
+    const newStudent = await student.save();
+    const studentResponse = newStudent.toObject();
+    delete studentResponse.password;
 
-      res.status(201).json(studentResponse);
-
+    res.status(201).json(studentResponse);
   } catch (error) {
     if (error.code === 11000) {
-      return res.status(400).json({ message: "Email already exists as a Student" });
+      return res
+        .status(400)
+        .json({ message: "Email already exists as a Student" });
     }
     res.status(400).json({ message: error.message });
   }
@@ -181,8 +186,10 @@ router.get("/:id",protect, async (req, res) => {
  */
 router.put("/:id", protect, async (req, res) => {
   if (req.userId !== req.params.id) {
-        return res.status(403).json({ message: "Not authorized to update this profile" });
-    }
+    return res
+      .status(403)
+      .json({ message: "Not authorized to update this profile" });
+  }
   try {
     // Whitelist of fields that can be updated
     // Note: email and password are NOT included for security
@@ -279,10 +286,14 @@ router.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
+      return res
+        .status(400)
+        .json({ message: "Email and password are required" });
     }
 
-    const student = await Student.findOne({ email: email.toLowerCase().trim() });
+    const student = await Student.findOne({
+      email: email.toLowerCase().trim(),
+    });
     if (!student) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
@@ -390,5 +401,173 @@ router.patch("/:id/notifications", async (req, res) => {
   }
 });
 
+/**
+ * GET /api/students/:id/dashboard
+ *
+ * Fetches all dashboard data for a student:
+ * - Stats (upcoming/completed lessons, total hours, teachers worked with)
+ * - Upcoming lessons with teacher info
+ * - Recent activity
+ * - Recommended teachers
+ *
+ * @param {string} req.params.id - MongoDB ObjectId of the student
+ * @returns {Object} Dashboard data object
+ */
+router.get("/:id/dashboard", protect, async (req, res) => {
+  try {
+    if (req.userId !== req.params.id) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to access this dashboard" });
+    }
+
+    const studentId = req.params.id;
+
+    // Get all bookings for this student
+    const allBookings = await Booking.find({ studentId }).populate("teacherId");
+
+    // Calculate stats
+    const now = new Date();
+    const upcomingBookings = allBookings.filter(
+      (b) => b.status === "confirmed" && new Date(b.scheduledDate) >= now
+    );
+    const completedBookings = allBookings.filter(
+      (b) => b.status === "completed"
+    );
+
+    // Calculate total hours (assuming 1 hour per lesson for now, or use duration if available)
+    const totalHours = completedBookings.reduce(
+      (sum, b) => sum + (b.duration || 60) / 60,
+      0
+    );
+
+    // Get unique teachers the student has worked with
+    const teacherIds = [
+      ...new Set(
+        allBookings.map((b) => b.teacherId?._id?.toString()).filter(Boolean)
+      ),
+    ];
+
+    const stats = {
+      upcomingLessons: upcomingBookings.length,
+      completedLessons: completedBookings.length,
+      totalHours: Math.round(totalHours),
+      teachersWorkedWith: teacherIds.length,
+    };
+
+    // Format upcoming lessons
+    const upcomingLessons = upcomingBookings
+      .sort((a, b) => new Date(a.scheduledDate) - new Date(b.scheduledDate))
+      .slice(0, 5)
+      .map((booking) => ({
+        id: booking._id,
+        teacherName: booking.teacherId?.name || "Unknown Teacher",
+        teacherAvatar: booking.teacherId?.avatar || "https://i.pravatar.cc/150",
+        subject: booking.lessonType || "General Lesson",
+        date: booking.scheduledDate,
+        time: booking.scheduledTime || "TBD",
+        duration: booking.duration || 60,
+        status: booking.status,
+        meetingLink: booking.meetingLink || null,
+      }));
+
+    // Get recent activity from bookings (last 10 activities)
+    const recentBookings = allBookings
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 5);
+
+    const recentActivity = recentBookings.map((booking) => {
+      let type, message, icon;
+
+      if (booking.status === "completed") {
+        type = "lesson_completed";
+        message = `Completed lesson with ${
+          booking.teacherId?.name || "a teacher"
+        }`;
+        icon = "✅";
+      } else if (booking.status === "confirmed") {
+        type = "booking_confirmed";
+        message = `Booking confirmed for ${booking.lessonType || "lesson"}`;
+        icon = "📅";
+      } else if (booking.status === "paid") {
+        type = "payment_success";
+        message = `Payment of $${booking.amount || 0} processed`;
+        icon = "💳";
+      } else {
+        type = "booking_pending";
+        message = `New booking pending with ${
+          booking.teacherId?.name || "a teacher"
+        }`;
+        icon = "⏳";
+      }
+
+      return {
+        id: booking._id,
+        type,
+        message,
+        icon,
+        time: getRelativeTime(booking.createdAt),
+      };
+    });
+
+    // Get recommended teachers (teachers not yet worked with, or top-rated)
+    const recommendedTeachers = await Teacher.find({
+      _id: { $nin: teacherIds },
+      isApproved: { $ne: false },
+    })
+      .sort({ rating: -1 })
+      .limit(3)
+      .select("name avatar tagline rating prices");
+
+    const formattedRecommendedTeachers = recommendedTeachers.map((teacher) => ({
+      id: teacher._id,
+      name: teacher.name,
+      avatar: teacher.avatar || "https://i.pravatar.cc/150",
+      subject: teacher.tagline || "General Tutor",
+      rating: teacher.rating || 5.0,
+      price: teacher.prices?.standard || 25,
+    }));
+
+    // Fetch the student's learning progress for skill tracking visualization
+    // Returns array of { subject, progress } objects for the progress bars
+    const student = await Student.findById(studentId).select(
+      "learningProgress"
+    );
+    const learningProgress = student?.learningProgress || [];
+
+    // Return all dashboard data in a single response to minimize API calls
+    res.json({
+      stats, // Summary statistics for the stat cards
+      upcomingLessons, // Next 5 scheduled lessons
+      recentActivity, // Last 5 booking activities
+      recommendedTeachers: formattedRecommendedTeachers, // AI-like teacher suggestions
+      learningProgress, // Subject progress for visualization
+    });
+  } catch (error) {
+    console.error("Dashboard error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * Converts a timestamp to a human-readable relative time string.
+ * Used for displaying "2 hours ago", "1 day ago", etc. in activity feeds.
+ *
+ * @param {Date|string} date - The date to convert
+ * @returns {string} Human-readable relative time (e.g., "5 minutes ago")
+ */
+function getRelativeTime(date) {
+  const now = new Date();
+  const diff = now - new Date(date); // Difference in milliseconds
+  const minutes = Math.floor(diff / 60000); // Convert to minutes
+  const hours = Math.floor(diff / 3600000); // Convert to hours
+  const days = Math.floor(diff / 86400000); // Convert to days
+
+  // Return the most appropriate time unit
+  if (minutes < 60) return `${minutes} minutes ago`;
+  if (hours < 24) return `${hours} hours ago`;
+  if (days === 1) return "1 day ago";
+  return `${days} days ago`;
+}
 
 export default router;

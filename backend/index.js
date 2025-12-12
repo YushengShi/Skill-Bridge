@@ -13,24 +13,32 @@ mongoose
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-app.use(cors({
-  origin: 'http://localhost:5173',
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 
 // Stripe webhook route
-import webhookRoutes from './api/webhook.js'; 
-app.use('/api/webhook', express.raw({ type: 'application/json' }), webhookRoutes);
+import webhookRoutes from "./api/webhook.js";
+app.use(
+  "/api/webhook",
+  express.raw({ type: "application/json" }),
+  webhookRoutes
+);
 
 app.use(express.json());
 // we write our routes here
 import paymentRoutes from "./api/payment.js";
 import teacherRoutes from "./api/teachers.js";
 import studentRoutes from "./api/students.js";
+import aiRoutes from "./api/ai-recommendations.js";
 
 app.use("/api/payment", paymentRoutes);
 app.use("/api/teachers", teacherRoutes);
 app.use("/api/students", studentRoutes);
+app.use("/api/ai", aiRoutes);
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
