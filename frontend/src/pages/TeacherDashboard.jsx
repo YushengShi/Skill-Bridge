@@ -365,6 +365,8 @@ function TeacherDashboard() {
    */
   const handleLogout = () => {
     localStorage.removeItem("isAuth");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     localStorage.removeItem("userRole");
     navigate("/");
   };

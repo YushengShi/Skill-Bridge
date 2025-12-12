@@ -359,8 +359,10 @@ export default function StudentProfile({ setIsAuthenticated }) {
     if (setIsAuthenticated) {
       setIsAuthenticated(false);
     }
-    // Clear persisted auth state
+    // Clear persisted auth state and JWT token
     localStorage.removeItem("isAuth");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     // Redirect to login page
     navigate("/login");
   };
