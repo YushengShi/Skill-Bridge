@@ -1,6 +1,6 @@
 import { Router } from "express";
 import Teacher from "../models/Teacher.js";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
 const router = Router();
 
@@ -26,14 +26,14 @@ const router = Router();
  * if the API key isn't configured but the endpoint isn't being used.
  *
  * @throws {Error} If GEMINI_API_KEY environment variable is not set
- * @returns {GoogleGenerativeAI} Configured Gemini client instance
+ * @returns {GoogleGenAI} Configured Gemini client instance
  */
 const getGeminiClient = () => {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY is not configured");
   }
-  return new GoogleGenerativeAI(apiKey);
+  return new GoogleGenAI({ apiKey });
 };
 
 /**
@@ -113,15 +113,16 @@ router.post("/recommend", async (req, res) => {
     });
 
     // Initialize Gemini client and select the fast model for quick responses.
-    // gemini-1.5-flash is optimized for speed while maintaining good quality.
-    const genAI = getGeminiClient();
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // gemini-2.5-flash is optimized for speed while maintaining good quality.
+    const ai = getGeminiClient();
 
     // Send prompt to Gemini and await the response.
     // The AI will analyze teachers and return JSON with recommendations.
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const aiResponse = response.text();
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
+    const aiResponse = response.text;
 
     // Parse the AI's JSON response to extract teacher IDs and insight text.
     // The parser handles both valid JSON and fallback text parsing.
@@ -403,6 +404,290 @@ function getFallbackRecommendations(teachers, { skillLevel, budget }) {
  *
  * Returns the questionnaire structure for the recommendation form
  */
+/**
+ * POST /api/ai/chat
+ *
+ * AI Chatbot endpoint for conversational teacher recommendations.
+ * Maintains conversation context and extracts user preferences through natural dialogue.
+ *
+ * Request body:
+ * - message: string (user's chat message)
+ * - conversationHistory: array (previous messages for context)
+ * - extractedPreferences: object (preferences gathered so far)
+ *
+ * @returns {Object} { reply: string, extractedPreferences: object, recommendations?: Teacher[], complete: boolean }
+ */
+router.post("/chat", async (req, res) => {
+  try {
+    // Extract request data with defaults for optional fields
+    // - message: The user's current chat message (required)
+    // - conversationHistory: Array of previous {role, content} messages for context
+    // - extractedPreferences: Object holding preferences gathered in previous turns
+    const {
+      message,
+      conversationHistory = [],
+      extractedPreferences = {},
+    } = req.body;
+
+    // Validate that user sent a message
+    if (!message) {
+      return res.status(400).json({ error: "Message is required" });
+    }
+
+    // Fetch all active teachers from DB, excluding password for security
+    // These will be analyzed by AI to find the best matches
+    const teachers = await Teacher.find({ isActive: true }).select("-password");
+
+    // Transform MongoDB documents into plain objects for AI processing
+    // Only include fields relevant for matching (not sensitive data)
+    // Convert ObjectId to string for JSON serialization in AI prompt
+    const teacherSummaries = teachers.map((teacher) => ({
+      id: teacher._id.toString(),
+      name: teacher.name,
+      tagline: teacher.tagline || "",
+      bio: teacher.bio || "",
+      rating: teacher.rating,
+      lessonCount: teacher.lessonCount,
+      trialPrice: teacher.prices?.trial || 10,
+      standardPrice: teacher.prices?.standard || 25,
+      skills: teacher.skills || [],
+      specializations: teacher.specializations || [],
+      teachingStyle: teacher.teachingStyle || "",
+      availability: teacher.availability || {},
+      languages: teacher.languages || [],
+    }));
+
+    // Construct the AI prompt with conversation context, user preferences,
+    // and available teachers for the AI to analyze
+    const chatPrompt = buildChatbotPrompt({
+      message,
+      conversationHistory,
+      extractedPreferences,
+      teachers: teacherSummaries,
+    });
+
+    // Initialize Gemini client using API key from environment
+    const ai = getGeminiClient();
+
+    // Call Gemini API with the constructed prompt
+    // Using gemini-2.5-flash for fast responses with good quality
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: chatPrompt,
+    });
+
+    // Extract the text response from Gemini
+    const aiResponse = response.text;
+
+    // Parse AI's JSON response to extract:
+    // - reply: The friendly message to show the user
+    // - extractedPreferences: Any new preferences detected in user's message
+    // - complete: Whether we have enough info to recommend teachers
+    // - recommendations: Matched teachers (only if complete is true)
+    const parsedResponse = parseChatbotResponse(
+      aiResponse,
+      teacherSummaries,
+      teachers
+    );
+
+    // Send successful response with parsed AI data
+    res.json({
+      success: true,
+      ...parsedResponse,
+    });
+  } catch (error) {
+    // Log error for debugging but don't expose details to client
+    console.error("AI Chatbot Error:", error);
+
+    // Return a friendly fallback response instead of error
+    // This ensures the chat continues even if AI temporarily fails
+    // Preserve any preferences already gathered so user doesn't lose progress
+    res.json({
+      success: true,
+      reply:
+        "I'm having a bit of trouble right now. Could you tell me what kind of teacher you're looking for? I can help you find the perfect match based on your skill level, schedule, learning style, and budget!",
+      extractedPreferences: req.body.extractedPreferences || {},
+      complete: false,
+    });
+  }
+});
+
+/**
+ * Builds the chatbot prompt for conversational teacher recommendations.
+ *
+ * @param {Object} params - Chat parameters
+ * @param {string} params.message - Current user message
+ * @param {Array} params.conversationHistory - Previous messages
+ * @param {Object} params.extractedPreferences - Preferences gathered so far
+ * @param {Array} params.teachers - Available teachers
+ * @returns {string} Complete prompt for Gemini
+ */
+function buildChatbotPrompt({
+  message,
+  conversationHistory,
+  extractedPreferences,
+  teachers,
+}) {
+  // Format already-gathered preferences for the AI to reference
+  // This helps AI know what info we still need to collect
+  // If empty, tell AI no preferences gathered yet
+  const preferencesInfo =
+    Object.keys(extractedPreferences).length > 0
+      ? `\nALREADY GATHERED PREFERENCES:\n${JSON.stringify(
+          extractedPreferences,
+          null,
+          2
+        )}`
+      : "\nNo preferences gathered yet.";
+
+  // Format conversation history so AI understands the dialogue context
+  // Each message shows role (user/assistant) and content
+  // This enables multi-turn conversations where AI remembers what was said
+  const conversationContext =
+    conversationHistory.length > 0
+      ? `\nCONVERSATION HISTORY:\n${conversationHistory
+          .map((m) => `${m.role}: ${m.content}`)
+          .join("\n")}`
+      : "";
+
+  return `You are a friendly AI assistant for SkillBridge, an online learning platform. Your job is to help students find the perfect teacher through a natural conversation.
+
+YOUR PERSONALITY:
+- Warm, helpful, and encouraging
+- Ask one question at a time (don't overwhelm the user)
+- Use emojis occasionally to be friendly 😊
+- Keep responses concise (2-4 sentences max unless providing recommendations)
+
+INFORMATION TO GATHER (in any order, naturally):
+1. skillLevel: beginner, intermediate, or advanced
+2. schedule: morning (6AM-12PM), afternoon (12PM-6PM), evening (6PM-10PM), weekend, or flexible
+3. learningStyle: structured (clear curriculum), conversational (natural dialogue), intensive (fast-paced), or flexible
+4. budget: low (under $20/hr), medium ($20-40/hr), or high ($40+/hr)
+5. subject: What they want to learn (optional but helpful)
+${preferencesInfo}
+${conversationContext}
+
+CURRENT USER MESSAGE: "${message}"
+
+AVAILABLE TEACHERS:
+${JSON.stringify(teachers.slice(0, 10), null, 2)}
+
+TASK:
+1. Respond naturally to the user's message
+2. Extract any new preferences from their message
+3. If missing info, ask about ONE thing naturally
+4. When you have at least skillLevel, schedule, learningStyle, AND budget, provide teacher recommendations
+
+RESPONSE FORMAT (JSON only):
+{
+  "reply": "Your friendly response to the user",
+  "extractedPreferences": {
+    "skillLevel": "beginner|intermediate|advanced" or null,
+    "schedule": "morning|afternoon|evening|weekend|flexible" or null,
+    "learningStyle": "structured|conversational|intensive|flexible" or null,
+    "budget": "low|medium|high" or null,
+    "subject": "string or null"
+  },
+  "complete": true/false (true if ready to recommend),
+  "recommendedTeacherIds": ["id1", "id2", "id3"] (only if complete is true)
+}
+
+IMPORTANT:
+- Merge new preferences with existing ones (don't reset to null if already known)
+- Only return JSON, no additional text
+- If the user greets you, greet them back and ask how you can help find their perfect teacher`;
+}
+
+/**
+ * Parses the chatbot response from Gemini.
+ *
+ * @param {string} aiResponse - Raw response from Gemini
+ * @param {Array} teacherSummaries - Teacher summaries for ID matching
+ * @param {Array} fullTeachers - Full teacher documents
+ * @returns {Object} Parsed chatbot response
+ */
+function parseChatbotResponse(aiResponse, teacherSummaries, fullTeachers) {
+  try {
+    // Use regex to extract JSON from AI response
+    // This handles cases where AI might include extra text before/after the JSON
+    // The regex matches everything between first { and last }
+    const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      // Parse the extracted JSON string into an object
+      const parsed = JSON.parse(jsonMatch[0]);
+
+      // Build response object with safe defaults
+      // - reply: The friendly message to display to user
+      // - extractedPreferences: New preferences detected from user's message
+      // - complete: Flag indicating if we have enough info to recommend
+      const response = {
+        reply: parsed.reply || "How can I help you find a teacher today?",
+        extractedPreferences: parsed.extractedPreferences || {},
+        complete: parsed.complete || false,
+      };
+
+      // If complete, include recommendations
+      if (parsed.complete && parsed.recommendedTeacherIds) {
+        const recommendedTeachers = fullTeachers
+          .filter((t) =>
+            parsed.recommendedTeacherIds.includes(t._id.toString())
+          )
+          .map((teacher) => ({
+            id: teacher._id,
+            name: teacher.name,
+            tagline: teacher.tagline,
+            bio: teacher.bio,
+            avatar: teacher.avatar,
+            rating: teacher.rating,
+            lessonCount: teacher.lessonCount,
+            prices: teacher.prices,
+            skills: teacher.skills,
+            specializations: teacher.specializations,
+            teachingStyle: teacher.teachingStyle,
+          }));
+
+        // Fallback: If AI returned IDs that don't match any teachers,
+        // provide top 3 teachers as a reasonable default
+        // This ensures users always get some recommendations
+        if (recommendedTeachers.length === 0 && fullTeachers.length > 0) {
+          response.recommendations = fullTeachers
+            .slice(0, 3)
+            .map((teacher) => ({
+              id: teacher._id,
+              name: teacher.name,
+              tagline: teacher.tagline,
+              bio: teacher.bio,
+              avatar: teacher.avatar,
+              rating: teacher.rating,
+              lessonCount: teacher.lessonCount,
+              prices: teacher.prices,
+              skills: teacher.skills,
+            }));
+        } else {
+          // Use AI's recommended teachers, limited to top 5
+          response.recommendations = recommendedTeachers.slice(0, 5);
+        }
+      }
+
+      return response;
+    }
+  } catch (e) {
+    // JSON parsing failed - log for debugging
+    // This can happen if AI doesn't follow the expected format
+    console.error("Failed to parse chatbot response:", e);
+  }
+
+  // Ultimate fallback: If JSON parsing fails entirely,
+  // return a friendly message to keep the conversation going
+  // Reset preferences to empty so AI starts fresh gathering info
+  return {
+    reply:
+      "I'd love to help you find a great teacher! What subject are you interested in learning?",
+    extractedPreferences: {},
+    complete: false,
+  };
+}
+
 router.get("/questions", (req, res) => {
   res.json({
     questions: [

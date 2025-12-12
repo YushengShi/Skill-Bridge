@@ -16,6 +16,7 @@ import TeacherDetailPage from "./pages/TeacherDetailPage";
 import TeacherListPage from "./pages/TeacherListPage";
 
 import AIRecommendations from "./pages/AIRecommendations";
+import AIChatbot, { ChatbotButton } from "./components/AIChatbot";
 import "./App.css";
 
 
@@ -23,6 +24,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -160,6 +162,16 @@ function App() {
             )
           }
         />
+        <Route
+          path="/ai-chat"
+          element={
+            isAuthenticated ? (
+              <AIChatbot isFloating={false} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
 
         {/* Protected Routes - Teacher */}
         <Route
@@ -179,6 +191,21 @@ function App() {
         <Route path="*" element={<Navigate to="/login" replace />} />
 
       </Routes>
+
+      {/* AI Chatbot - Show floating button for authenticated users */}
+      {isAuthenticated && (
+        <>
+          <ChatbotButton
+            onClick={() => setIsChatOpen(!isChatOpen)}
+            isOpen={isChatOpen}
+          />
+          <AIChatbot
+            isOpen={isChatOpen}
+            onClose={() => setIsChatOpen(false)}
+            isFloating={true}
+          />
+        </>
+      )}
     </Router>
   );
 }
