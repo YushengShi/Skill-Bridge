@@ -1,33 +1,37 @@
-import express from 'express';
-import mongoose from 'mongoose';
-import cors from 'cors';
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
 import "dotenv/config";
 
 const app = express();
 const PORT = 3000;
 
 // MongoDB connection
-const mongoDB_URI = 'mongodb://localhost:27017/skillbridge';
+const mongoDB_URI = "mongodb://localhost:27017/skillbridge";
 mongoose
   .connect(mongoDB_URI)
-  .then(() => console.log('✅ MongoDB connected'))
-  .catch((err) => console.error('❌ MongoDB connection error:', err));
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-app.use(cors({
-  origin: 'http://localhost:5173',
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // we write our routes here
-import paymentRoutes from './api/payment.js';
-import teacherRoutes from './api/teachers.js';
+import paymentRoutes from "./api/payment.js";
+import teacherRoutes from "./api/teachers.js";
+import studentRoutes from "./api/students.js";
 
-app.use('/api/payment', paymentRoutes);
-app.use('/api/teachers', teacherRoutes);
+app.use("/api/payment", paymentRoutes);
+app.use("/api/teachers", teacherRoutes);
+app.use("/api/students", studentRoutes);
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
 });
 
 app.listen(PORT, () => {
