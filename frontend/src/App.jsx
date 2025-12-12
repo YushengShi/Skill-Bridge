@@ -16,6 +16,7 @@ import TeacherProfile from "./pages/TeacherProfile";
 import StudentProfile from "./pages/StudentProfile";
 import StudentDashboard from "./pages/StudentDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
+import AIRecommendations from "./pages/AIRecommendations";
 import "./App.css";
 
 function App() {
@@ -134,6 +135,16 @@ function App() {
           element={
             isAuthenticated ? (
               <StudentProfile setIsAuthenticated={setIsAuthenticated} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/ai-recommendations"
+          element={
+            isAuthenticated ? (
+              <AIRecommendations />
             ) : (
               <Navigate to="/login" replace />
             )
