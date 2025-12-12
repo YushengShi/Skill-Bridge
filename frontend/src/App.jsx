@@ -6,7 +6,7 @@ import {
   Navigate,
 } from "react-router-dom";
 // 🌟 引入解析库
-import { jwtDecode } from "jwt-decode"; 
+import { jwtDecode } from "jwt-decode";
 
 import Login from "./components/Login";
 import Home from "./components/Home";
@@ -20,17 +20,17 @@ import "./App.css";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userRole, setUserRole] = useState(null); 
+  const [userRole, setUserRole] = useState(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
     const checkAuth = () => {
       const token = localStorage.getItem("token");
-      
+
       if (token) {
         try {
           const decoded = jwtDecode(token);
-          
+
           if (decoded.exp * 1000 < Date.now()) {
             throw new Error("Token expired");
           }
@@ -54,9 +54,16 @@ function App() {
     checkAuth();
   }, []);
 
+  /**
+   * Determines the appropriate home route based on user role.
+   * Used for redirects after login and when accessing the root path.
+   *
+   * @returns {string} Route path for the user's dashboard or login page
+   */
   const getHomeRoute = () => {
-    if (userRole === 'teacher') return "/teacher-dashboard";
-    return "/teacherhome"; 
+    if (userRole === "teacher") return "/teacher-dashboard";
+    if (userRole === "student") return "/student-dashboard";
+    return "/login"; // Fallback for unauthenticated or unknown role
   };
 
   if (isCheckingAuth) {
@@ -72,14 +79,22 @@ function App() {
             isAuthenticated ? (
               <Navigate to={getHomeRoute()} replace />
             ) : (
-              <Login setIsAuthenticated={setIsAuthenticated} setUserRole={setUserRole} />
+              <Login
+                setIsAuthenticated={setIsAuthenticated}
+                setUserRole={setUserRole}
+              />
             )
           }
         />
 
-        <Route 
-          path="/" 
-          element={<Navigate to={isAuthenticated ? getHomeRoute() : "/login"} replace />} 
+        <Route
+          path="/"
+          element={
+            <Navigate
+              to={isAuthenticated ? getHomeRoute() : "/login"}
+              replace
+            />
+          }
         />
 
         {/* Public Routes */}
@@ -93,7 +108,10 @@ function App() {
             )
           }
         />
-        <Route path="/teachers" element={<Navigate to="/teacherhome" replace />} />
+        <Route
+          path="/teachers"
+          element={<Navigate to="/teacherhome" replace />}
+        />
         <Route path="/teachers/:id" element={<TeacherProfile />} />
         <Route path="/checkout" element={<PaymentForm />} />
 
@@ -101,10 +119,13 @@ function App() {
         <Route
           path="/student-dashboard"
           element={
-            isAuthenticated && userRole === 'student' ? (
+            isAuthenticated && userRole === "student" ? (
               <StudentDashboard setIsAuthenticated={setIsAuthenticated} />
             ) : (
-              <Navigate to={isAuthenticated ? "/teacher-dashboard" : "/login"} replace />
+              <Navigate
+                to={isAuthenticated ? "/teacher-dashboard" : "/login"}
+                replace
+              />
             )
           }
         />
@@ -123,10 +144,13 @@ function App() {
         <Route
           path="/teacher-dashboard"
           element={
-            isAuthenticated && userRole === 'teacher' ? (
+            isAuthenticated && userRole === "teacher" ? (
               <TeacherDashboard setIsAuthenticated={setIsAuthenticated} />
             ) : (
-              <Navigate to={isAuthenticated ? "/teacherhome" : "/login"} replace />
+              <Navigate
+                to={isAuthenticated ? "/teacherhome" : "/login"}
+                replace
+              />
             )
           }
         />
