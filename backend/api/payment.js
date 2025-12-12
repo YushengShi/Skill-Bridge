@@ -2,13 +2,14 @@ import "dotenv/config";
 import Stripe from "stripe";
 import { Router } from "express";
 import Booking from "../models/Booking.js";
+import protect from "../middleware/auth.js";
 
 const router = Router();
 
 // This is your test secret API key.
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-router.post("/create-checkout-session", async (req, res) => {
+router.post("/create-checkout-session", protect, async (req, res) => {
   // TODO: replace this url
   const YOUR_DOMAIN = "http://localhost:5173"; // replace with frontend domain
   const { teacherId, lessonType, price, teacherName } = req.body;
@@ -20,7 +21,7 @@ router.post("/create-checkout-session", async (req, res) => {
       amount: price,
       status: "pending",
     });
-    // 2. create a checkout session with Stripe
+    
     const session = await stripe.checkout.sessions.create({
       line_items: [
         {
@@ -36,8 +37,13 @@ router.post("/create-checkout-session", async (req, res) => {
         },
       ],
       mode: "payment",
-      success_url: `${YOUR_DOMAIN}/teachers?success=true&bookingId=${newBooking._id}`,
-      cancel_url: `${YOUR_DOMAIN}/teachers?canceled=true`,
+
+      metadata: {
+        bookingId: newBooking._id.toString()
+      },
+
+      success_url: `${YOUR_DOMAIN}/teacherhome?success=true&bookingId=${newBooking._id}`,
+      cancel_url: `${YOUR_DOMAIN}/teacherhome?canceled=true`,
     });
 
     res.json({ url: session.url });
