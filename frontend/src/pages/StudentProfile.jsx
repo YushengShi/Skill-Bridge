@@ -288,20 +288,39 @@ export default function StudentProfile({ setIsAuthenticated }) {
    */
   const handleSave = async () => {
     setLoading(true);
+    setSaveSuccess(false);
     try {
-      // TODO: Replace with actual API call:
-      // await fetch(`/api/students/${userId}`, {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(profile)
-      // });
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Mock delay
+      const token = localStorage.getItem("token");
+      const userStr = localStorage.getItem("user");
+      if (!token || !userStr) {
+        navigate("/login");
+        return;
+      }
+      const user = JSON.parse(userStr);
+      const userId = user._id || user.id;
 
-      // Show success message and exit edit mode
+      const response = await fetch(
+        `http://localhost:3000/api/students/${userId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(profile),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to save profile");
+      }
+
+      const updatedUser = await response.json();
+      localStorage.setItem("user", JSON.stringify(updatedUser)); // Update localStorage
+
       setSaveSuccess(true);
       setIsEditing(false);
 
-      // Auto-hide success message after 3 seconds
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
       console.error("Error saving profile:", error);
@@ -417,7 +436,7 @@ export default function StudentProfile({ setIsAuthenticated }) {
               onClick={handleAvatarClick}
             >
               <img
-                src={profile.avatar || "https://i.pravatar.cc/150?img=1"}
+                src={profile.avatar}
                 alt="Profile"
                 className="nav-avatar"
               />
