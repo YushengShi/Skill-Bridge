@@ -105,34 +105,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-
-
-
-router.post('/', async (req, res) => {
-
-/**
- * POST /api/teachers
- *
- * Creates a new teacher profile.
- * Used when a new teacher registers or admin creates a teacher account.
- *
- * Required fields in request body:
- * - name: Teacher's full name
- * - tagline: Short professional title (e.g., "Professional Teacher")
- * - bio: Description of teaching experience and style
- * - avatar: URL to profile image
- * - prices: Object with trial and standard lesson prices
- *
- * Optional fields (have defaults):
- * - rating: Defaults to 5.0
- * - lessonCount: Defaults to 0
- *
- * @param {Object} req.body - Teacher data
- * @returns {Object} 201 with created teacher document
- * @returns {Object} 400 if validation fails
- */
 router.post("/", async (req, res) => {
-
   const teacher = new Teacher({
     name: req.body.name,
     tagline: req.body.tagline,

@@ -174,27 +174,47 @@ export default function StudentProfile({ setIsAuthenticated }) {
 
   // Load profile data
   useEffect(() => {
-    // TODO: Replace with actual API call
-    const mockProfile = {
-      firstName: "John",
-      lastName: "Doe",
-      email: "john.doe@example.com",
-      phone: "+1 234 567 8900",
-      avatar: "https://i.pravatar.cc/150?img=3",
-      bio: "Passionate learner looking to improve my English skills for work and travel.",
-      learningGoals: "Become fluent in English within 6 months",
-      preferredLanguage: "English",
-      timezone: "America/New_York",
-      skillLevel: "intermediate",
-      notifications: {
-        email: true,
-        sms: false,
-        bookingReminders: true,
-        promotions: false,
-      },
+    const fetchProfileData = () => {
+      const userStr = localStorage.getItem("user");
+      if (!userStr) {
+        console.error("No user data found in local storage.");
+        // Optionally navigate to login if no user is found
+        navigate("/login");
+        return;
+      }
+
+      try {
+        const user = JSON.parse(userStr);
+
+        // Set the profile state with the data from localStorage
+        // Provide default values for fields that might be missing
+        setProfile({
+          firstName: user.firstName || "",
+          lastName: user.lastName || "",
+          email: user.email || "",
+          phone: user.phone || "",
+          avatar:
+            user.avatar || "https://i.pravatar.cc/150?u=" + (user._id || user.id),
+          bio: user.bio || "",
+          learningGoals: user.learningGoals || "",
+          preferredLanguage: user.preferredLanguage || "English",
+          timezone:
+            user.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+          skillLevel: user.skillLevel || "beginner",
+          notifications: {
+            email: user.notifications?.email ?? true,
+            sms: user.notifications?.sms ?? false,
+            bookingReminders: user.notifications?.bookingReminders ?? true,
+            promotions: user.notifications?.promotions ?? false,
+          },
+        });
+      } catch (error) {
+        console.error("Failed to parse user data from local storage:", error);
+      }
     };
-    setProfile(mockProfile);
-  }, []);
+
+    fetchProfileData();
+  }, [navigate]);
 
   // ==================== EVENT HANDLERS ====================
 

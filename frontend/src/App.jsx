@@ -1,22 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './components/Login';
-import Home from './components/Home';
-import PaymentForm from './pages/PaymentForm';
-import TeacherHome from './components/TeacherHome';
-import TeacherListPage from './pages/TeacherListPage'; // Added
-import TeacherDetailPage from './pages/TeacherDetailPage'; // Added
-import './App.css';
 
-import React, { useState, useEffect } from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-// 🌟 引入解析库
 import { jwtDecode } from "jwt-decode";
 
 import Login from "./components/Login";
@@ -27,6 +12,9 @@ import TeacherProfile from "./pages/TeacherProfile";
 import StudentProfile from "./pages/StudentProfile";
 import StudentDashboard from "./pages/StudentDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
+import TeacherDetailPage from "./pages/TeacherDetailPage";
+import TeacherListPage from "./pages/TeacherListPage";
+
 import AIRecommendations from "./pages/AIRecommendations";
 import "./App.css";
 
