@@ -349,7 +349,7 @@ export default function StudentDashboard({ setIsAuthenticated }) {
               </button>
               <button
                 className="action-card"
-                onClick={() => alert("AI Recommendations coming soon!")}
+                onClick={() => navigate("/ai-recommendations")}
               >
                 <span className="action-icon">🤖</span>
                 <span className="action-text">AI Suggestions</span>
@@ -459,7 +459,7 @@ export default function StudentDashboard({ setIsAuthenticated }) {
               <p>Our AI assistant can recommend the perfect teacher for you!</p>
               <button
                 className="ai-btn"
-                onClick={() => alert("AI Assistant coming soon!")}
+                onClick={() => navigate("/ai-recommendations")}
               >
                 Get Recommendations
               </button>
