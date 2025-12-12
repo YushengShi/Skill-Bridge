@@ -69,108 +69,47 @@ function TeacherDashboard() {
    */
   const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
 
+  /**
+   * Dashboard statistics from backend
+   */
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    pendingBookings: 0,
+    todayLessons: 0,
+    monthlyEarnings: 0,
+    averageRating: 5.0,
+    totalReviews: 0,
+  });
+
+  /**
+   * Today's schedule from backend
+   */
+  const [todaySchedule, setTodaySchedule] = useState([]);
+
+  /**
+   * Pending booking requests from backend
+   */
+  const [pendingBookings, setPendingBookings] = useState([]);
+
+  /**
+   * Earnings data from backend
+   */
+  const [earningsData, setEarningsData] = useState({
+    thisMonth: 0,
+    lastMonth: 0,
+    pending: 0,
+    available: 0,
+    recentTransactions: [],
+  });
+
   // Navigation hook for programmatic routing
   const navigate = useNavigate();
 
-  // ==================== MOCK DATA ====================
-  // TODO: Replace with actual API calls
-
-  /**
-   * Mock dashboard statistics
-   * In production, fetch from /api/teachers/stats endpoint
-   */
-  const stats = {
-    totalStudents: 24,
-    pendingBookings: 3,
-    todayLessons: 4,
-    monthlyEarnings: 2450,
-    averageRating: 4.8,
-    totalReviews: 47,
-  };
-
-  /**
-   * Mock today's schedule
-   * In production, fetch from /api/bookings/today endpoint
-   */
-  const todaySchedule = [
-    {
-      id: 1,
-      studentName: "Emma Wilson",
-      studentAvatar: "https://randomuser.me/api/portraits/women/1.jpg",
-      subject: "Spanish Conversation",
-      time: "09:00 AM - 10:00 AM",
-      status: "upcoming",
-      meetingLink: "https://meet.example.com/abc123",
-    },
-    {
-      id: 2,
-      studentName: "James Chen",
-      studentAvatar: "https://randomuser.me/api/portraits/men/2.jpg",
-      subject: "Spanish Grammar",
-      time: "11:00 AM - 12:00 PM",
-      status: "in-progress",
-      meetingLink: "https://meet.example.com/def456",
-    },
-    {
-      id: 3,
-      studentName: "Sophie Brown",
-      studentAvatar: "https://randomuser.me/api/portraits/women/3.jpg",
-      subject: "Spanish for Business",
-      time: "02:00 PM - 03:00 PM",
-      status: "upcoming",
-      meetingLink: "https://meet.example.com/ghi789",
-    },
-    {
-      id: 4,
-      studentName: "Michael Lee",
-      studentAvatar: "https://randomuser.me/api/portraits/men/4.jpg",
-      subject: "Beginner Spanish",
-      time: "04:00 PM - 05:00 PM",
-      status: "upcoming",
-      meetingLink: "https://meet.example.com/jkl012",
-    },
-  ];
-
-  /**
-   * Mock pending booking requests
-   * In production, fetch from /api/bookings/pending endpoint
-   */
-  const pendingBookings = [
-    {
-      id: 1,
-      studentName: "Alex Johnson",
-      studentAvatar: "https://randomuser.me/api/portraits/men/5.jpg",
-      subject: "Spanish Basics",
-      requestedDate: "Dec 20, 2024",
-      requestedTime: "10:00 AM - 11:00 AM",
-      message: "I would like to focus on pronunciation and basic vocabulary.",
-      studentLevel: "Beginner",
-    },
-    {
-      id: 2,
-      studentName: "Lisa Park",
-      studentAvatar: "https://randomuser.me/api/portraits/women/6.jpg",
-      subject: "Advanced Conversation",
-      requestedDate: "Dec 21, 2024",
-      requestedTime: "03:00 PM - 04:00 PM",
-      message: "Looking to practice business Spanish for upcoming meetings.",
-      studentLevel: "Advanced",
-    },
-    {
-      id: 3,
-      studentName: "David Miller",
-      studentAvatar: "https://randomuser.me/api/portraits/men/7.jpg",
-      subject: "Spanish Grammar",
-      requestedDate: "Dec 22, 2024",
-      requestedTime: "11:00 AM - 12:00 PM",
-      message: "Need help with verb conjugations and tenses.",
-      studentLevel: "Intermediate",
-    },
-  ];
+  // ==================== STATIC MOCK DATA (for materials until API is ready) ====================
 
   /**
    * Mock teaching materials
-   * In production, fetch from /api/teachers/materials endpoint
+   * TODO: Replace with API call when endpoint is ready
    */
   const materials = [
     {
@@ -209,7 +148,7 @@ function TeacherDashboard() {
 
   /**
    * Mock student file submissions
-   * In production, fetch from /api/teachers/submissions endpoint
+   * TODO: Replace with API call when endpoint is ready
    */
   const studentSubmissions = [
     {
@@ -235,78 +174,103 @@ function TeacherDashboard() {
     },
   ];
 
-  /**
-   * Mock earnings data
-   * In production, fetch from /api/teachers/earnings endpoint
-   */
-  const earningsData = {
-    thisMonth: 2450,
-    lastMonth: 2180,
-    pending: 350,
-    available: 2100,
-    recentTransactions: [
-      {
-        id: 1,
-        studentName: "Emma Wilson",
-        amount: 50,
-        date: "Dec 15",
-        status: "completed",
-      },
-      {
-        id: 2,
-        studentName: "James Chen",
-        amount: 75,
-        date: "Dec 14",
-        status: "completed",
-      },
-      {
-        id: 3,
-        studentName: "Sophie Brown",
-        amount: 50,
-        date: "Dec 13",
-        status: "pending",
-      },
-      {
-        id: 4,
-        studentName: "Michael Lee",
-        amount: 100,
-        date: "Dec 12",
-        status: "completed",
-      },
-    ],
-  };
-
   // ==================== LIFECYCLE HOOKS ====================
 
   /**
-   * Effect: Fetch teacher data on component mount
-   * Simulates API call with timeout
+   * Fetches all teacher dashboard data from the backend API on component mount.
+   *
+   * This single API call retrieves:
+   * - teacher: Basic profile info (name, avatar, subject, verified status)
+   * - stats: Summary metrics (students, bookings, lessons, earnings, rating)
+   * - todaySchedule: Lessons scheduled for today with student info
+   * - pendingBookings: Booking requests awaiting teacher approval
+   * - earningsData: Financial summary and recent transactions
+   *
+   * Authentication is validated via JWT token in localStorage.
+   * On auth failure (401/403), user is redirected to login.
    */
   useEffect(() => {
-    // TODO: Replace with actual API call
-    // const fetchTeacherData = async () => {
-    //   try {
-    //     const response = await fetch('/api/teachers/me');
-    //     const data = await response.json();
-    //     setTeacher(data);
-    //   } catch (error) {
-    //     console.error('Failed to fetch teacher data:', error);
-    //   } finally {
-    //     setLoading(false);
-    //   }
-    // };
+    const fetchDashboardData = async () => {
+      try {
+        // Retrieve authentication credentials from localStorage
+        const token = localStorage.getItem("token");
+        const userStr = localStorage.getItem("user");
 
-    // Simulated data loading
-    setTimeout(() => {
-      setTeacher({
-        name: "Maria Garcia",
-        avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-        subject: "Spanish Language",
-        verified: true,
-      });
-      setLoading(false);
-    }, 500);
-  }, []);
+        // Redirect to login if no valid auth found
+        if (!token || !userStr) {
+          console.error("No authentication found");
+          navigate("/login");
+          return;
+        }
+
+        // Parse user data to get the teacher ID for the API call
+        const user = JSON.parse(userStr);
+        const userId = user._id || user.id;
+
+        // Fetch dashboard data with auth header
+        const response = await fetch(
+          `http://localhost:3000/api/teachers/${userId}/dashboard`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`, // JWT for protected route
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        // Handle authentication errors - clear local storage and redirect
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            navigate("/login");
+            return;
+          }
+          throw new Error("Failed to fetch dashboard data");
+        }
+
+        const data = await response.json();
+
+        // Populate all state variables from the API response
+        setTeacher(data.teacher);
+        setStats(data.stats);
+        setTodaySchedule(data.todaySchedule);
+        setPendingBookings(data.pendingBookings);
+        setEarningsData(data.earningsData);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+
+        // On error, set sensible defaults to prevent UI crashes
+        setTeacher({
+          name: "Teacher",
+          avatar: "https://randomuser.me/api/portraits/lego/1.jpg",
+          subject: "General",
+          verified: false,
+        });
+        setStats({
+          totalStudents: 0,
+          pendingBookings: 0,
+          todayLessons: 0,
+          monthlyEarnings: 0,
+          averageRating: 5.0,
+          totalReviews: 0,
+        });
+        setTodaySchedule([]);
+        setPendingBookings([]);
+        setEarningsData({
+          thisMonth: 0,
+          lastMonth: 0,
+          pending: 0,
+          available: 0,
+          recentTransactions: [],
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [navigate]);
 
   // ==================== EVENT HANDLERS ====================
 
