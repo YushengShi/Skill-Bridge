@@ -151,20 +151,33 @@ function Login({ setIsAuthenticated }) {
     setSuccessMessage('')
   }
 
-  // Credential validation
-  const validateCredentials = (email, password) => {
-    // Demo credentials
-    const validEmail = 'demo@example.com'
-    const validPassword = 'password123'
-    
-    if (email === validEmail && password === validPassword) {
-      return true
+  // Login API call
+  const loginUser = async (email, password) => {
+    try {
+      const response = await fetch('http://localhost:3000/api/students/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: data.message || 'Login failed' };
+      }
+
+      // Store JWT token in localStorage
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+      }
+
+      return { success: true, user: data.user };
+    } catch (error) {
+      return { success: false, error: 'Network error. Please try again.' };
     }
-    
-    // Check localStorage for registered users
-    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]')
-    const user = registeredUsers.find(u => u.email === email && u.password === password)
-    return !!user
   }
 
   // User registration
@@ -217,22 +230,23 @@ function Login({ setIsAuthenticated }) {
     setIsLoading(true)
     hideMessages()
     
-    // Simulate API call
-    setTimeout(() => {
-      if (validateCredentials(email, password)) {
-        setSuccessMessage('Login successful! Redirecting...')
-        if (rememberMe) {
-          localStorage.setItem('rememberedEmail', email)
-        }
-        setTimeout(() => {
-          setIsAuthenticated(true)
-          navigate('/teacherhome') /* for home page, navigate('/home')*/
-        }, 1500)
-      } else {
-        setErrorMessage('Invalid email or password. Please try again.')
+    // Call backend API for login
+    const result = await loginUser(email.trim(), password)
+    
+    if (result.success) {
+      setSuccessMessage('Login successful! Redirecting...')
+      if (rememberMe) {
+        localStorage.setItem('rememberedEmail', email)
       }
-      setIsLoading(false)
-    }, 2000)
+      setTimeout(() => {
+        setIsAuthenticated(true)
+        navigate('/teacherhome') /* for home page, navigate('/home')*/
+      }, 1500)
+    } else {
+      setErrorMessage(result.error || 'Invalid email or password. Please try again.')
+    }
+    
+    setIsLoading(false)
   }
 
   // Signup form submission

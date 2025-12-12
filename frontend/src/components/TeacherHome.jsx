@@ -59,6 +59,8 @@ export default function TeacherHome({ setIsAuthenticated }) {
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem('isAuth');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
   };
 
   return (

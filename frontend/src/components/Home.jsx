@@ -7,6 +7,9 @@ function Home({ setIsAuthenticated }) {
 
   const handleLogout = () => {
     setIsAuthenticated(false)
+    localStorage.removeItem("token")
+    localStorage.removeItem("user")
+    localStorage.removeItem("isAuth")
     navigate('/login')
   }
 
