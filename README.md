@@ -165,7 +165,6 @@ When a user logs out:
 ```javascript
 // After successful login
 localStorage.setItem('token', data.token);
-localStorage.setItem('user', JSON.stringify(data.user));
 
 // Check authentication
 const token = localStorage.getItem('token');

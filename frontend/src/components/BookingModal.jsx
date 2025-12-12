@@ -8,11 +8,22 @@ export default function BookingModal({ teacher, onClose }) {
   const currentPrice = lessonType === 'trial' ? teacher.prices.trial : teacher.prices.standard;
 
   const handlePayment = async () => {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      alert("You need to be logged in to book a lesson.");
+      onClose(); 
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const response = await fetch('/api/payment/create-checkout-session', {
+      const response = await fetch('http://localhost:3000/api/payment/create-checkout-session', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           teacherId: teacher._id,
           teacherName: teacher.name,
@@ -21,13 +32,26 @@ export default function BookingModal({ teacher, onClose }) {
         })
       });
       
+      if (response.status === 401) {
+        alert("Your session has expired. Please login again.");
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        return;
+      }
+
       const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Payment initiation failed');
+      }
+
       if (data.url) {
         window.location.href = data.url;
       }
     } catch (error) {
       console.error("Payment failed", error);
-      alert("Something went wrong with payment initiation.");
+      alert(error.message || "Something went wrong with payment initiation.");
     } finally {
       setIsLoading(false);
     }
