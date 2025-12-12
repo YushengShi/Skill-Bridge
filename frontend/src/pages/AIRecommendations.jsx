@@ -437,6 +437,12 @@ export default function AIRecommendations() {
             Answer a few questions and let our AI recommend the best teachers
             for you
           </p>
+          <button
+            className="chat-mode-btn"
+            onClick={() => navigate("/ai-chat")}
+          >
+            💬 Prefer to chat? Try our AI Chatbot
+          </button>
         </header>
 
         {/* Progress Bar */}
