@@ -2,6 +2,7 @@ import { Router } from "express";
 import jwt from "jsonwebtoken";
 import Student from "../models/Student.js";
 import Teacher from "../models/Teacher.js";
+import protect from "../middleware/auth.js";
 
 const router = Router();
 
@@ -41,7 +42,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-producti
  * @returns {Array} List of all student documents (without passwords)
  * @returns {Object} 500 error if database query fails
  */
-router.get("/", async (req, res) => {
+router.get("/", protect, async (req, res) => {
   try {
     // .select("-password") excludes the password field from results
     const students = await Student.find().select("-password");
@@ -62,7 +63,7 @@ router.get("/", async (req, res) => {
  * @returns {Object} 404 if not found or invalid ID format
  * @returns {Object} 500 for database errors
  */
-router.get("/:id", async (req, res) => {
+router.get("/:id",protect, async (req, res) => {
   try {
     const student = await Student.findById(req.params.id).select("-password");
     if (!student) {
@@ -160,7 +161,10 @@ router.post("/", async (req, res) => {
  * @returns {Object} 404 if student not found
  * @returns {Object} 400 for validation errors
  */
-router.put("/:id", async (req, res) => {
+router.put("/:id", protect, async (req, res) => {
+  if (req.userId !== req.params.id) {
+        return res.status(403).json({ message: "Not authorized to update this profile" });
+    }
   try {
     // Whitelist of fields that can be updated
     // Note: email and password are NOT included for security

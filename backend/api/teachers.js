@@ -2,6 +2,7 @@ import { Router } from "express";
 import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
 import jwt from "jsonwebtoken";
+import protect from "../middleware/auth.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt"
 
@@ -149,7 +150,7 @@ router.post("/", async (req, res) => {
  * @returns {Object} 404 if not found or invalid ID
  * @returns {Object} 500 for database errors
  */
-router.get("/:id", async (req, res) => {
+router.get("/:id", protect, async (req, res) => {
   try {
     const teacher = await Teacher.findById(req.params.id).select("-password");
     if (!teacher) return res.status(404).json({ message: "Teacher not found" });

@@ -24,15 +24,42 @@ const NotificationModal = ({ type, message, onClose }) => {
 export default function TeacherHome({ setIsAuthenticated }) {
   const [teachers, setTeachers] = useState([]);
   const [selectedTeacher, setSelectedTeacher] = useState(null); 
-  const [notification, setNotification] = useState(null); // { type, message }
+  const [notification, setNotification] = useState(null); 
 
   const location = useLocation();
   const navigate = useNavigate();
 
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
+
   useEffect(() => {
-    fetch('/api/teachers')
-      .then(res => res.json())
-      .then(data => setTeachers(data))
+    const token = localStorage.getItem('token');
+
+    fetch('http://localhost:3000/api/teachers', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+      }
+    })
+      .then(res => {
+        if (res.status === 401) {
+            handleLogout();
+            throw new Error("Session expired");
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (Array.isArray(data)) {
+            setTeachers(data);
+        } else {
+            console.error("API did not return an array:", data);
+        }
+      })
       .catch(err => console.error("Error fetching teachers:", err));
   }, []);
 
@@ -44,7 +71,7 @@ export default function TeacherHome({ setIsAuthenticated }) {
         type: 'success',
         message: 'Your payment was successful. The teacher has been notified!'
       });
-      navigate('/teachers', { replace: true });
+      navigate('/teacherhome', { replace: true });
     }
 
     if (query.get("canceled")) {
@@ -52,16 +79,9 @@ export default function TeacherHome({ setIsAuthenticated }) {
         type: 'error',
         message: 'You canceled the payment. Feel free to book whenever you are ready.'
       });
-      navigate('/teachers', { replace: true });
+      navigate('/teacherhome', { replace: true });
     }
   }, [location, navigate]);
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    localStorage.removeItem('isAuth');
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-  };
 
   return (
     <div className="home-container">
@@ -71,41 +91,45 @@ export default function TeacherHome({ setIsAuthenticated }) {
       </header>
 
       <div className="teacher-list">
-        {teachers.map(teacher => (
-          <div key={teacher._id} className="teacher-card">
-            <div className="card-left">
-              <img src={teacher.avatar} alt={teacher.name} className="avatar" />
-              <div className="info">
-                <h3>{teacher.name}</h3>
-                <span className="tag">{teacher.tagline}</span>
-                <div className="stats">⭐ {teacher.rating} • {teacher.lessonCount} lessons</div>
-                <p className="bio">{teacher.bio}</p>
-              </div>
-            </div>
-            
-            <div className="card-right">
-              <div className="price-box">
-                <span className="label">Trial Price</span>
-                <span className="price">${teacher.prices.trial}</span>
-              </div>
-              <div className="btn-group">
-                <button 
-                  className="details-btn"
-                  onClick={() => navigate(`/teachers/${teacher._id}`)}
-                >
-                  See Details
-                </button>
+        {teachers.length > 0 ? (
+            teachers.map(teacher => (
+            <div key={teacher._id} className="teacher-card">
+                <div className="card-left">
+                <img src={teacher.avatar} alt={teacher.name} className="avatar" />
+                <div className="info">
+                    <h3>{teacher.name}</h3>
+                    <span className="tag">{teacher.tagline}</span>
+                    <div className="stats">⭐ {teacher.rating} • {teacher.lessonCount} lessons</div>
+                    <p className="bio">{teacher.bio}</p>
+                </div>
+                </div>
+                
+                <div className="card-right">
+                <div className="price-box">
+                    <span className="label">Trial Price</span>
+                    <span className="price">${teacher.prices.trial}</span>
+                </div>
+                <div className="btn-group">
+                    <button 
+                    className="details-btn"
+                    onClick={() => navigate(`/teachers/${teacher._id}`)}
+                    >
+                    See Details
+                    </button>
 
-                <button 
-                  className="book-btn"
-                  onClick={() => setSelectedTeacher(teacher)}
-                >
-                  Book Trial
-                </button>
-              </div>
+                    <button 
+                    className="book-btn"
+                    onClick={() => setSelectedTeacher(teacher)}
+                    >
+                    Book Trial
+                    </button>
+                </div>
+                </div>
             </div>
-          </div>
-        ))}
+            ))
+        ) : (
+            <p className="no-teachers">Loading teachers...</p>
+        )}
       </div>
 
       {selectedTeacher && (
