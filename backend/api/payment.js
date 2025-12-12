@@ -20,7 +20,7 @@ router.post("/create-checkout-session", async (req, res) => {
       amount: price,
       status: "pending",
     });
-    // 2. create a checkout session with Stripe
+    
     const session = await stripe.checkout.sessions.create({
       line_items: [
         {
@@ -36,6 +36,11 @@ router.post("/create-checkout-session", async (req, res) => {
         },
       ],
       mode: "payment",
+
+      metadata: {
+        bookingId: newBooking._id.toString()
+      },
+
       success_url: `${YOUR_DOMAIN}/teachers?success=true&bookingId=${newBooking._id}`,
       cancel_url: `${YOUR_DOMAIN}/teachers?canceled=true`,
     });
