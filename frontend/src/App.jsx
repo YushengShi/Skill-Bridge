@@ -1,11 +1,7 @@
-import React, { useState, useEffect } from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-// 🌟 引入解析库
+
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
 import { jwtDecode } from "jwt-decode";
 
 import Login from "./components/Login";
@@ -16,9 +12,13 @@ import TeacherProfile from "./pages/TeacherProfile";
 import StudentProfile from "./pages/StudentProfile";
 import StudentDashboard from "./pages/StudentDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
+import TeacherDetailPage from "./pages/TeacherDetailPage";
+import TeacherListPage from "./pages/TeacherListPage";
+
 import AIRecommendations from "./pages/AIRecommendations";
 import AIChatbot, { ChatbotButton } from "./components/AIChatbot";
 import "./App.css";
+
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -111,6 +111,16 @@ function App() {
             )
           }
         />
+
+        {/* Add this dynamic route for individual teacher pages */}
+        <Route path="/teachers/:id" element={<TeacherDetailPage />} />
+        
+        <Route path="/teachers" element={<TeacherHome />} />
+        <Route path="/japanese-teachers" element={<TeacherListPage />} />
+        
+        
+        <Route path="/" element={<Navigate to="/login" replace />} />
+
         <Route
           path="/teachers"
           element={<Navigate to="/teacherhome" replace />}
@@ -179,6 +189,7 @@ function App() {
         />
 
         <Route path="*" element={<Navigate to="/login" replace />} />
+
       </Routes>
 
       {/* AI Chatbot - Show floating button for authenticated users */}
