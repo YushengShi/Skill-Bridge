@@ -18,7 +18,7 @@ import TeacherListPage from "./pages/TeacherListPage";
 import AIRecommendations from "./pages/AIRecommendations";
 import AIChatbot, { ChatbotButton } from "./components/AIChatbot";
 import "./App.css";
-
+import StudentBookings from "./pages/StudentBookings";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -134,11 +134,30 @@ function App() {
           element={
             isAuthenticated && userRole === "student" ? (
               <StudentDashboard setIsAuthenticated={setIsAuthenticated} />
-            ) : (
-              <Navigate
+            ) : ( <Navigate
                 to={isAuthenticated ? "/teacher-dashboard" : "/login"}
                 replace
               />
+            )
+          }
+        />
+        <Route
+          path="/my-bookings"
+          element={
+            isAuthenticated && userRole === 'student' ? (
+              <StudentBookings />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/my-bookings"
+          element={
+            isAuthenticated && userRole === 'student' ? (
+              <StudentBookings />
+            ) : (
+              <Navigate to="/login" replace />
             )
           }
         />

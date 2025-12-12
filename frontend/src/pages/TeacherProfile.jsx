@@ -60,25 +60,35 @@ export default function TeacherProfile() {
    * - Error is caught and stored in state for display
    * - Loading state is always set to false in finally block
    */
-  useEffect(() => {
+useEffect(() => {
     const fetchTeacher = async () => {
       try {
-        // Make API call to get teacher data by ID
-        const response = await fetch(`/api/teachers/${id}`);
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+           // navigate('/login'); 
+           // return;
+        }
 
-        // Check if response is successful (status 200-299)
+        const response = await fetch(`/api/teachers/${id}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.status === 401) {
+            throw new Error("Please login to view teacher details");
+        }
+
         if (!response.ok) {
           throw new Error("Teacher not found");
         }
 
-        // Parse JSON response and update state
         const data = await response.json();
         setTeacher(data);
       } catch (err) {
-        // Store error message for display in error UI
         setError(err.message);
       } finally {
-        // Always stop loading spinner, whether success or error
         setLoading(false);
       }
     };
