@@ -3,8 +3,16 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import BookingModal from './BookingModal';
 import '../App.css';
 
-const NotificationModal = ({ type, message, onClose }) => {
+const NotificationModal = ({ type, message, onClose, onConfirm }) => {
   const isSuccess = type === 'success';
+
+  const handleClick = () => {
+    onClose(); // 先关闭弹窗
+    if (isSuccess && onConfirm) {
+      onConfirm();
+    }
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content notification-content" onClick={e => e.stopPropagation()}>
@@ -13,7 +21,11 @@ const NotificationModal = ({ type, message, onClose }) => {
         </div>
         <h2>{isSuccess ? 'Booking Confirmed!' : 'Booking Canceled'}</h2>
         <p>{message}</p>
-        <button className="confirm-btn" onClick={onClose} style={{marginTop: '20px', width: '100%'}}>
+        <button 
+          className="confirm-btn" 
+          onClick={handleClick} // 🌟 修改点 2: 绑定新的点击事件
+          style={{marginTop: '20px', width: '100%'}}
+        >
           {isSuccess ? 'View My Bookings' : 'Close'}
         </button>
       </div>
@@ -38,29 +50,30 @@ export default function TeacherHome({ setIsAuthenticated }) {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-
-    fetch('http://localhost:3000/api/teachers', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` 
-      }
-    })
-      .then(res => {
-        if (res.status === 401) {
-            handleLogout();
-            throw new Error("Session expired");
+    if (token) {
+        fetch('http://localhost:3000/api/teachers', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
         }
-        return res.json();
-      })
-      .then(data => {
-        if (Array.isArray(data)) {
-            setTeachers(data);
-        } else {
-            console.error("API did not return an array:", data);
-        }
-      })
-      .catch(err => console.error("Error fetching teachers:", err));
+        })
+        .then(res => {
+            if (res.status === 401) {
+                handleLogout();
+                throw new Error("Session expired");
+            }
+            return res.json();
+        })
+        .then(data => {
+            if (Array.isArray(data)) {
+                setTeachers(data);
+            } else {
+                console.error("API did not return an array:", data);
+            }
+        })
+        .catch(err => console.error("Error fetching teachers:", err));
+    }
   }, []);
 
   useEffect(() => {
@@ -85,11 +98,6 @@ export default function TeacherHome({ setIsAuthenticated }) {
 
   return (
     <div className="home-container">
-      <header className="home-header">
-        <h1>Find your <span>English teacher</span> online</h1>
-        <button className="logout-btn" onClick={handleLogout}>Logout</button>
-      </header>
-
       <div className="teacher-list">
         {teachers.length > 0 ? (
             teachers.map(teacher => (
@@ -144,6 +152,7 @@ export default function TeacherHome({ setIsAuthenticated }) {
           type={notification.type}
           message={notification.message}
           onClose={() => setNotification(null)}
+          onConfirm={() => navigate('/my-bookings')}
         />
       )}
     </div>

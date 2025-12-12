@@ -5,7 +5,6 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-// 🌟 引入解析库
 import { jwtDecode } from "jwt-decode"; 
 
 import Login from "./components/Login";
@@ -17,6 +16,7 @@ import StudentProfile from "./pages/StudentProfile";
 import StudentDashboard from "./pages/StudentDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import "./App.css";
+import StudentBookings from "./pages/StudentBookings";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -105,6 +105,16 @@ function App() {
               <StudentDashboard setIsAuthenticated={setIsAuthenticated} />
             ) : (
               <Navigate to={isAuthenticated ? "/teacher-dashboard" : "/login"} replace />
+            )
+          }
+        />
+        <Route
+          path="/my-bookings"
+          element={
+            isAuthenticated && userRole === 'student' ? (
+              <StudentBookings />
+            ) : (
+              <Navigate to="/login" replace />
             )
           }
         />

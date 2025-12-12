@@ -2,6 +2,7 @@ import { Router } from "express";
 import jwt from "jsonwebtoken";
 import Student from "../models/Student.js";
 import Teacher from "../models/Teacher.js";
+import Booking from "../models/Booking.js";
 import protect from "../middleware/auth.js";
 
 const router = Router();
@@ -52,32 +53,7 @@ router.get("/", protect, async (req, res) => {
   }
 });
 
-/**
- * GET /api/students/:id
- *
- * Fetches a single student by their MongoDB ObjectId.
- * Used to load profile data on the student profile page.
- *
- * @param {string} req.params.id - MongoDB ObjectId of the student
- * @returns {Object} Student document (without password) if found
- * @returns {Object} 404 if not found or invalid ID format
- * @returns {Object} 500 for database errors
- */
-router.get("/:id",protect, async (req, res) => {
-  try {
-    const student = await Student.findById(req.params.id).select("-password");
-    if (!student) {
-      return res.status(404).json({ message: "Student not found" });
-    }
-    res.json(student);
-  } catch (error) {
-    // Invalid ObjectId format (not 24-char hex string)
-    if (error.kind === "ObjectId") {
-      return res.status(404).json({ message: "Student not found" });
-    }
-    res.status(500).json({ message: error.message });
-  }
-});
+
 
 /**
  * POST /api/students
@@ -139,6 +115,48 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ message: "Email already exists as a Student" });
     }
     res.status(400).json({ message: error.message });
+  }
+});
+
+router.get("/my-bookings", protect, async (req, res) => {
+  try {
+    const currentStudentId = req.userId;
+
+    const bookings = await Booking.find({ studentId: currentStudentId })
+      .populate('teacherId', 'name avatar email')
+      .sort({ createdAt: -1 });
+
+    res.json(bookings);
+  } catch (error) {
+    console.error("Error fetching bookings:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+/**
+ * GET /api/students/:id
+ *
+ * Fetches a single student by their MongoDB ObjectId.
+ * Used to load profile data on the student profile page.
+ *
+ * @param {string} req.params.id - MongoDB ObjectId of the student
+ * @returns {Object} Student document (without password) if found
+ * @returns {Object} 404 if not found or invalid ID format
+ * @returns {Object} 500 for database errors
+ */
+router.get("/:id",protect, async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id).select("-password");
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+    res.json(student);
+  } catch (error) {
+    // Invalid ObjectId format (not 24-char hex string)
+    if (error.kind === "ObjectId") {
+      return res.status(404).json({ message: "Student not found" });
+    }
+    res.status(500).json({ message: error.message });
   }
 });
 
@@ -371,5 +389,6 @@ router.patch("/:id/notifications", async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 });
+
 
 export default router;
