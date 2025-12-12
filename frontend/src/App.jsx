@@ -38,11 +38,15 @@ import "./App.css";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem("isAuth") === "true";
+    // Check for JWT token in localStorage
+    const token = localStorage.getItem("token");
+    return !!token;
   });
 
   useEffect(() => {
-    localStorage.setItem("isAuth", isAuthenticated);
+    // Update isAuth flag for backward compatibility, but primary check is token
+    const token = localStorage.getItem("token");
+    localStorage.setItem("isAuth", token ? "true" : "false");
   }, [isAuthenticated]);
 
   return (

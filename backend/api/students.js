@@ -1,7 +1,11 @@
 import { Router } from "express";
+import jwt from "jsonwebtoken";
 import Student from "../models/Student.js";
 
 const router = Router();
+
+// JWT secret - in production, use environment variable
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 /**
  * ================================================================================
@@ -224,6 +228,73 @@ router.delete("/:id", async (req, res) => {
     if (error.kind === "ObjectId") {
       return res.status(404).json({ message: "Student not found" });
     }
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * POST /api/students/login
+ *
+ * Authenticates a student and returns a JWT token.
+ * Used during login process.
+ *
+ * Required fields:
+ * - email: Student's email address
+ * - password: Student's password
+ *
+ * NOTE: Currently compares plain text passwords.
+ * TODO: Implement bcrypt password hashing for production.
+ *
+ * @param {Object} req.body - Login credentials { email, password }
+ * @returns {Object} 200 with JWT token and user info
+ * @returns {Object} 401 if invalid credentials
+ * @returns {Object} 500 for database errors
+ */
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    // Find student by email (include password for comparison)
+    const student = await Student.findOne({ email: email.toLowerCase().trim() });
+
+    if (!student) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    // Compare passwords (plain text for now - TODO: use bcrypt.compare in production)
+    if (student.password !== password) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    // Check if account is active
+    if (!student.isActive) {
+      return res.status(401).json({ message: "Account is inactive" });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        id: student._id,
+        email: student.email,
+        role: student.role || "student",
+      },
+      JWT_SECRET,
+      { expiresIn: "7d" } // Token expires in 7 days
+    );
+
+    // Return token and user info (without password)
+    const studentResponse = student.toObject();
+    delete studentResponse.password;
+
+    res.json({
+      token,
+      user: studentResponse,
+    });
+  } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });

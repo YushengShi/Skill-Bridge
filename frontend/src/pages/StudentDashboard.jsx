@@ -187,6 +187,8 @@ export default function StudentDashboard({ setIsAuthenticated }) {
       setIsAuthenticated(false);
     }
     localStorage.removeItem("isAuth");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     navigate("/login");
   };
 
