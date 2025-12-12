@@ -115,6 +115,28 @@ const studentSchema = new mongoose.Schema({
     },
   ],
 
+  /**
+   * Learning Progress Tracking
+   *
+   * Stores the student's progress in each subject they're learning.
+   * Updated after lessons are completed to reflect advancement.
+   *
+   * Each entry contains:
+   * - subject: Name of the skill/subject (e.g., "English", "Spanish", "Python")
+   * - progress: Percentage of completion (0-100%)
+   *
+   * Progress can be calculated based on:
+   * - Number of completed lessons in that subject
+   * - Teacher assessments
+   * - Quiz/test scores
+   */
+  learningProgress: [
+    {
+      subject: { type: String, required: true },
+      progress: { type: Number, default: 0, min: 0, max: 100 },
+    },
+  ],
+
   // Role
   role: {
     type: String,
