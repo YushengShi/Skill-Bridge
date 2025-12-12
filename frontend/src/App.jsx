@@ -1,3 +1,24 @@
+/**
+ * ================================================================================
+ * APP.JSX - MAIN APPLICATION COMPONENT
+ * ================================================================================
+ *
+ * Root component for the SkillBridge application.
+ * Handles routing, authentication state, and protected routes.
+ *
+ * Route Structure:
+ * - /login - Authentication page
+ * - /home - Student home page (browse teachers)
+ * - /teacherhome - Teacher listing page
+ * - /teachers/:id - Individual teacher profile
+ * - /profile - Student's own profile page
+ * - /student-dashboard - Student dashboard (protected)
+ * - /teacher-dashboard - Teacher dashboard (protected)
+ * - /checkout - Payment processing
+ *
+ * ================================================================================
+ */
+
 import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
@@ -11,6 +32,8 @@ import PaymentForm from "./pages/PaymentForm";
 import TeacherHome from "./components/TeacherHome";
 import TeacherProfile from "./pages/TeacherProfile";
 import StudentProfile from "./pages/StudentProfile";
+import StudentDashboard from "./pages/StudentDashboard";
+import TeacherDashboard from "./pages/TeacherDashboard";
 import "./App.css";
 
 function App() {
@@ -63,6 +86,30 @@ function App() {
           element={
             isAuthenticated ? (
               <StudentProfile setIsAuthenticated={setIsAuthenticated} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        {/* Student Dashboard - Protected Route */}
+        <Route
+          path="/student-dashboard"
+          element={
+            isAuthenticated ? (
+              <StudentDashboard setIsAuthenticated={setIsAuthenticated} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        {/* Teacher Dashboard - Protected Route */}
+        <Route
+          path="/teacher-dashboard"
+          element={
+            isAuthenticated ? (
+              <TeacherDashboard setIsAuthenticated={setIsAuthenticated} />
             ) : (
               <Navigate to="/login" replace />
             )
