@@ -191,6 +191,7 @@ function TeacherDashboard() {
    */
   useEffect(() => {
     const fetchDashboardData = async () => {
+      setLoading(true); // Ensure loading is true at the start
       try {
         // Retrieve authentication credentials from localStorage
         const token = localStorage.getItem("token");
@@ -271,6 +272,7 @@ function TeacherDashboard() {
 
     fetchDashboardData();
   }, [navigate]);
+  }, [navigate]); // The navigate dependency is fine, the internal logic was the issue.
 
   // ==================== EVENT HANDLERS ====================
 
