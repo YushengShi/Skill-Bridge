@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import "./TeacherDetailPage.css"; // make sure filename matches
+import { useParams, useNavigate } from "react-router-dom";
+import BookingModal from "../components/BookingModal";
+import "./TeacherDetailPage.css";
 
 export default function TeacherDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  
   const [teacher, setTeacher] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showBookingModal, setShowBookingModal] = useState(false);
 
   useEffect(() => {
     const fetchTeacher = async () => {
@@ -16,7 +20,6 @@ export default function TeacherDetailPage() {
         setTeacher(data);
       } catch (err) {
         console.error(err);
-        setTeacher(null);
       } finally {
         setLoading(false);
       }
@@ -30,7 +33,10 @@ export default function TeacherDetailPage() {
   return (
     <div className="tdp-page">
       <main className="tdp-container">
+        {/* Main Content (Left on Desktop, Top on Mobile) */}
         <section className="tdp-main">
+          
+          {/* Profile Header Card */}
           <div className="tdp-profile-card">
             <div className="tdp-avatar-wrap">
               <img
@@ -42,25 +48,45 @@ export default function TeacherDetailPage() {
 
             <div className="tdp-profile-info">
               <h1 className="tdp-name">{teacher.name}</h1>
-              <p className="tdp-tagline">{teacher.tagline}</p>
+              <p className="tdp-tagline">{teacher.tagline || "Professional Teacher"}</p>
 
               <div className="tdp-meta">
                 <span>
                   ⭐ <strong>{teacher.rating ?? "—"}</strong>
                 </span>
                 <span>•</span>
-                <span>{teacher.lessonCount ?? 0} lessons</span>
+                <span>{teacher.lessonCount || 0} lessons</span>
               </div>
 
               <div className="tdp-actions"></div>
             </div>
           </div>
 
+          {/* About Me */}
           <div className="tdp-card">
             <h2>About Me</h2>
-            <p className="tdp-bio">{teacher.bio}</p>
+            <p className="tdp-bio">{teacher.bio || "This teacher has not written a bio yet."}</p>
+            
+            {teacher.education && (
+               <div style={{marginTop: '15px', fontSize: '14px', color: '#555'}}>
+                  <strong>🎓 Education:</strong> {teacher.education}
+               </div>
+            )}
           </div>
 
+          {/* Skills (New Section) */}
+          {teacher.skills && teacher.skills.length > 0 && (
+             <div className="tdp-card">
+               <h2>Skills & Expertise</h2>
+               <div className="skills-cloud">
+                  {teacher.skills.map((skill, idx) => (
+                     <span key={idx} className="skill-pill">{skill}</span>
+                  ))}
+               </div>
+             </div>
+          )}
+
+          {/* Reviews */}
           <div className="tdp-card">
             <h2>Student Reviews</h2>
             {/* If you have reviews array, map them. Example below is placeholder */}
@@ -73,9 +99,17 @@ export default function TeacherDetailPage() {
           </div>
         </section>
 
+        {/* Sidebar (Right on Desktop, Bottom on Mobile) */}
         <aside className="tdp-sidebar">
           <div className="tdp-card sticky">
-            <h3>Lesson Packages</h3>
+            {teacher.videoUrl && (
+                <div style={{background: '#000', color: 'white', padding: '20px', textAlign: 'center', borderRadius: '8px', marginBottom: '15px', cursor: 'pointer'}}>
+                   ▶ Video Intro
+                </div>
+             )}
+
+            <h3 style={{marginTop:0, marginBottom:'15px', fontSize:'18px'}}>Book a Lesson</h3>
+            
             <div className="price-row">
               <div>Trial (30 min)</div>
               <div className="price">${teacher.prices?.trial ?? "—"}</div>
@@ -87,6 +121,13 @@ export default function TeacherDetailPage() {
           </div>
         </aside>
       </main>
+
+      {showBookingModal && (
+        <BookingModal 
+          teacher={teacher} 
+          onClose={() => setShowBookingModal(false)} 
+        />
+      )}
     </div>
   );
 }

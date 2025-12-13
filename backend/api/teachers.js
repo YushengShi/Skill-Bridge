@@ -479,4 +479,65 @@ function formatShortDate(date) {
   });
 }
 
+/**
+ * Updates a teacher's profile.
+ * PUT /api/teachers/:id
+ * Protected Route - Teacher can only update their own profile
+ * @param {string} req.params.id - MongoDB ObjectId of the teacher
+ * @returns {Object} Updated teacher document
+ * @returns {Object} 403 if not authorized
+ * @returns {Object} 404 if teacher not found
+ * 
+ * 
+
+ */
+router.put("/:id", protect, async (req, res) => {
+  try {
+    if (req.userId !== req.params.id) {
+      return res.status(403).json({ message: "Not authorized to update this profile" });
+    }
+
+    const updateData = {
+      name: req.body.name,
+      phone: req.body.phone,
+      tagline: req.body.tagline,
+      bio: req.body.bio,
+      avatar: req.body.avatar,
+      languages: req.body.languages,
+      education: req.body.education,
+      location: req.body.location,
+
+      teachingStyle: req.body.teachingStyle,
+      specializations: req.body.specializations,
+      
+      prices: req.body.prices,
+      availability: req.body.availability,
+      
+      skills: req.body.skills,
+      specializations: req.body.specializations,
+      
+      videoUrl: req.body.videoUrl,
+    };
+
+    Object.keys(updateData).forEach(key => 
+      updateData[key] === undefined && delete updateData[key]
+    );
+
+    const updatedTeacher = await Teacher.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!updatedTeacher) {
+      return res.status(404).json({ message: "Teacher not found" });
+    }
+
+    res.json(updatedTeacher);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+
 export default router;

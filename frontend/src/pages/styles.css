@@ -226,3 +226,10 @@ main {
     flex-direction: column;
   }
 }
+/* MOBILE FULL-WIDTH BUTTONS */
+@media (max-width: 767px) {
+  button,
+  .btn {
+    width: 100%;
+  }
+}

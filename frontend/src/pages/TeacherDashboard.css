@@ -1091,3 +1091,44 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+/* ================================
+   RESPONSIVE — TEACHER DASHBOARD
+================================ */
+
+/* Laptop */
+@media (max-width: 1199px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Tablet */
+@media (max-width: 991px) {
+  .dashboard-container {
+    padding: 1rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-card,
+  .pending-card,
+  .earnings-card {
+    padding: 1rem;
+  }
+}
+
+/* Small mobile */
+@media (max-width: 480px) {
+  .dashboard-header h2 {
+    font-size: 1.3rem;
+  }
+}

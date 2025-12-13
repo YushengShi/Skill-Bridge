@@ -19,7 +19,7 @@
 .tdp-logo {
   font-weight:700;
   color:#0b69ff;
-  font-size:18px;
+  font-size:16px;
 }
 
 /* Container */
@@ -44,13 +44,13 @@
   padding: 1rem;
   border-radius: 12px;
   box-shadow: 0 6px 18px rgba(20,40,60,0.06);
-  align-items:center;
+  align-items:flex-start; /* Changed to flex-start for better alignment with longer bios */
 }
 
-.tdp-avatar-wrap { flex: 0 0 120px; }
+.tdp-avatar-wrap { flex: 0 0 100px; } /* Slightly smaller for mobile */
 .tdp-avatar {
-  width: 120px;
-  height: 120px;
+  width: 100px;
+  height: 100px;
   object-fit: cover;
   border-radius: 12px;
   box-shadow: 0 6px 18px rgba(20,40,60,0.07);
@@ -61,24 +61,30 @@
   margin: 0;
   font-size: 22px;
   font-weight:800;
+  line-height: 1.2;
 }
-.tdp-tagline { margin: 4px 0 8px; color:#4b5563; font-weight:600; }
-.tdp-meta { color:#6b7280; font-size:14px; display:flex; gap:0.5rem; align-items:center; }
+.tdp-tagline { margin: 6px 0 8px; color:#4b5563; font-weight:600; font-size: 15px; }
+.tdp-meta { color:#6b7280; font-size:14px; display:flex; flex-wrap: wrap; gap:0.5rem; align-items:center; }
 .tdp-actions { margin-top: 12px; display:flex; gap:8px; }
 
 /* Buttons */
 .tdp-btn {
-  padding: 10px 14px;
+  padding: 12px 14px;
   border-radius: 8px;
   border: 1px solid transparent;
   cursor: pointer;
   font-weight:600;
-  font-size:14px;
+  font-size:15px;
+  transition: all 0.2s;
 }
 .tdp-btn-primary {
   background: #0b69ff;
   color: white;
-  box-shadow: 0 8px 20px rgba(11,105,255,0.12);
+  box-shadow: 0 4px 12px rgba(11,105,255,0.2);
+}
+.tdp-btn-primary:hover {
+  background: #0056d6;
+  transform: translateY(-1px);
 }
 .tdp-btn-outline {
   background: transparent;
@@ -89,43 +95,135 @@
 /* Content cards */
 .tdp-card {
   background:white;
-  padding: 1rem;
+  padding: 1.5rem;
   border-radius: 10px;
   margin-top: 1rem;
   box-shadow: 0 6px 18px rgba(20,40,60,0.04);
 }
-.tdp-card h2 { margin-top:0; font-size:18px; }
-.tdp-bio { color:#374151; line-height:1.55; }
+.tdp-card h2 { margin-top:0; font-size:18px; border-bottom: 1px solid #f3f4f6; padding-bottom: 10px; margin-bottom: 15px; }
+.tdp-bio { color:#374151; line-height:1.6; white-space: pre-wrap; }
 
 /* Sidebar */
-.tdp-sidebar .tdp-card { margin-top: 0.75rem; }
+.tdp-sidebar .tdp-card { margin-top: 0; } /* Reset margin for sidebar top card */
 .price-row {
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding: 8px 0;
+  padding: 12px 0;
   border-bottom: 1px dashed #eef2f7;
 }
-.price { font-weight:700; color:#111827; }
+.price { font-weight:700; color:#111827; font-size: 1.1rem; }
 
-.tdp-full { width:100%; margin-top: 10px; }
+.tdp-full { width:100%; margin-top: 20px; }
 
-/* Sticky card on larger screens - we’ll enable in larger breakpoints */
+/* Sticky card class */
 .sticky { position: static; }
 
 /* Loading / empty */
-.tdp-loading, .tdp-empty { padding: 3rem; text-align:center; color:#6b7280; }
+.tdp-loading, .tdp-empty { padding: 3rem; text-align:center; color:#6b7280; font-weight: 500;}
+
+/* --- NEW ADDITIONS FOR SKILLS & REVIEWS --- */
+
+/* Skills Cloud */
+.skills-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.skill-pill {
+  background: #f3f4f6;
+  color: #374151;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Reviews */
+.review-item {
+  padding: 15px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+.review-item:last-child { border-bottom: none; }
+.review-head {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
 
 /* Responsive layout for larger screens */
 @media (min-width: 900px) {
   .tdp-container {
     grid-template-columns: 2fr 1fr;
     align-items:start;
+    gap: 2rem;
   }
   .tdp-main { order: 1; }
   .tdp-sidebar { order: 2; }
-  .sticky { position: sticky; top: 90px; }
-  .tdp-avatar { width: 180px; height:180px; border-radius: 10px; }
-  .tdp-profile-card { gap: 1.5rem; padding: 1.25rem; }
-  .tdp-name { font-size: 28px; }
+  
+  /* Enable sticky sidebar on desktop */
+  .sticky { position: sticky; top: 20px; }
+  
+  .tdp-avatar { width: 160px; height:160px; border-radius: 12px; }
+  .tdp-avatar-wrap { flex: 0 0 160px; }
+  
+  .tdp-profile-card { gap: 2rem; padding: 2rem; }
+  .tdp-name { font-size: 32px; }
+  .tdp-tagline { font-size: 18px; margin-bottom: 15px;}
+}
+/* ================================
+   RESPONSIVE — TEACHER DETAIL PAGE
+================================ */
+
+/* Laptop */
+@media (max-width: 1199px) {
+  .detail-container {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+/* Tablet */
+@media (max-width: 991px) {
+  .detail-container {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+  }
+
+  .tdp-profile {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .tdp-avatar {
+    width: 120px;
+    height: 120px;
+  }
+
+  .tdp-actions {
+    justify-content: center;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .content-card {
+    padding: 1rem;
+  }
+
+  .tdp-actions button {
+    width: 100%;
+  }
+
+  .price-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .tdp-avatar {
+    width: 100px;
+    height: 100px;
+  }
 }
