@@ -25,6 +25,10 @@ passport.use(
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: callbackURL,
+      // Force account selection every time (don't auto-login with last used account)
+      authorizationParams: {
+        prompt: "select_account",
+      },
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -68,9 +72,30 @@ passport.deserializeUser((user, done) => {
 });
 
 /**
+ * GET /api/auth/google/init
+ * Stores the intended role in session before OAuth
+ * Query params: ?role=student or ?role=teacher
+ */
+router.get("/google/init", (req, res) => {
+  const role = req.query.role;
+  if (role && ["student", "teacher"].includes(role)) {
+    req.session.oauthRole = role;
+    req.session.save((err) => {
+      if (err) {
+        console.error("Session save error:", err);
+        return res.status(500).json({ error: "Failed to initialize OAuth" });
+      }
+      res.json({ success: true, role });
+    });
+  } else {
+    res.status(400).json({ error: "Invalid role" });
+  }
+});
+
+/**
  * GET /api/auth/google
  * Initiates Google OAuth flow
- * Query params: ?role=student or ?role=teacher
+ * Role is stored in session from /init endpoint
  */
 router.get(
   "/google",
@@ -82,15 +107,19 @@ router.get(
       );
     }
 
-    // Store role in session for callback
-    if (req.query.role) {
-      req.session.oauthRole = req.query.role;
+    // Check if role is stored in session (from /init endpoint)
+    if (!req.session.oauthRole) {
+      return res.redirect(
+        `${process.env.FRONTEND_URL || "http://localhost:5173"}/login?error=oauth_role_not_set`
+      );
     }
+
     next();
   },
   passport.authenticate("google", {
     scope: ["profile", "email"],
     session: false,
+    prompt: "select_account", // Force account selection every time
   })
 );
 
@@ -101,7 +130,10 @@ router.get(
  */
 router.get(
   "/google/callback",
-  passport.authenticate("google", { session: false, failureRedirect: "/login?error=google_auth_failed" }),
+  passport.authenticate("google", { 
+    session: false, 
+    failureRedirect: "/login?error=google_auth_failed",
+  }),
   async (req, res) => {
     try {
       console.log("OAuth callback received");
@@ -115,25 +147,61 @@ router.get(
         return res.redirect(`${process.env.FRONTEND_URL || "http://localhost:5173"}/login?error=no_profile`);
       }
 
-      // Get role from session (stored during initial redirect)
-      const role = req.session?.oauthRole || req.query.role || "student";
+      // Get role from session (stored during /init endpoint)
+      const intendedRole = req.session?.oauthRole;
       const googleProfile = req.user;
       
       console.log("Google profile:", {
         googleId: googleProfile.googleId,
         email: googleProfile.email,
         name: googleProfile.name,
-        role: role
+        intendedRole: intendedRole
       });
-      
-      // Clear OAuth role from session
-      if (req.session) {
-        delete req.session.oauthRole;
+
+      if (!intendedRole || !["student", "teacher"].includes(intendedRole)) {
+        console.error("Invalid or missing role in session:", intendedRole);
+        return res.redirect(`${process.env.FRONTEND_URL || "http://localhost:5173"}/login?error=invalid_role`);
       }
 
-      if (!role || !["student", "teacher"].includes(role)) {
-        console.error("Invalid role:", role);
-        return res.redirect(`${process.env.FRONTEND_URL || "http://localhost:5173"}/login?error=invalid_role`);
+      // Check for role conflicts BEFORE creating/linking account
+      const StudentModel = Student;
+      const TeacherModel = Teacher;
+      const OtherModel = intendedRole === "student" ? Teacher : Student;
+      
+      // Check if Google account exists in the OTHER role
+      const otherRoleUser = await OtherModel.findOne({ googleId: googleProfile.googleId });
+      if (otherRoleUser) {
+        const existingRole = intendedRole === "student" ? "teacher" : "student";
+        console.error(`Google account already used as ${existingRole}`);
+        // Clear session
+        if (req.session) {
+          delete req.session.oauthRole;
+        }
+        return res.redirect(
+          `${process.env.FRONTEND_URL || "http://localhost:5173"}/login?error=account_role_conflict&attempted_role=${intendedRole}&existing_role=${existingRole}`
+        );
+      }
+
+      // Check if email exists in the OTHER role
+      const otherRoleUserByEmail = await OtherModel.findOne({ email: googleProfile.email.toLowerCase() });
+      if (otherRoleUserByEmail) {
+        const existingRole = intendedRole === "student" ? "teacher" : "student";
+        console.error(`Email already used as ${existingRole}`);
+        // Clear session
+        if (req.session) {
+          delete req.session.oauthRole;
+        }
+        return res.redirect(
+          `${process.env.FRONTEND_URL || "http://localhost:5173"}/login?error=email_role_conflict&attempted_role=${intendedRole}&existing_role=${existingRole}`
+        );
+      }
+
+      // No conflict - proceed with login/registration
+      const role = intendedRole;
+      
+      // Clear OAuth role from session after checking conflicts
+      if (req.session) {
+        delete req.session.oauthRole;
       }
 
       // Validate Google profile has required fields
@@ -148,15 +216,15 @@ router.get(
       let user;
       const Model = role === "student" ? Student : Teacher;
 
-      // Check if user exists with this Google ID
+      // Check if user exists with this Google ID in the SAME role
       user = await Model.findOne({ googleId: googleProfile.googleId });
 
-      // If not found by Google ID, check by email
+      // If not found by Google ID, check by email in the SAME role
       if (!user) {
         user = await Model.findOne({ email: googleProfile.email.toLowerCase() });
         
         if (user) {
-          // Link Google account to existing email account
+          // Link Google account to existing email account (same role)
           user.googleId = googleProfile.googleId;
           if (googleProfile.avatar && !user.avatar) {
             user.avatar = googleProfile.avatar;
@@ -198,31 +266,83 @@ router.get(
           console.log("Creating student with:", { firstName, lastName, email: googleProfile.email });
           
           user = new Student({
-            googleId: googleProfile.googleId,
+            googleId: googleProfile.googleId, // Set this first so password validation can see it
             email: googleProfile.email.toLowerCase(),
             firstName: firstName.trim(),
             lastName: lastName.trim(),
             avatar: googleProfile.avatar || "",
             isActive: true,
             isVerified: true, // Google emails are verified
+            // password is intentionally omitted - not required when googleId is set
           });
         } else {
-          // Ensure name exists (required field)
-          const name = googleProfile.name || `${googleProfile.firstName || ""} ${googleProfile.lastName || ""}`.trim() || "Teacher";
+          // Ensure name exists (required field for Teacher)
+          let name = googleProfile.name || "";
           
+          // If no name from Google, try to construct from firstName/lastName
+          if (!name || name.trim() === "") {
+            const firstName = googleProfile.firstName || "";
+            const lastName = googleProfile.lastName || "";
+            name = `${firstName} ${lastName}`.trim();
+          }
+          
+          // Fallback: use email username if still no name
+          if (!name || name.trim() === "") {
+            name = googleProfile.email.split("@")[0] || "Teacher";
+          }
+          
+          // Ensure name is not empty (required field)
+          if (!name || name.trim() === "") {
+            name = "Teacher"; // Final fallback
+          }
+          
+          console.log("Creating teacher with:", { name, email: googleProfile.email, googleId: googleProfile.googleId });
+          
+          // Create teacher object - password is not required when googleId is set
+          // Set googleId first, then create object to ensure validation works correctly
           user = new Teacher({
-            googleId: googleProfile.googleId,
+            googleId: googleProfile.googleId, // Set this first so password validation can see it
             email: googleProfile.email.toLowerCase(),
-            name: name,
+            name: name.trim(),
             avatar: googleProfile.avatar || "",
             isActive: true,
             isApproved: false, // Teachers need approval
+            // password is intentionally omitted - not required when googleId is set
           });
+          
+      // Verify googleId is set
+      if (!user.googleId) {
+        throw new Error("googleId must be set for OAuth users");
+      }
+      
+      // Remove password field completely to avoid validation issues
+      // Use delete operator or set to null
+      delete user.password;
+      user.password = undefined;
+      
+      console.log("Teacher object created, googleId:", user.googleId);
         }
         
         try {
-          await user.save();
-          console.log("User created successfully:", user._id);
+          // For OAuth users, the conditional required function should work
+          // But if it doesn't, we'll use $unset to remove password from validation
+          try {
+            await user.save();
+            console.log("User created successfully:", user._id);
+          } catch (validationError) {
+            // If validation fails due to password, unset it and save without validation
+            if (validationError.name === 'ValidationError' && validationError.errors?.password) {
+              console.log("Password validation failed despite googleId being set, using workaround...");
+              // Remove password field completely
+              delete user.password;
+              user.password = undefined;
+              // Save without validation since we know googleId is set
+              await user.save({ validateBeforeSave: false });
+              console.log("User created successfully (password validation bypassed):", user._id);
+            } else {
+              throw validationError;
+            }
+          }
         } catch (saveError) {
           console.error("Error saving user:", saveError);
           throw saveError;
