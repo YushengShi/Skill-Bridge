@@ -100,32 +100,29 @@ function Login({ setIsAuthenticated, setUserRole }) {
   const handleSocialLogin = (provider) => {
     if (provider === "google") {
       const role = uiRole; // 'student' or 'teacher'
-
-      // Determine backend URL based on environment
       const isLocal = window.location.hostname.includes("localhost");
+
       const backendBaseUrl = isLocal
         ? "http://localhost:3000"
         : "https://skill-bridge-d090.onrender.com";
 
-      const backendInitUrl = `${backendBaseUrl}/api/auth/google/init?role=${role}`;
-      const backendOAuthUrl = `${backendBaseUrl}/api/auth/google`;
-
-      fetch(backendInitUrl, {
+      // 1️⃣ Initialize OAuth role in backend session
+      fetch(`${backendBaseUrl}/api/auth/google/init?role=${role}`, {
         method: "GET",
-        credentials: "include", // important to store session cookie
+        credentials: "include", // important for session cookie
       })
         .then((res) => res.json())
         .then((data) => {
           if (data.success) {
-            // Redirect browser to backend OAuth route
-            window.location.href = backendOAuthUrl;
+            // 2️⃣ Redirect to Google OAuth on backend domain
+            window.location.href = `${backendBaseUrl}/api/auth/google`;
           } else {
             console.error("OAuth init failed:", data);
             setErrorMessage("Failed to start Google login. Please try again.");
           }
         })
-        .catch((error) => {
-          console.error("Failed to initialize OAuth:", error);
+        .catch((err) => {
+          console.error("Failed to initialize OAuth:", err);
           setErrorMessage("Failed to start Google login. Please try again.");
         });
     } else if (provider === "microsoft") {
