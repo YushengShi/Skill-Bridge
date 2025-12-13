@@ -10,7 +10,7 @@ export default function TeacherDetailPage() {
   useEffect(() => {
     const fetchTeacher = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/api/teachers/${id}`);
+        const res = await fetch(`/api/teachers/${id}`);
         if (!res.ok) throw new Error("Teacher not found");
         const data = await res.json();
         setTeacher(data);
@@ -29,12 +29,15 @@ export default function TeacherDetailPage() {
 
   return (
     <div className="tdp-page">
-      
       <main className="tdp-container">
         <section className="tdp-main">
           <div className="tdp-profile-card">
             <div className="tdp-avatar-wrap">
-              <img className="tdp-avatar" src={teacher.avatar} alt={teacher.name} />
+              <img
+                className="tdp-avatar"
+                src={teacher.avatar}
+                alt={teacher.name}
+              />
             </div>
 
             <div className="tdp-profile-info">
@@ -42,14 +45,14 @@ export default function TeacherDetailPage() {
               <p className="tdp-tagline">{teacher.tagline}</p>
 
               <div className="tdp-meta">
-                <span>⭐ <strong>{teacher.rating ?? "—"}</strong></span>
+                <span>
+                  ⭐ <strong>{teacher.rating ?? "—"}</strong>
+                </span>
                 <span>•</span>
                 <span>{teacher.lessonCount ?? 0} lessons</span>
               </div>
 
-              <div className="tdp-actions">
-                
-              </div>
+              <div className="tdp-actions"></div>
             </div>
           </div>
 
@@ -62,7 +65,9 @@ export default function TeacherDetailPage() {
             <h2>Student Reviews</h2>
             {/* If you have reviews array, map them. Example below is placeholder */}
             <div className="review">
-              <div className="review-head"><strong>Michael Chen</strong> • 5.0 • 2 weeks ago</div>
+              <div className="review-head">
+                <strong>Michael Chen</strong> • 5.0 • 2 weeks ago
+              </div>
               <p>"Great teacher..."</p>
             </div>
           </div>
@@ -72,16 +77,14 @@ export default function TeacherDetailPage() {
           <div className="tdp-card sticky">
             <h3>Lesson Packages</h3>
             <div className="price-row">
-              <div>Trial (30 min)</div><div className="price">${teacher.prices?.trial ?? "—"}</div>
+              <div>Trial (30 min)</div>
+              <div className="price">${teacher.prices?.trial ?? "—"}</div>
             </div>
             <div className="price-row">
-              <div>Single (60 min)</div><div className="price">${teacher.prices?.standard ?? "—"}</div>
+              <div>Single (60 min)</div>
+              <div className="price">${teacher.prices?.standard ?? "—"}</div>
             </div>
-
-            
           </div>
-
-       
         </aside>
       </main>
     </div>

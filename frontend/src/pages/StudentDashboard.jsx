@@ -87,15 +87,12 @@ export default function StudentDashboard({ setIsAuthenticated }) {
         const userId = user._id || user.id;
 
         // Fetch dashboard data with auth header
-        const response = await fetch(
-          `http://localhost:3000/api/students/${userId}/dashboard`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`, // JWT for protected route
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const response = await fetch(`/api/students/${userId}/dashboard`, {
+          headers: {
+            Authorization: `Bearer ${token}`, // JWT for protected route
+            "Content-Type": "application/json",
+          },
+        });
 
         // Handle authentication errors - clear local storage and redirect
         if (!response.ok) {

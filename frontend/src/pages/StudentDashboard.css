@@ -26,7 +26,7 @@
   width: 50px;
   height: 50px;
   border: 4px solid #f3f3f3;
-  border-top: 4px solid #4f46e5;
+  border-top: 4px solid var(--primary-color, #4f46e5);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
@@ -43,13 +43,13 @@
 
 /* ==================== HEADER ==================== */
 .dashboard-header {
-  background: #4f46e5;
+  background: var(--primary-color, #4f46e5);
   color: white;
   padding: 1.5rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 4px 12px rgba(255, 85, 75, 0.3);
+  box-shadow: 0 4px 12px var(--primary-shadow, rgba(79, 70, 229, 0.3));
 }
 
 /* Dashboard Title Section (used with global navbar) */
@@ -106,7 +106,7 @@
 
 .logout-btn {
   background: white;
-  color: #4f46e5;
+  color: var(--primary-color, #4f46e5);
 }
 
 .logout-btn:hover {
@@ -216,7 +216,7 @@
 .view-all-btn {
   background: none;
   border: none;
-  color: #4f46e5;
+  color: var(--primary-color, #4f46e5);
   font-size: 0.9rem;
   cursor: pointer;
   font-weight: 500;
@@ -244,8 +244,8 @@
 }
 
 .lesson-card:hover {
-  border-color: #4f46e5;
-  box-shadow: 0 4px 12px rgba(255, 85, 75, 0.1);
+  border-color: var(--primary-color, #4f46e5);
+  box-shadow: 0 4px 12px var(--primary-light, rgba(79, 70, 229, 0.1));
 }
 
 .lesson-avatar {
@@ -310,14 +310,14 @@
 }
 
 .join-btn {
-  background: #4f46e5;
+  background: var(--primary-color, #4f46e5);
   color: white;
   border: none;
   font-weight: 600;
 }
 
 .join-btn:hover {
-  background: #e04b42;
+  background: var(--primary-hover, #4338ca);
 }
 
 .reschedule-btn {
@@ -327,8 +327,8 @@
 }
 
 .reschedule-btn:hover {
-  border-color: #4f46e5;
-  color: #4f46e5;
+  border-color: var(--primary-color, #4f46e5);
+  color: var(--primary-color, #4f46e5);
 }
 
 /* ==================== QUICK ACTIONS ==================== */
@@ -352,8 +352,8 @@
 }
 
 .action-card:hover {
-  border-color: #4f46e5;
-  background: #fff5f5;
+  border-color: var(--primary-color, #4f46e5);
+  background: var(--primary-light, rgba(79, 70, 229, 0.05));
 }
 
 .action-icon {
@@ -386,7 +386,7 @@
 }
 
 .teacher-mini-card:hover {
-  border-color: #4f46e5;
+  border-color: var(--primary-color, #4f46e5);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
@@ -422,12 +422,12 @@
 }
 
 .teacher-mini-meta .price {
-  color: #4f46e5;
+  color: var(--primary-color, #4f46e5);
   font-weight: 600;
 }
 
 .book-mini-btn {
-  background: #4f46e5;
+  background: var(--primary-color, #4f46e5);
   color: white;
   border: none;
   padding: 0.4rem 1rem;
@@ -438,7 +438,7 @@
 }
 
 .book-mini-btn:hover {
-  background: #e04b42;
+  background: var(--primary-hover, #4338ca);
 }
 
 /* ==================== SIDEBAR ==================== */
@@ -528,14 +528,14 @@
 
 .progress-fill {
   height: 100%;
-  background: #4f46e5;
+  background: var(--primary-color, #4f46e5);
   border-radius: 4px;
   transition: width 0.3s ease;
 }
 
 /* ==================== AI PROMO ==================== */
 .ai-promo {
-  background: #4f46e5;
+  background: var(--primary-color, #4f46e5);
   color: white;
 }
 
@@ -561,7 +561,7 @@
 
 .ai-btn {
   background: white;
-  color: #4f46e5;
+  color: var(--primary-color, #4f46e5);
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
@@ -597,7 +597,7 @@
 }
 
 .empty-state button {
-  background: #4f46e5;
+  background: var(--primary-color, #4f46e5);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;

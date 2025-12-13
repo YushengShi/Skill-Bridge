@@ -208,15 +208,12 @@ function TeacherDashboard() {
         const userId = user._id || user.id;
 
         // Fetch dashboard data with auth header
-        const response = await fetch(
-          `http://localhost:3000/api/teachers/${userId}/dashboard`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`, // JWT for protected route
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const response = await fetch(`/api/teachers/${userId}/dashboard`, {
+          headers: {
+            Authorization: `Bearer ${token}`, // JWT for protected route
+            "Content-Type": "application/json",
+          },
+        });
 
         // Handle authentication errors - clear local storage and redirect
         if (!response.ok) {
@@ -726,6 +723,40 @@ function TeacherDashboard() {
         <div className="tab-content">
           {activeTab === "overview" && (
             <>
+              {/* Quick Actions Section */}
+              <section className="dashboard-section quick-actions-section">
+                <h2>⚡ Quick Actions</h2>
+                <div className="quick-actions">
+                  <button
+                    className="action-card"
+                    onClick={() => setShowAvailabilityModal(true)}
+                  >
+                    <span className="action-icon">⏰</span>
+                    <span className="action-text">Add Availability</span>
+                  </button>
+                  <button
+                    className="action-card"
+                    onClick={() => setActiveTab("materials")}
+                  >
+                    <span className="action-icon">📤</span>
+                    <span className="action-text">Upload Material</span>
+                  </button>
+                  <button
+                    className="action-card"
+                    onClick={() => setActiveTab("bookings")}
+                  >
+                    <span className="action-icon">📋</span>
+                    <span className="action-text">View Bookings</span>
+                  </button>
+                  <button
+                    className="action-card"
+                    onClick={() => setActiveTab("earnings")}
+                  >
+                    <span className="action-icon">💰</span>
+                    <span className="action-text">Earnings</span>
+                  </button>
+                </div>
+              </section>
               {renderSchedule()}
               {renderPendingBookings()}
               {renderAvailability()}
@@ -741,18 +772,6 @@ function TeacherDashboard() {
           {activeTab === "earnings" && renderEarnings()}
         </div>
       </main>
-
-      {/* Quick Actions Floating Button */}
-      <div className="quick-actions-fab">
-        <button className="fab-main" title="Quick Actions">
-          +
-        </button>
-        <div className="fab-menu">
-          <button title="Add Availability">⏰</button>
-          <button title="Upload Material">📤</button>
-          <button title="Send Message">💬</button>
-        </div>
-      </div>
     </div>
   );
 }

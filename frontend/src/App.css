@@ -1,3 +1,33 @@
+/* ================================================================================
+   ROLE-BASED THEME VARIABLES
+   ================================================================================
+   Student theme: Indigo (#4f46e5) - cool, learning-focused
+   Teacher theme: Teal (#0d9488) - professional, trustworthy
+   ================================================================================ */
+
+/* Student Theme (Default) - Indigo color scheme */
+.student-theme {
+  --primary-color: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-light: rgba(79, 70, 229, 0.1);
+  --primary-shadow: rgba(79, 70, 229, 0.3);
+  --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+}
+
+/* Teacher Theme - Teal color scheme */
+.teacher-theme {
+  --primary-color: #0d9488;
+  --primary-hover: #0f766e;
+  --primary-light: rgba(13, 148, 136, 0.1);
+  --primary-shadow: rgba(13, 148, 136, 0.3);
+  --primary-gradient: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+}
+
+/* App wrapper base styles */
+.app-wrapper {
+  min-height: 100vh;
+}
+
 .home-container {
   max-width: 900px;
   margin: 0 auto;
@@ -200,33 +230,29 @@
   display: flex;
   gap: 12px;
   margin-top: 16px;
-
 }
-
 
 .details-btn,
 .book-btn {
-  padding: 10px 20px; 
+  padding: 10px 20px;
   border-radius: 8px;
-  font-weight: 600; 
-  font-size: 14px; 
+  font-weight: 600;
+  font-size: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: center;
   white-space: nowrap;
-
 }
-
 
 .details-btn {
   background-color: transparent;
   border: 1px solid #4f46e5;
-  color: #4f46e5; 
+  color: #4f46e5;
 }
 
 .details-btn:hover {
   background-color: #fff5f5;
   border-color: #e04b42;
-  color: #e04b42;  
+  color: #e04b42;
   box-shadow: 0 2px 4px rgba(255, 85, 75, 0.1);
 }

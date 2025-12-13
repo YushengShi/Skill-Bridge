@@ -194,7 +194,8 @@ export default function StudentProfile({ setIsAuthenticated }) {
           email: user.email || "",
           phone: user.phone || "",
           avatar:
-            user.avatar || "https://i.pravatar.cc/150?u=" + (user._id || user.id),
+            user.avatar ||
+            "https://i.pravatar.cc/150?u=" + (user._id || user.id),
           bio: user.bio || "",
           learningGoals: user.learningGoals || "",
           preferredLanguage: user.preferredLanguage || "English",
@@ -299,17 +300,14 @@ export default function StudentProfile({ setIsAuthenticated }) {
       const user = JSON.parse(userStr);
       const userId = user._id || user.id;
 
-      const response = await fetch(
-        `http://localhost:3000/api/students/${userId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(profile),
-        }
-      );
+      const response = await fetch(`/api/students/${userId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(profile),
+      });
 
       if (!response.ok) {
         throw new Error("Failed to save profile");
@@ -435,11 +433,7 @@ export default function StudentProfile({ setIsAuthenticated }) {
               className={`nav-avatar-wrapper ${isEditing ? "editable" : ""}`}
               onClick={handleAvatarClick}
             >
-              <img
-                src={profile.avatar}
-                alt="Profile"
-                className="nav-avatar"
-              />
+              <img src={profile.avatar} alt="Profile" className="nav-avatar" />
               {isEditing && (
                 <div className="avatar-overlay">
                   <span>📷</span>
