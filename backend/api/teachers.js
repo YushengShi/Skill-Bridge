@@ -4,6 +4,7 @@ import Student from "../models/Student.js";
 import Booking from "../models/Booking.js";
 import jwt from "jsonwebtoken";
 import protect from "../middleware/auth.js";
+import upload from "../middleware/upload.js";
 
 const JWT_SECRET =
   process.env.JWT_SECRET || "your-secret-key-change-in-production";
@@ -491,33 +492,41 @@ function formatShortDate(date) {
  * 
 
  */
-router.put("/:id", protect, async (req, res) => {
+router.put("/:id", protect, upload.single('avatar'), async (req, res) => {
   try {
     if (req.userId !== req.params.id) {
       return res.status(403).json({ message: "Not authorized to update this profile" });
     }
+
+    const parseJSON = (data) => {
+        try {
+            return typeof data === 'string' ? JSON.parse(data) : data;
+        } catch (e) {
+            return data;
+        }
+    };
 
     const updateData = {
       name: req.body.name,
       phone: req.body.phone,
       tagline: req.body.tagline,
       bio: req.body.bio,
-      avatar: req.body.avatar,
-      languages: req.body.languages,
-      education: req.body.education,
       location: req.body.location,
-
+      education: req.body.education,
       teachingStyle: req.body.teachingStyle,
-      specializations: req.body.specializations,
-      
-      prices: req.body.prices,
-      availability: req.body.availability,
-      
-      skills: req.body.skills,
-      specializations: req.body.specializations,
-      
       videoUrl: req.body.videoUrl,
+      
+      prices: parseJSON(req.body.prices),
+      availability: parseJSON(req.body.availability),
+      skills: parseJSON(req.body.skills),
+      languages: parseJSON(req.body.languages),
+      specializations: parseJSON(req.body.specializations),
     };
+
+    if (req.file) {
+        const cleanPath = req.file.filename.replace(/\\/g, "/");
+        updateData.avatar = `http://localhost:3000/uploads/${cleanPath}`;
+    }
 
     Object.keys(updateData).forEach(key => 
       updateData[key] === undefined && delete updateData[key]
@@ -535,6 +544,7 @@ router.put("/:id", protect, async (req, res) => {
 
     res.json(updatedTeacher);
   } catch (error) {
+    console.error(error);
     res.status(400).json({ message: error.message });
   }
 });

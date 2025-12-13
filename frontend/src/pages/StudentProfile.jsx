@@ -149,6 +149,7 @@ export default function StudentProfile({ setIsAuthenticated }) {
    * - status: Review status
    * - feedback: Teacher's comments (null if not yet reviewed)
    */
+  const [selectedFile, setSelectedFile] = useState(null);
   const [uploadedFiles, setUploadedFiles] = useState([
     {
       id: 1,
@@ -274,11 +275,12 @@ export default function StudentProfile({ setIsAuthenticated }) {
   const handleAvatarChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Create a temporary URL for immediate preview
-      // Note: This URL is revoked when component unmounts
+      // 1. 生成预览图 (仅用于前端显示，不发给后端)
       const previewUrl = URL.createObjectURL(file);
       setProfile((prev) => ({ ...prev, avatar: previewUrl }));
-      // TODO: Upload file to server using FormData and fetch/axios
+      
+      // 2. 保存原始文件对象 (发送给后端用)
+      setSelectedFile(file);
     }
   };
 
@@ -300,13 +302,35 @@ export default function StudentProfile({ setIsAuthenticated }) {
       const user = JSON.parse(userStr);
       const userId = user._id || user.id;
 
-      const response = await fetch(`/api/students/${userId}`, {
+      // 1. 创建 FormData 对象
+      const formData = new FormData();
+
+      // 2. 追加普通字段
+      formData.append("firstName", profile.firstName);
+      formData.append("lastName", profile.lastName);
+      formData.append("email", profile.email);
+      formData.append("phone", profile.phone);
+      formData.append("bio", profile.bio);
+      formData.append("learningGoals", profile.learningGoals);
+      formData.append("preferredLanguage", profile.preferredLanguage);
+      formData.append("timezone", profile.timezone);
+      formData.append("skillLevel", profile.skillLevel);
+
+      // 3. 追加复杂对象 (必须转成字符串)
+      formData.append("notifications", JSON.stringify(profile.notifications));
+
+      // 4. 追加文件 (如果有新上传的文件)
+      // 注意：'avatar' 这个名字必须跟后端 upload.single('avatar') 里的名字一致
+      if (selectedFile) {
+        formData.append("avatar", selectedFile);
+      }
+
+      const response = await fetch(`http://localhost:3000/api/students/${userId}`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(profile),
+        body: formData,
       });
 
       if (!response.ok) {
@@ -314,15 +338,13 @@ export default function StudentProfile({ setIsAuthenticated }) {
       }
 
       const updatedUser = await response.json();
-      localStorage.setItem("user", JSON.stringify(updatedUser)); // Update localStorage
+      localStorage.setItem("user", JSON.stringify(updatedUser)); 
 
       setSaveSuccess(true);
       setIsEditing(false);
-
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
       console.error("Error saving profile:", error);
-      // TODO: Show error toast/notification to user
     } finally {
       setLoading(false);
     }
