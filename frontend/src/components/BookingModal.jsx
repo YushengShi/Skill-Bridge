@@ -6,15 +6,11 @@ export default function BookingModal({ teacher, onClose }) {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-<<<<<<< HEAD
   const [availableSlots, setAvailableSlots] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(true);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [calendarConnected, setCalendarConnected] = useState(true);
-  const [selectedDate, setSelectedDate] = useState("");
-=======
   const [bookedSlots, setBookedSlots] = useState([]);
-  const [loadingSlots, setLoadingSlots] = useState(false);
 
   // Generate time slots (9 AM to 8 PM, every hour)
   const timeSlots = [];
@@ -26,7 +22,6 @@ export default function BookingModal({ teacher, onClose }) {
 
   // Get minimum date (today)
   const today = new Date().toISOString().split("T")[0];
->>>>>>> c46c81164b8176fa2d6f31706927d5a4b9559d9c
 
   const currentPrice =
     lessonType === "trial" ? teacher.prices.trial : teacher.prices.standard;
@@ -193,7 +188,6 @@ export default function BookingModal({ teacher, onClose }) {
           teacherName: teacher.name,
           lessonType: lessonType,
           price: currentPrice,
-<<<<<<< HEAD
           scheduledDate: selectedSlot.start,
           scheduledTime: new Date(selectedSlot.start).toLocaleTimeString(
             "en-US",
@@ -201,10 +195,6 @@ export default function BookingModal({ teacher, onClose }) {
           ),
           startDateTime: selectedSlot.start,
           endDateTime: selectedSlot.end,
-=======
-          scheduledDate: selectedDate,
-          scheduledTime: selectedTime,
->>>>>>> c46c81164b8176fa2d6f31706927d5a4b9559d9c
         }),
       });
 
@@ -298,24 +288,7 @@ export default function BookingModal({ teacher, onClose }) {
                 required
               />
             </div>
-<<<<<<< HEAD
-            <div className="price">${teacher.prices.standard}</div>
-          </label>
-
-          {/* Date Selection */}
-          <div className="date-picker-section">
-            <h3>📅 Select a Date</h3>
-            <input
-              type="date"
-              value={selectedDate}
-              min={new Date().toISOString().split("T")[0]}
-              onChange={(e) => {
-                setSelectedDate(e.target.value);
-                setSelectedSlot(null);
-              }}
-              className="date-picker"
-            />
-          </div>
+          )}
 
           {/* Time Slot Selection */}
           <div className="time-slots-section">
@@ -363,38 +336,6 @@ export default function BookingModal({ teacher, onClose }) {
             <div className="selected-slot-summary">
               <strong>Selected:</strong> {formatSlotDate(selectedSlot.start)} at{" "}
               {formatSlotTime(selectedSlot.start, selectedSlot.end)}
-=======
-          )}
-
-          {/* Step 3: Time Slot Selection (shown after date is selected) */}
-          {lessonType && selectedDate && (
-            <div className="booking-step">
-              <h3>3. Choose Time Slot</h3>
-              {loadingSlots ? (
-                <p>Loading available slots...</p>
-              ) : (
-                <div className="time-slots-grid">
-                  {timeSlots.map((slot) => {
-                    const isBooked = bookedSlots.includes(slot.value);
-                    return (
-                      <button
-                        key={slot.value}
-                        type="button"
-                        className={`time-slot-btn ${
-                          selectedTime === slot.value ? "selected" : ""
-                        } ${isBooked ? "booked" : ""}`}
-                        onClick={() => !isBooked && setSelectedTime(slot.value)}
-                        disabled={isBooked}
-                        title={isBooked ? "This time slot is already booked" : ""}
-                      >
-                        {slot.display}
-                        {isBooked && " (Booked)"}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
->>>>>>> c46c81164b8176fa2d6f31706927d5a4b9559d9c
             </div>
           )}
         </div>
@@ -406,7 +347,6 @@ export default function BookingModal({ teacher, onClose }) {
           <button
             className="confirm-btn"
             onClick={handlePayment}
-<<<<<<< HEAD
             disabled={isLoading || !selectedSlot || !calendarConnected}
           >
             {isLoading
@@ -415,14 +355,6 @@ export default function BookingModal({ teacher, onClose }) {
               ? "Not Available"
               : !selectedSlot
               ? "Select a Time Slot"
-=======
-            disabled={isLoading || !canProceed}
-          >
-            {isLoading
-              ? "Loading..."
-              : !canProceed
-              ? "Select Date & Time"
->>>>>>> c46c81164b8176fa2d6f31706927d5a4b9559d9c
               : "Proceed to Payment"}
           </button>
         </div>

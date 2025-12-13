@@ -103,7 +103,7 @@ export default function TeacherHome({ setIsAuthenticated }) {
     <div className="home-container">
       <header className="home-header">
         <h1>
-          Find your <span>English teacher</span> online
+          Find your <span>teacher</span> online
         </h1>
         <button className="logout-btn" onClick={handleLogout}>
           Logout

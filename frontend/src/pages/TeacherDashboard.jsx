@@ -325,6 +325,80 @@ function TeacherDashboard() {
   // ==================== RENDER HELPERS ====================
 
   /**
+   * Render pending bookings section
+   * Shows all pending booking requests for the teacher
+   */
+  const renderPendingBookings = () => (
+    <div className="bookings-section">
+      <div className="section-header">
+        <h2>📋 Pending Bookings</h2>
+        <span className="count-badge">
+          {upcomingAppointments.filter((b) => b.status === "pending").length}{" "}
+          pending
+        </span>
+      </div>
+      {upcomingAppointments.filter((b) => b.status === "pending").length > 0 ? (
+        <div className="bookings-list">
+          {upcomingAppointments
+            .filter((b) => b.status === "pending")
+            .map((booking) => (
+              <div key={booking.id} className="booking-card">
+                <div className="booking-header">
+                  <img
+                    src={booking.studentAvatar}
+                    alt={booking.studentName}
+                    className="student-avatar"
+                  />
+                  <div className="booking-info">
+                    <h4>{booking.studentName}</h4>
+                    <span className="level-badge">{booking.studentLevel}</span>
+                  </div>
+                </div>
+                <div className="booking-details">
+                  <p>
+                    <strong>Subject:</strong> {booking.subject}
+                  </p>
+                  {booking.scheduledDate && (
+                    <p>
+                      <strong>Date:</strong>{" "}
+                      {new Date(booking.scheduledDate).toLocaleDateString()}{" "}
+                      {booking.scheduledTime && `at ${booking.scheduledTime}`}
+                    </p>
+                  )}
+                  <p>
+                    <strong>Type:</strong> {booking.type}
+                  </p>
+                  <p>
+                    <strong>Price:</strong> ${booking.price}
+                  </p>
+                </div>
+                <div className="booking-actions">
+                  <button
+                    className="join-btn"
+                    onClick={() => handleApproveBooking(booking.id)}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    className="cancel-booking-btn"
+                    onClick={() => handleRejectBooking(booking.id)}
+                  >
+                    Reject
+                  </button>
+                </div>
+              </div>
+            ))}
+        </div>
+      ) : (
+        <div className="empty-schedule">
+          <span className="empty-icon">📭</span>
+          <p>No pending bookings</p>
+        </div>
+      )}
+    </div>
+  );
+
+  /**
    * Render the statistics cards section
    * Displays key metrics at a glance
    */
@@ -431,7 +505,9 @@ function TeacherDashboard() {
     <div className="bookings-section">
       <div className="section-header">
         <h2>📅 Upcoming Appointments</h2>
-        <span className="count-badge">{upcomingAppointments.length} students</span>
+        <span className="count-badge">
+          {upcomingAppointments.length} students
+        </span>
       </div>
 
       {upcomingAppointments.length > 0 ? (
@@ -446,7 +522,9 @@ function TeacherDashboard() {
                 />
                 <div className="booking-info">
                   <h4>{appointment.studentName}</h4>
-                  <span className="level-badge">{appointment.studentLevel}</span>
+                  <span className="level-badge">
+                    {appointment.studentLevel}
+                  </span>
                 </div>
               </div>
               <div className="booking-details">
@@ -464,8 +542,10 @@ function TeacherDashboard() {
                   </p>
                 )}
                 <p>
-                  <strong>Status:</strong> <span className={`status-badge ${appointment.status}`}>
-                    {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                  <strong>Status:</strong>{" "}
+                  <span className={`status-badge ${appointment.status}`}>
+                    {appointment.status.charAt(0).toUpperCase() +
+                      appointment.status.slice(1)}
                   </span>
                 </p>
               </div>
@@ -791,13 +871,10 @@ function TeacherDashboard() {
 
           {activeTab === "schedule" && renderSchedule()}
 
-<<<<<<< HEAD
           {activeTab === "calendar" && <CalendarManager />}
 
           {activeTab === "bookings" && renderPendingBookings()}
-=======
           {activeTab === "bookings" && renderUpcomingAppointments()}
->>>>>>> c46c81164b8176fa2d6f31706927d5a4b9559d9c
 
           {activeTab === "materials" && renderMaterials()}
 

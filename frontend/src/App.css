@@ -117,7 +117,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 9999;
 }
 
 .modal-content {
@@ -201,7 +201,6 @@
   cursor: not-allowed;
 }
 
-<<<<<<< HEAD
 /* Time Slot Selection Styles */
 .date-picker-section {
   margin-top: 20px;
@@ -217,10 +216,10 @@
 }
 
 .date-picker {
-=======
-/* Booking Steps */
-.booking-step {
-  margin-bottom: 24px;
+  /* Booking Steps */
+  .booking-step {
+    margin-bottom: 24px;
+  }
 }
 
 .booking-step h3 {
@@ -231,30 +230,25 @@
 }
 
 .date-input {
->>>>>>> c46c81164b8176fa2d6f31706927d5a4b9559d9c
   width: 100%;
   padding: 12px;
   border: 2px solid #eee;
   border-radius: 8px;
-<<<<<<< HEAD
   font-size: 1rem;
   cursor: pointer;
 }
 
 .date-picker:focus {
-=======
   font-size: 16px;
   cursor: pointer;
   transition: border-color 0.2s;
 }
 
 .date-input:focus {
->>>>>>> c46c81164b8176fa2d6f31706927d5a4b9559d9c
   outline: none;
   border-color: #4f46e5;
 }
 
-<<<<<<< HEAD
 .time-slots-section {
   margin-top: 20px;
 }
@@ -336,7 +330,8 @@
   border-radius: 8px;
   color: #2e7d32;
   text-align: center;
-=======
+}
+
 .time-slots-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -384,7 +379,6 @@
 
 .time-slot-btn:disabled {
   cursor: not-allowed;
->>>>>>> c46c81164b8176fa2d6f31706927d5a4b9559d9c
 }
 
 .notification-content {

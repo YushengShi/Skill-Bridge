@@ -175,46 +175,40 @@ function Login({ setIsAuthenticated, setUserRole }) {
   };
 
   return (
-    <div className="login-wrapper">
+    <div className={`login-wrapper ${uiRole}-theme`}>
       <div className="login-container">
-        <div
-          className="role-toggle-container"
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            marginBottom: "20px",
-            gap: "10px",
-          }}
-        >
+        <div className="role-toggle-container">
           <button
             type="button"
+            className={`role-toggle-btn${
+              uiRole === "student" ? " selected" : ""
+            }`}
             onClick={() => setUiRole("student")}
-            style={{
-              padding: "8px 20px",
-              backgroundColor: uiRole === "student" ? "#2196F3" : "#ddd",
-              color: uiRole === "student" ? "white" : "black",
-              border: "none",
-              borderRadius: "10px",
-              cursor: "pointer",
-              fontWeight: "bold",
-              transition: "all 0.3s ease",
-            }}
+            style={
+              uiRole === "student"
+                ? {
+                    background: "var(--primary-color)",
+                    color: "#fff",
+                  }
+                : {}
+            }
           >
             Student
           </button>
           <button
             type="button"
+            className={`role-toggle-btn${
+              uiRole === "teacher" ? " selected" : ""
+            }`}
             onClick={() => setUiRole("teacher")}
-            style={{
-              padding: "8px 20px",
-              backgroundColor: uiRole === "teacher" ? "#4CAF50" : "#ddd",
-              color: uiRole === "teacher" ? "white" : "black",
-              border: "none",
-              borderRadius: "10px",
-              cursor: "pointer",
-              fontWeight: "bold",
-              transition: "all 0.3s ease",
-            }}
+            style={
+              uiRole === "teacher"
+                ? {
+                    background: "var(--primary-color)",
+                    color: "#fff",
+                  }
+                : {}
+            }
           >
             Teacher
           </button>
