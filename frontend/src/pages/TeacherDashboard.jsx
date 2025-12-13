@@ -7,7 +7,7 @@
  * management tools for teaching activities including:
  * - Overview statistics (students, bookings, earnings)
  * - Today's schedule with lesson details
- * - Pending booking requests (approve/reject)
+ * - Upcoming appointments (all confirmed/paid future lessons)
  * - Availability calendar management
  * - Teaching materials upload
  * - Student file submissions view
@@ -87,9 +87,9 @@ function TeacherDashboard() {
   const [todaySchedule, setTodaySchedule] = useState([]);
 
   /**
-   * Pending booking requests from backend
+   * Upcoming appointments from backend (all confirmed/paid future bookings)
    */
-  const [pendingBookings, setPendingBookings] = useState([]);
+  const [upcomingAppointments, setUpcomingAppointments] = useState([]);
 
   /**
    * Earnings data from backend
@@ -183,7 +183,7 @@ function TeacherDashboard() {
    * - teacher: Basic profile info (name, avatar, subject, verified status)
    * - stats: Summary metrics (students, bookings, lessons, earnings, rating)
    * - todaySchedule: Lessons scheduled for today with student info
-   * - pendingBookings: Booking requests awaiting teacher approval
+   * - pendingBookings: Upcoming appointments (all confirmed/paid future lessons)
    * - earningsData: Financial summary and recent transactions
    *
    * Authentication is validated via JWT token in localStorage.
@@ -233,7 +233,7 @@ function TeacherDashboard() {
         setTeacher(data.teacher);
         setStats(data.stats);
         setTodaySchedule(data.todaySchedule);
-        setPendingBookings(data.pendingBookings);
+        setUpcomingAppointments(data.pendingBookings); // Backend now returns upcoming appointments
         setEarningsData(data.earningsData);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -254,7 +254,7 @@ function TeacherDashboard() {
           totalReviews: 0,
         });
         setTodaySchedule([]);
-        setPendingBookings([]);
+        setUpcomingAppointments([]);
         setEarningsData({
           thisMonth: 0,
           lastMonth: 0,
@@ -407,8 +407,8 @@ function TeacherDashboard() {
                   className="student-avatar"
                 />
                 <div className="lesson-info">
-                  <h4>{lesson.subject}</h4>
-                  <p>with {lesson.studentName}</p>
+                  <h4>{lesson.studentName}</h4>
+                  <p>{lesson.subject}</p>
                 </div>
               </div>
               <div className="schedule-actions">
@@ -435,64 +435,58 @@ function TeacherDashboard() {
   );
 
   /**
-   * Render pending booking requests section
-   * Allows teacher to approve or reject bookings
+   * Render upcoming appointments section
+   * Displays simple cards of students who have signed up for lessons
    */
-  const renderPendingBookings = () => (
+  const renderUpcomingAppointments = () => (
     <div className="bookings-section">
       <div className="section-header">
-        <h2>📋 Pending Booking Requests</h2>
-        <span className="count-badge">{pendingBookings.length} pending</span>
+        <h2>📅 Upcoming Appointments</h2>
+        <span className="count-badge">{upcomingAppointments.length} students</span>
       </div>
 
-      {pendingBookings.length > 0 ? (
+      {upcomingAppointments.length > 0 ? (
         <div className="bookings-list">
-          {pendingBookings.map((booking) => (
-            <div key={booking.id} className="booking-card">
+          {upcomingAppointments.map((appointment) => (
+            <div key={appointment.id} className="booking-card">
               <div className="booking-header">
                 <img
-                  src={booking.studentAvatar}
-                  alt={booking.studentName}
+                  src={appointment.studentAvatar}
+                  alt={appointment.studentName}
                   className="student-avatar"
                 />
                 <div className="booking-info">
-                  <h4>{booking.studentName}</h4>
-                  <span className="level-badge">{booking.studentLevel}</span>
+                  <h4>{appointment.studentName}</h4>
+                  <span className="level-badge">{appointment.studentLevel}</span>
                 </div>
               </div>
               <div className="booking-details">
                 <p>
-                  <strong>Subject:</strong> {booking.subject}
+                  <strong>Subject:</strong> {appointment.subject}
                 </p>
+                {appointment.scheduledDate && (
+                  <p>
+                    <strong>Date:</strong> {appointment.scheduledDate}
+                  </p>
+                )}
+                {appointment.scheduledTime && (
+                  <p>
+                    <strong>Time:</strong> {appointment.scheduledTime}
+                  </p>
+                )}
                 <p>
-                  <strong>Date:</strong> {booking.requestedDate}
+                  <strong>Status:</strong> <span className={`status-badge ${appointment.status}`}>
+                    {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                  </span>
                 </p>
-                <p>
-                  <strong>Time:</strong> {booking.requestedTime}
-                </p>
-                <p className="booking-message">"{booking.message}"</p>
-              </div>
-              <div className="booking-actions">
-                <button
-                  className="approve-btn"
-                  onClick={() => handleApproveBooking(booking.id)}
-                >
-                  ✓ Approve
-                </button>
-                <button
-                  className="reject-btn"
-                  onClick={() => handleRejectBooking(booking.id)}
-                >
-                  ✕ Reject
-                </button>
               </div>
             </div>
           ))}
         </div>
       ) : (
         <div className="empty-bookings">
-          <span className="empty-icon">✨</span>
-          <p>No pending booking requests</p>
+          <span className="empty-icon">📅</span>
+          <p>No students have signed up yet</p>
         </div>
       )}
     </div>
@@ -759,14 +753,14 @@ function TeacherDashboard() {
                 </div>
               </section>
               {renderSchedule()}
-              {renderPendingBookings()}
+              {renderUpcomingAppointments()}
               {renderAvailability()}
             </>
           )}
 
           {activeTab === "schedule" && renderSchedule()}
 
-          {activeTab === "bookings" && renderPendingBookings()}
+          {activeTab === "bookings" && renderUpcomingAppointments()}
 
           {activeTab === "materials" && renderMaterials()}
 
