@@ -15,7 +15,8 @@ const app = express();
 const PORT = 3000;
 
 // MongoDB connection
-const mongoDB_URI = "mongodb://localhost:27017/skillbridge";
+const mongoDB_URI =
+  process.env.MONGODB_URI || "mongodb://localhost:27017/skillbridge";
 mongoose
   .connect(mongoDB_URI)
   .then(() => console.log("✅ MongoDB connected"))
@@ -23,7 +24,7 @@ mongoose
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
     credentials: true,
   })
 );
