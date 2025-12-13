@@ -49,20 +49,13 @@ function Login({ setIsAuthenticated, setUserRole }) {
 
   // Social login handlers
   const handleSocialLogin = (provider) => {
-    setIsLoading(true);
-    setErrorMessage("");
-    setSuccessMessage("");
-
-    setTimeout(() => {
-      if (provider === "google") {
-        setSuccessMessage("Redirecting to Google login...");
-        // In a real app, redirect to Google OAuth
-      } else if (provider === "microsoft") {
-        setSuccessMessage("Redirecting to Microsoft login...");
-        // In a real app, redirect to Microsoft OAuth
-      }
-      setIsLoading(false);
-    }, 1000);
+    if (provider === "google") {
+      // Redirect to Google OAuth with role parameter
+      const role = uiRole; // 'student' or 'teacher'
+      window.location.href = `/api/auth/google?role=${role}`;
+    } else if (provider === "microsoft") {
+      setErrorMessage("Microsoft login coming soon!");
+    }
   };
 
   // Forgot password handler
@@ -119,6 +112,7 @@ function Login({ setIsAuthenticated, setUserRole }) {
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // Send session cookie
         body: JSON.stringify(payload),
       });
 

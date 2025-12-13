@@ -2,13 +2,31 @@ import React, { useState, useEffect } from "react";
 import "../App.css";
 
 export default function BookingModal({ teacher, onClose }) {
-  const [lessonType, setLessonType] = useState("trial");
+  const [lessonType, setLessonType] = useState(null);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+<<<<<<< HEAD
   const [availableSlots, setAvailableSlots] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(true);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [calendarConnected, setCalendarConnected] = useState(true);
   const [selectedDate, setSelectedDate] = useState("");
+=======
+  const [bookedSlots, setBookedSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+
+  // Generate time slots (9 AM to 8 PM, every hour)
+  const timeSlots = [];
+  for (let hour = 9; hour <= 20; hour++) {
+    const time12 = hour > 12 ? `${hour - 12}:00 PM` : `${hour}:00 AM`;
+    const time24 = `${hour.toString().padStart(2, "0")}:00`;
+    timeSlots.push({ display: time12, value: time24 });
+  }
+
+  // Get minimum date (today)
+  const today = new Date().toISOString().split("T")[0];
+>>>>>>> c46c81164b8176fa2d6f31706927d5a4b9559d9c
 
   const currentPrice =
     lessonType === "trial" ? teacher.prices.trial : teacher.prices.standard;
@@ -125,6 +143,29 @@ export default function BookingModal({ teacher, onClose }) {
     return grouped;
   };
 
+  const canProceed = lessonType && selectedDate && selectedTime;
+
+  // Fetch booked slots when date is selected
+  useEffect(() => {
+    if (selectedDate && teacher._id) {
+      setLoadingSlots(true);
+      fetch(`/api/teachers/${teacher._id}/available-slots?date=${selectedDate}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setBookedSlots(data.bookedSlots || []);
+        })
+        .catch((err) => {
+          console.error("Error fetching booked slots:", err);
+          setBookedSlots([]);
+        })
+        .finally(() => {
+          setLoadingSlots(false);
+        });
+    } else {
+      setBookedSlots([]);
+    }
+  }, [selectedDate, teacher._id]);
+
   const handlePayment = async () => {
     const token = localStorage.getItem("token");
 
@@ -152,6 +193,7 @@ export default function BookingModal({ teacher, onClose }) {
           teacherName: teacher.name,
           lessonType: lessonType,
           price: currentPrice,
+<<<<<<< HEAD
           scheduledDate: selectedSlot.start,
           scheduledTime: new Date(selectedSlot.start).toLocaleTimeString(
             "en-US",
@@ -159,6 +201,10 @@ export default function BookingModal({ teacher, onClose }) {
           ),
           startDateTime: selectedSlot.start,
           endDateTime: selectedSlot.end,
+=======
+          scheduledDate: selectedDate,
+          scheduledTime: selectedTime,
+>>>>>>> c46c81164b8176fa2d6f31706927d5a4b9559d9c
         }),
       });
 
@@ -200,29 +246,59 @@ export default function BookingModal({ teacher, onClose }) {
         </div>
 
         <div className="modal-body">
-          <label
-            className={`option-card ${
-              lessonType === "trial" ? "selected" : ""
-            }`}
-            onClick={() => setLessonType("trial")}
-          >
-            <div>
-              <strong>Trial Lesson (30 mins)</strong>
-              <p>Good for first timers</p>
-            </div>
-            <div className="price">${teacher.prices.trial}</div>
-          </label>
+          {/* Step 1: Lesson Type Selection */}
+          <div className="booking-step">
+            <h3>1. Choose Lesson Type</h3>
+            <label
+              className={`option-card ${
+                lessonType === "trial" ? "selected" : ""
+              }`}
+              onClick={() => {
+                setLessonType("trial");
+                setSelectedTime(""); // Reset time when changing lesson type
+              }}
+            >
+              <div>
+                <strong>Trial Lesson (30 mins)</strong>
+                <p>Good for first timers</p>
+              </div>
+              <div className="price">${teacher.prices.trial}</div>
+            </label>
 
-          <label
-            className={`option-card ${
-              lessonType === "standard" ? "selected" : ""
-            }`}
-            onClick={() => setLessonType("standard")}
-          >
-            <div>
-              <strong>Standard Lesson (60 mins)</strong>
-              <p>Regular structured lesson</p>
+            <label
+              className={`option-card ${
+                lessonType === "standard" ? "selected" : ""
+              }`}
+              onClick={() => {
+                setLessonType("standard");
+                setSelectedTime(""); // Reset time when changing lesson type
+              }}
+            >
+              <div>
+                <strong>Standard Lesson (60 mins)</strong>
+                <p>Regular structured lesson</p>
+              </div>
+              <div className="price">${teacher.prices.standard}</div>
+            </label>
+          </div>
+
+          {/* Step 2: Date Selection (shown after lesson type is selected) */}
+          {lessonType && (
+            <div className="booking-step">
+              <h3>2. Choose Date</h3>
+              <input
+                type="date"
+                className="date-input"
+                value={selectedDate}
+                onChange={(e) => {
+                  setSelectedDate(e.target.value);
+                  setSelectedTime(""); // Reset time when changing date
+                }}
+                min={today}
+                required
+              />
             </div>
+<<<<<<< HEAD
             <div className="price">${teacher.prices.standard}</div>
           </label>
 
@@ -287,6 +363,38 @@ export default function BookingModal({ teacher, onClose }) {
             <div className="selected-slot-summary">
               <strong>Selected:</strong> {formatSlotDate(selectedSlot.start)} at{" "}
               {formatSlotTime(selectedSlot.start, selectedSlot.end)}
+=======
+          )}
+
+          {/* Step 3: Time Slot Selection (shown after date is selected) */}
+          {lessonType && selectedDate && (
+            <div className="booking-step">
+              <h3>3. Choose Time Slot</h3>
+              {loadingSlots ? (
+                <p>Loading available slots...</p>
+              ) : (
+                <div className="time-slots-grid">
+                  {timeSlots.map((slot) => {
+                    const isBooked = bookedSlots.includes(slot.value);
+                    return (
+                      <button
+                        key={slot.value}
+                        type="button"
+                        className={`time-slot-btn ${
+                          selectedTime === slot.value ? "selected" : ""
+                        } ${isBooked ? "booked" : ""}`}
+                        onClick={() => !isBooked && setSelectedTime(slot.value)}
+                        disabled={isBooked}
+                        title={isBooked ? "This time slot is already booked" : ""}
+                      >
+                        {slot.display}
+                        {isBooked && " (Booked)"}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+>>>>>>> c46c81164b8176fa2d6f31706927d5a4b9559d9c
             </div>
           )}
         </div>
@@ -298,6 +406,7 @@ export default function BookingModal({ teacher, onClose }) {
           <button
             className="confirm-btn"
             onClick={handlePayment}
+<<<<<<< HEAD
             disabled={isLoading || !selectedSlot || !calendarConnected}
           >
             {isLoading
@@ -306,6 +415,14 @@ export default function BookingModal({ teacher, onClose }) {
               ? "Not Available"
               : !selectedSlot
               ? "Select a Time Slot"
+=======
+            disabled={isLoading || !canProceed}
+          >
+            {isLoading
+              ? "Loading..."
+              : !canProceed
+              ? "Select Date & Time"
+>>>>>>> c46c81164b8176fa2d6f31706927d5a4b9559d9c
               : "Proceed to Payment"}
           </button>
         </div>

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 import Student from "../models/Student.js";
 import Teacher from "../models/Teacher.js";
 import Booking from "../models/Booking.js";
@@ -117,11 +118,15 @@ router.post("/", async (req, res) => {
       }
     }
 
+    // Hash password before saving
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
+
     const student = new Student({
       firstName: req.body.firstName,
       lastName: req.body.lastName,
       email: req.body.email,
-      password: req.body.password,
+      password: hashedPassword,
       role: "student",
       notifications: req.body.notifications,
     });
@@ -180,10 +185,101 @@ router.get("/my-bookings", protect, async (req, res) => {
       .populate("teacherId", "name avatar email")
       .sort({ createdAt: -1 });
 
-    res.json(bookings);
+    // For each booking, check if it has been rated
+    const bookingsWithRating = await Promise.all(
+      bookings.map(async (booking) => {
+        const bookingObj = booking.toObject();
+        
+        // Check if this booking has been rated
+        if (booking.teacherId && booking.status === "completed") {
+          const teacher = await Teacher.findById(booking.teacherId._id || booking.teacherId);
+          if (teacher) {
+            const review = teacher.reviews.find(
+              (r) => r.bookingId && r.bookingId.toString() === booking._id.toString()
+            );
+            if (review) {
+              bookingObj.userRating = review.rating;
+            }
+          }
+        }
+        
+        return bookingObj;
+      })
+    );
+
+    res.json(bookingsWithRating);
   } catch (error) {
     console.error("Error fetching bookings:", error);
     res.status(500).json({ message: "Server Error" });
+  }
+});
+
+/**
+ * PATCH /api/students/bookings/:bookingId/complete
+ * 
+ * Marks a booking as completed when the student clicks "Complete Lesson" button.
+ * This allows students to mark lessons as complete and then rate the teacher.
+ * 
+ * IMPORTANT: This route must be defined BEFORE /:id route to avoid route conflicts.
+ * 
+ * @param {string} req.params.bookingId - MongoDB ObjectId of the booking
+ * @returns {Object} Updated booking document
+ * @returns {Object} 404 if booking not found
+ * @returns {Object} 403 if booking doesn't belong to student
+ * @returns {Object} 400 if booking is already completed or not in valid status
+ */
+// IMPORTANT: This route must be defined before /:id route to avoid conflicts
+router.patch("/bookings/:bookingId/complete", protect, async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const studentId = req.userId;
+
+    // Find the booking
+    const booking = await Booking.findById(bookingId);
+    
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    // Verify booking belongs to the student
+    if (booking.studentId.toString() !== studentId) {
+      return res.status(403).json({ 
+        message: "You can only complete your own bookings" 
+      });
+    }
+
+    // Check if booking is already completed
+    if (booking.status === "completed") {
+      return res.status(400).json({ 
+        message: "This booking is already marked as completed" 
+      });
+    }
+
+    // Only allow completing bookings that are paid or confirmed
+    if (!["paid", "confirmed"].includes(booking.status)) {
+      return res.status(400).json({ 
+        message: `Cannot complete booking with status: ${booking.status}. Booking must be paid or confirmed first.` 
+      });
+    }
+
+    // Update booking status to completed
+    booking.status = "completed";
+    await booking.save();
+
+    // Increment teacher's lesson count
+    const teacher = await Teacher.findById(booking.teacherId);
+    if (teacher) {
+      teacher.lessonCount = (teacher.lessonCount || 0) + 1;
+      await teacher.save();
+    }
+
+    res.json({
+      message: "Booking marked as completed successfully",
+      booking: booking,
+    });
+  } catch (error) {
+    console.error("Error completing booking:", error);
+    res.status(500).json({ message: error.message || "Server Error" });
   }
 });
 
@@ -465,15 +561,23 @@ router.post("/login", async (req, res) => {
         .json({ message: "Email and password are required" });
     }
 
+    
     const student = await Student.findOne({
       email: email.toLowerCase().trim(),
     });
     if (!student) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
-
-    if (student.password !== password) {
+    
+    // Compare password with bcrypt
+    const isPasswordValid = await bcrypt.compare(password, student.password);
+    if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid email or password" });
+    }
+    if (student.isBanned) {
+      return res.status(403).json({ 
+          message: "Your account has been banned. Please contact support." 
+      });
     }
 
     if (!student.isActive) {
@@ -490,6 +594,11 @@ router.post("/login", async (req, res) => {
       { expiresIn: "7d" }
     );
 
+    // Store JWT in session for server-side management (logout/invalidation)
+    req.session.token = token;
+    req.session.userId = student._id.toString();
+    req.session.userRole = "student";
+
     const studentResponse = student.toObject();
     delete studentResponse.password;
 
@@ -500,6 +609,21 @@ router.post("/login", async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
+});
+
+/**
+ * POST /api/students/logout
+ * Logs out by destroying session (JWT workflow remains unchanged)
+ */
+router.post("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Session destroy error:", err);
+      return res.status(500).json({ message: "Logout failed" });
+    }
+    res.clearCookie("skillbridge.sid");
+    res.json({ message: "Logged out successfully" });
+  });
 });
 
 /**

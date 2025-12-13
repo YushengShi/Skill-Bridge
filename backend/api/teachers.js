@@ -3,6 +3,7 @@ import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
 import Booking from "../models/Booking.js";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 import protect from "../middleware/auth.js";
 import upload from "../middleware/upload.js";
 import { DEFAULT_AVATAR } from "../constants/index.js";
@@ -275,10 +276,14 @@ router.post("/register", async (req, res) => {
       });
     }
 
+    // Hash password before saving
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
     const teacher = new Teacher({
       name,
       email,
-      password,
+      password: hashedPassword,
       role: "teacher",
       prices: { trial: 15, standard: 30 },
     });
@@ -332,8 +337,16 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    if (teacher.password !== password) {
+    // Compare password with bcrypt
+    const isPasswordValid = await bcrypt.compare(password, teacher.password);
+    if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    if (teacher.isBanned) {
+      return res.status(403).json({
+        message: "Your account has been banned. Please contact support.",
+      });
     }
 
     const token = jwt.sign(
@@ -342,6 +355,11 @@ router.post("/login", async (req, res) => {
       { expiresIn: "7d" }
     );
 
+    // Store JWT in session for server-side management (logout/invalidation)
+    req.session.token = token;
+    req.session.userId = teacher._id.toString();
+    req.session.userRole = "teacher";
+
     const teacherData = teacher.toObject();
     delete teacherData.password;
 
@@ -349,6 +367,21 @@ router.post("/login", async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
+});
+
+/**
+ * POST /api/teachers/logout
+ * Logs out by destroying session (JWT workflow remains unchanged)
+ */
+router.post("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Session destroy error:", err);
+      return res.status(500).json({ message: "Logout failed" });
+    }
+    res.clearCookie("skillbridge.sid");
+    res.json({ message: "Logged out successfully" });
+  });
 });
 
 /**
@@ -431,18 +464,45 @@ router.get("/:id/dashboard", protect, async (req, res) => {
 
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // Today's lessons
+    // Today's lessons - check if scheduledDate is today
+    // Include both confirmed and paid bookings for today
     const todayBookings = allBookings.filter((b) => {
+      if (!b.scheduledDate) return false;
+
+      // Get today's date string in YYYY-MM-DD format using UTC
+      // This matches how dates are stored (UTC midnight)
+      const todayYear = now.getUTCFullYear();
+      const todayMonth = now.getUTCMonth() + 1;
+      const todayDay = now.getUTCDate();
+      const todayStr = `${todayYear}-${String(todayMonth).padStart(
+        2,
+        "0"
+      )}-${String(todayDay).padStart(2, "0")}`;
+
+      // Get booking date string in YYYY-MM-DD format using UTC
+      // Since dates are stored as UTC midnight, use UTC components for comparison
       const bookingDate = new Date(b.scheduledDate);
-      return (
-        b.status === "confirmed" &&
-        bookingDate >= today &&
-        bookingDate < tomorrow
-      );
+      const bookingYear = bookingDate.getUTCFullYear();
+      const bookingMonth = bookingDate.getUTCMonth() + 1;
+      const bookingDay = bookingDate.getUTCDate();
+      const bookingStr = `${bookingYear}-${String(bookingMonth).padStart(
+        2,
+        "0"
+      )}-${String(bookingDay).padStart(2, "0")}`;
+
+      const isToday = bookingStr === todayStr;
+
+      return ["confirmed", "paid"].includes(b.status) && isToday;
     });
 
-    // Pending bookings
+    // Pending bookings (for stats)
     const pendingBookings = allBookings.filter((b) => b.status === "pending");
+
+    // Upcoming appointments - all confirmed/paid bookings (students who signed up)
+    // Show all students who have booked lessons, regardless of date
+    const upcomingAppointments = allBookings.filter((b) => {
+      return ["confirmed", "paid"].includes(b.status);
+    });
 
     // This month's earnings (from paid/confirmed/completed bookings)
     const monthlyBookings = allBookings.filter((b) => {
@@ -493,7 +553,9 @@ router.get("/:id/dashboard", protect, async (req, res) => {
             : "Unknown Student",
           studentAvatar: booking.studentId?.avatar || DEFAULT_AVATAR,
           subject: booking.lessonType || "General Lesson",
-          time: `${booking.scheduledTime || "TBD"} - ${endTime}`,
+          time: booking.scheduledTime
+            ? `${formatTime12Hour(booking.scheduledTime)} - ${endTime}`
+            : "TBD",
           status: isLessonInProgress(booking.scheduledTime, booking.duration)
             ? "in-progress"
             : "upcoming",
@@ -517,6 +579,44 @@ router.get("/:id/dashboard", protect, async (req, res) => {
         message: booking.message || "No message provided",
         studentLevel: booking.studentId?.skillLevel || "Not specified",
       }));
+    // Format upcoming appointments - include date and time for each booking
+    const formattedUpcomingAppointments = upcomingAppointments
+      .filter((booking) => booking.scheduledDate) // Only include bookings with dates
+      .sort((a, b) => {
+        // Sort by date, then by time
+        const dateA = new Date(a.scheduledDate);
+        const dateB = new Date(b.scheduledDate);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateA - dateB;
+        }
+        const timeA = a.scheduledTime || "00:00";
+        const timeB = b.scheduledTime || "00:00";
+        return timeA.localeCompare(timeB);
+      })
+      .map((booking) => {
+        const endTime = calculateEndTime(
+          booking.scheduledTime,
+          booking.duration || 60
+        );
+        return {
+          id: booking._id,
+          studentName: booking.studentId?.firstName
+            ? `${booking.studentId.firstName} ${
+                booking.studentId.lastName || ""
+              }`
+            : "Unknown Student",
+          studentAvatar:
+            booking.studentId?.avatar ||
+            "https://randomuser.me/api/portraits/lego/1.jpg",
+          studentLevel: booking.studentId?.skillLevel || "Not specified",
+          subject: booking.lessonType || "General Lesson",
+          status: booking.status,
+          scheduledDate: formatDate(booking.scheduledDate),
+          scheduledTime: booking.scheduledTime
+            ? `${formatTime12Hour(booking.scheduledTime)} - ${endTime}`
+            : "TBD",
+        };
+      });
 
     // Recent transactions (paid bookings)
     const paidBookings = allBookings
@@ -549,7 +649,7 @@ router.get("/:id/dashboard", protect, async (req, res) => {
       },
       stats,
       todaySchedule,
-      pendingBookings: formattedPendingBookings,
+      pendingBookings: formattedUpcomingAppointments, // Now contains upcoming appointments
       earningsData,
     });
   } catch (error) {
@@ -559,6 +659,19 @@ router.get("/:id/dashboard", protect, async (req, res) => {
 });
 
 // ==================== HELPER FUNCTIONS ====================
+
+/**
+ * Formats a 24-hour time string to 12-hour format with AM/PM
+ * @param {string} time24 - Time in "HH:MM" 24-hour format
+ * @returns {string} Formatted time with AM/PM (e.g., "9:00 AM")
+ */
+function formatTime12Hour(time24) {
+  if (!time24) return "TBD";
+  const [hours, minutes] = time24.split(":").map(Number);
+  const period = hours >= 12 ? "PM" : "AM";
+  const displayHours = hours % 12 || 12;
+  return `${displayHours}:${minutes.toString().padStart(2, "0")} ${period}`;
+}
 
 /**
  * Calculates the end time of a lesson given start time and duration.
@@ -611,17 +724,37 @@ function isLessonInProgress(startTime, durationMinutes) {
 /**
  * Formats a date as a readable string (e.g., "Dec 20, 2024").
  * Used for displaying booking request dates.
+ * Handles timezone correctly by using UTC date components.
  *
  * @param {Date|string} date - The date to format
  * @returns {string} Formatted date string
  */
 function formatDate(date) {
   if (!date) return "TBD";
-  return new Date(date).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  const d = new Date(date);
+
+  // Use UTC date methods since dates are stored as UTC midnight
+  // This ensures "2024-12-13" displays as "Dec 13, 2024" regardless of server timezone
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
+  const month = months[d.getUTCMonth()];
+  const day = d.getUTCDate();
+  const year = d.getUTCFullYear();
+
+  return `${month} ${day}, ${year}`;
 }
 
 /**
@@ -779,6 +912,165 @@ router.put("/:id", protect, upload.single("avatar"), async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(400).json({ message: error.message });
+  }
+});
+
+/**
+ * POST /api/teachers/:teacherId/rate
+ *
+ * Submits a rating and review for a teacher after a completed booking.
+ *
+ * Required fields:
+ * - bookingId: The booking ID that was completed
+ * - rating: Number between 1 and 5
+ * - comment: Optional review comment
+ *
+ * @param {string} req.params.teacherId - MongoDB ObjectId of the teacher
+ * @param {Object} req.body - Rating data { bookingId, rating, comment }
+ * @returns {Object} Success message and updated teacher data
+ * @returns {Object} 400 if validation fails
+ * @returns {Object} 404 if teacher or booking not found
+ * @returns {Object} 403 if booking doesn't belong to student
+ */
+/**
+ * GET /api/teachers/:teacherId/available-slots
+ *
+ * Gets available time slots for a specific date.
+ * Returns time slots that are already booked (to prevent double booking).
+ *
+ * @param {string} req.params.teacherId - MongoDB ObjectId of the teacher
+ * @param {string} req.query.date - Date in YYYY-MM-DD format
+ * @returns {Object} Array of booked time slots for the date
+ */
+router.get("/:teacherId/available-slots", async (req, res) => {
+  try {
+    const { teacherId } = req.params;
+    const { date } = req.query;
+
+    if (!date) {
+      return res.status(400).json({ message: "Date parameter is required" });
+    }
+
+    // Find all bookings for this teacher on the specified date
+    // Parse date string "YYYY-MM-DD" and create UTC date range
+    const [year, month, day] = date.split("-").map(Number);
+    const startOfDay = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+    const endOfDay = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
+
+    const bookings = await Booking.find({
+      teacherId,
+      scheduledDate: {
+        $gte: startOfDay,
+        $lte: endOfDay,
+      },
+      status: { $in: ["pending", "paid", "confirmed"] }, // Include all active bookings
+    });
+
+    // Extract booked time slots
+    const bookedSlots = bookings
+      .map((booking) => booking.scheduledTime)
+      .filter(Boolean);
+
+    res.json({ bookedSlots });
+  } catch (error) {
+    console.error("Error fetching available slots:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.post("/:teacherId/rate", protect, async (req, res) => {
+  try {
+    const { teacherId } = req.params;
+    const { bookingId, rating, comment } = req.body;
+    const studentId = req.userId; // From JWT token
+
+    // Validate input
+    if (!bookingId || !rating) {
+      return res.status(400).json({
+        message: "Booking ID and rating are required",
+      });
+    }
+
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json({
+        message: "Rating must be between 1 and 5",
+      });
+    }
+
+    // Find the booking
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    // Verify booking belongs to the student and teacher
+    if (booking.studentId.toString() !== studentId) {
+      return res.status(403).json({
+        message: "You can only rate bookings you made",
+      });
+    }
+
+    if (booking.teacherId.toString() !== teacherId) {
+      return res.status(403).json({
+        message: "Booking does not match this teacher",
+      });
+    }
+
+    // Check if booking is completed
+    if (booking.status !== "completed") {
+      return res.status(400).json({
+        message: "You can only rate completed bookings",
+      });
+    }
+
+    // Find teacher and student
+    const teacher = await Teacher.findById(teacherId);
+    const student = await Student.findById(studentId);
+
+    if (!teacher) {
+      return res.status(404).json({ message: "Teacher not found" });
+    }
+
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    // Check if student already rated this booking
+    const existingReview = teacher.reviews.find(
+      (review) => review.bookingId && review.bookingId.toString() === bookingId
+    );
+
+    if (existingReview) {
+      // Update existing review
+      existingReview.rating = rating;
+      existingReview.comment = comment || existingReview.comment;
+      existingReview.date = new Date();
+    } else {
+      // Add new review
+      teacher.reviews.push({
+        studentId: student._id,
+        studentName: `${student.firstName} ${student.lastName}`,
+        bookingId: booking._id,
+        rating: rating,
+        comment: comment || "",
+        date: new Date(),
+      });
+    }
+
+    // Recalculate teacher's average rating
+    teacher.calculateRating();
+    await teacher.save();
+
+    res.json({
+      message: "Rating submitted successfully",
+      teacher: {
+        rating: teacher.rating,
+        reviewCount: teacher.reviewCount,
+      },
+    });
+  } catch (error) {
+    console.error("Rating submission error:", error);
+    res.status(500).json({ message: error.message });
   }
 });
 

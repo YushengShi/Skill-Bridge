@@ -1,6 +1,8 @@
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
+import session from "express-session";
+import passport from "passport";
 import "dotenv/config";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -25,6 +27,27 @@ app.use(
     credentials: true,
   })
 );
+
+// Session management (stores JWT tokens server-side for logout/invalidation)
+app.use(
+  session({
+    secret:
+      process.env.SESSION_SECRET || "your-session-secret-change-in-production",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      sameSite: "lax",
+    },
+    name: "skillbridge.sid",
+  })
+);
+
+// Initialize Passport for OAuth
+app.use(passport.initialize());
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Stripe webhook route
@@ -46,12 +69,16 @@ import teacherRoutes from "./api/teachers.js";
 import studentRoutes from "./api/students.js";
 import aiRoutes from "./api/ai-recommendations.js";
 import calendarRoutes from "./api/calendar.js";
+import adminRoutes from "./api/admin.js";
+import authRoutes from "./api/auth.js";
 
 app.use("/api/payment", paymentRoutes);
 app.use("/api/teachers", teacherRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/calendar", calendarRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/auth", authRoutes);
 
 /**
  * @swagger
