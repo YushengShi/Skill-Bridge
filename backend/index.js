@@ -41,11 +41,13 @@ import paymentRoutes from "./api/payment.js";
 import teacherRoutes from "./api/teachers.js";
 import studentRoutes from "./api/students.js";
 import aiRoutes from "./api/ai-recommendations.js";
+import adminRoutes from "./api/admin.js";
 
 app.use("/api/payment", paymentRoutes);
 app.use("/api/teachers", teacherRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });

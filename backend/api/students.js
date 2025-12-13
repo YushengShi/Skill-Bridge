@@ -293,15 +293,21 @@ router.post("/login", async (req, res) => {
         .json({ message: "Email and password are required" });
     }
 
+    
     const student = await Student.findOne({
       email: email.toLowerCase().trim(),
     });
     if (!student) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
-
+    
     if (student.password !== password) {
       return res.status(401).json({ message: "Invalid email or password" });
+    }
+    if (student.isBanned) {
+      return res.status(403).json({ 
+          message: "Your account has been banned. Please contact support." 
+      });
     }
 
     if (!student.isActive) {

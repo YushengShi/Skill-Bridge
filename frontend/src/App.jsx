@@ -12,11 +12,14 @@ import Login from "./components/Login";
 import Navbar from "./components/Navbar";
 import PaymentForm from "./pages/PaymentForm";
 import TeacherHome from "./components/TeacherHome";
-import TeacherProfile from "./pages/TeacherProfile"; // 公开展示页
-import StudentProfile from "./pages/StudentProfile"; // 学生个人中心
-import TeacherOwnProfile from "./pages/TeacherOwnProfile"; // 🌟 老师个人中心 (编辑页)
+import TeacherProfile from "./pages/TeacherProfile";
+import StudentProfile from "./pages/StudentProfile";
+import TeacherOwnProfile from "./pages/TeacherOwnProfile";
 import StudentDashboard from "./pages/StudentDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
+
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
 
 import AIRecommendations from "./pages/AIRecommendations";
 import AIChatbot, { ChatbotButton } from "./components/AIChatbot";
@@ -61,10 +64,13 @@ function App() {
   }, []);
 
   const getHomeRoute = () => {
+    if (userRole === "admin") return "/admin-dashboard";
     if (userRole === "teacher") return "/dashboard";
     if (userRole === "student") return "/dashboard";
     return "/login"; 
   };
+
+  const isAdmin = userRole === "admin";
 
   if (isCheckingAuth) {
     return <div className="loading">Loading...</div>;
@@ -74,16 +80,46 @@ function App() {
     <Router>
       <div
         className={`app-wrapper ${
-          userRole === "teacher" ? "teacher-theme" : "student-theme"
+          isAdmin 
+            ? "admin-theme" 
+            : userRole === "teacher" ? "teacher-theme" : "student-theme"
         }`}
       >
-        <Navbar
-          isAuthenticated={isAuthenticated}
-          userRole={userRole}
-          setIsAuthenticated={setIsAuthenticated}
-          setUserRole={setUserRole}
-        />
+        {!isAdmin && (
+          <Navbar
+            isAuthenticated={isAuthenticated}
+            userRole={userRole}
+            setIsAuthenticated={setIsAuthenticated}
+            setUserRole={setUserRole}
+          />
+        )}
+
         <Routes>
+          <Route 
+            path="/admin-login" 
+            element={
+              isAuthenticated && isAdmin ? (
+                <Navigate to="/admin-dashboard" replace />
+              ) : (
+                <AdminLogin 
+                  setIsAuthenticated={setIsAuthenticated} 
+                  setUserRole={setUserRole} 
+                />
+              )
+            } 
+          />
+          
+          <Route
+            path="/admin-dashboard"
+            element={
+              isAuthenticated && isAdmin ? (
+                <AdminDashboard setIsAuthenticated={setIsAuthenticated} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+
           <Route
             path="/login"
             element={
@@ -127,8 +163,10 @@ function App() {
               isAuthenticated ? (
                 userRole === "teacher" ? (
                   <TeacherDashboard setIsAuthenticated={setIsAuthenticated} />
-                ) : (
+                ) : userRole === "student" ? (
                   <StudentDashboard setIsAuthenticated={setIsAuthenticated} />
+                ) : (
+                  <Navigate to="/admin-dashboard" replace />
                 )
               ) : (
                 <Navigate to="/login" replace />
@@ -151,8 +189,10 @@ function App() {
               isAuthenticated ? (
                 userRole === "student" ? (
                   <StudentProfile setIsAuthenticated={setIsAuthenticated} />
+                ) : userRole === "teacher" ? (
+                   <TeacherOwnProfile setIsAuthenticated={setIsAuthenticated} />
                 ) : (
-                  <TeacherOwnProfile setIsAuthenticated={setIsAuthenticated} />
+                   <Navigate to="/admin-dashboard" replace />
                 )
               ) : (
                 <Navigate to="/login" replace />
@@ -195,15 +235,7 @@ function App() {
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
 
-        {/*
-        FLOATING AI CHATBOT
-        Appears as a floating action button (FAB) in the bottom-right corner
-        for all authenticated users. Clicking toggles the chat window.
-        Shows different assistant based on user role:
-        - Students: AI Teacher Finder
-        - Teachers: AI Teaching Assistant
-      */}
-        {isAuthenticated && (
+        {isAuthenticated && !isAdmin && (
           <>
             <ChatbotButton
               onClick={() => setIsChatOpen(!isChatOpen)}
