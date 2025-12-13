@@ -34,27 +34,38 @@ function Login({ setIsAuthenticated, setUserRole }) {
     const error = urlParams.get("error");
     const attemptedRole = urlParams.get("attempted_role");
     const existingRole = urlParams.get("existing_role");
-    
+
     if (error) {
-      if (error === "account_role_conflict" || error === "email_role_conflict") {
+      if (
+        error === "account_role_conflict" ||
+        error === "email_role_conflict"
+      ) {
         // Use existing_role from URL if available, otherwise calculate
-        const conflictRole = existingRole || (attemptedRole === "student" ? "teacher" : "student");
-        const conflictType = error === "account_role_conflict" ? "Google account" : "email address";
-        
+        const conflictRole =
+          existingRole || (attemptedRole === "student" ? "teacher" : "student");
+        const conflictType =
+          error === "account_role_conflict"
+            ? "Google account"
+            : "email address";
+
         setRoleConflictMessage(
           `This ${conflictType} is already registered as a ${conflictRole}. ` +
-          `Please select "${conflictRole}" role or use email/password login.`
+            `Please select "${conflictRole}" role or use email/password login.`
         );
         setShowRoleConflictModal(true);
-        
+
         // Auto-switch to the correct role
         if (conflictRole) {
           setUiRole(conflictRole);
         }
       } else if (error === "oauth_error") {
-        setErrorMessage("OAuth authentication failed. Please try again or use email/password login.");
+        setErrorMessage(
+          "OAuth authentication failed. Please try again or use email/password login."
+        );
       } else if (error === "validation_error") {
-        setErrorMessage("Account creation failed. Please try again or contact support.");
+        setErrorMessage(
+          "Account creation failed. Please try again or contact support."
+        );
       } else if (error === "oauth_role_not_set") {
         setErrorMessage("OAuth session expired. Please try logging in again.");
       } else {
@@ -86,20 +97,32 @@ function Login({ setIsAuthenticated, setUserRole }) {
     }
   };
 
-  // Social login handlers
   const handleSocialLogin = (provider) => {
     if (provider === "google") {
-      // Store the intended role in session before OAuth
-      // User will choose Google account first, then we'll check for role conflicts
       const role = uiRole; // 'student' or 'teacher'
-      // Store role in session via backend endpoint, then redirect to OAuth
-      fetch(`/api/auth/google/init?role=${role}`, {
+
+      // Determine backend URL based on environment
+      const isLocal = window.location.hostname.includes("localhost");
+      const backendBaseUrl = isLocal
+        ? "http://localhost:3000"
+        : "https://skill-bridge-d090.onrender.com";
+
+      const backendInitUrl = `${backendBaseUrl}/api/auth/google/init?role=${role}`;
+      const backendOAuthUrl = `${backendBaseUrl}/api/auth/google`;
+
+      fetch(backendInitUrl, {
         method: "GET",
-        credentials: "include",
+        credentials: "include", // important to store session cookie
       })
-        .then(() => {
-          // After storing role, redirect to Google OAuth (without role in URL)
-          window.location.href = `/api/auth/google`;
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            // Redirect browser to backend OAuth route
+            window.location.href = backendOAuthUrl;
+          } else {
+            console.error("OAuth init failed:", data);
+            setErrorMessage("Failed to start Google login. Please try again.");
+          }
         })
         .catch((error) => {
           console.error("Failed to initialize OAuth:", error);

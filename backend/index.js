@@ -25,22 +25,25 @@ mongoose
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:5173",
-    credentials: true,
+    credentials: true, // required to send cookies
   })
 );
 
 // Session management (stores JWT tokens server-side for logout/invalidation)
+// Session management (stores JWT tokens server-side for logout/invalidation)
+const isProduction = process.env.NODE_ENV === "production";
+
 app.use(
   session({
-    secret: process.env.SESSION_SECRET,
+    secret: process.env.SESSION_SECRET || "super-secret",
     resave: false,
     saveUninitialized: false,
     name: "skillbridge.sid",
     cookie: {
-      secure: true, // HTTPS on Render
+      secure: isProduction, // HTTPS only in production
       httpOnly: true,
-      sameSite: "none", // REQUIRED for OAuth
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      sameSite: isProduction ? "none" : "lax", // cross-site cookies for production
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     },
   })
 );
