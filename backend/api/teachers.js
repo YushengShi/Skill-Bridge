@@ -849,4 +849,117 @@ router.put("/:id", protect, upload.single("avatar"), async (req, res) => {
   }
 });
 
+/**
+ * POST /api/teachers/:teacherId/rate
+ * 
+ * Submits a rating and review for a teacher after a completed booking.
+ * 
+ * Required fields:
+ * - bookingId: The booking ID that was completed
+ * - rating: Number between 1 and 5
+ * - comment: Optional review comment
+ * 
+ * @param {string} req.params.teacherId - MongoDB ObjectId of the teacher
+ * @param {Object} req.body - Rating data { bookingId, rating, comment }
+ * @returns {Object} Success message and updated teacher data
+ * @returns {Object} 400 if validation fails
+ * @returns {Object} 404 if teacher or booking not found
+ * @returns {Object} 403 if booking doesn't belong to student
+ */
+router.post("/:teacherId/rate", protect, async (req, res) => {
+  try {
+    const { teacherId } = req.params;
+    const { bookingId, rating, comment } = req.body;
+    const studentId = req.userId; // From JWT token
+
+    // Validate input
+    if (!bookingId || !rating) {
+      return res.status(400).json({ 
+        message: "Booking ID and rating are required" 
+      });
+    }
+
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json({ 
+        message: "Rating must be between 1 and 5" 
+      });
+    }
+
+    // Find the booking
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    // Verify booking belongs to the student and teacher
+    if (booking.studentId.toString() !== studentId) {
+      return res.status(403).json({ 
+        message: "You can only rate bookings you made" 
+      });
+    }
+
+    if (booking.teacherId.toString() !== teacherId) {
+      return res.status(403).json({ 
+        message: "Booking does not match this teacher" 
+      });
+    }
+
+    // Check if booking is completed
+    if (booking.status !== "completed") {
+      return res.status(400).json({ 
+        message: "You can only rate completed bookings" 
+      });
+    }
+
+    // Find teacher and student
+    const teacher = await Teacher.findById(teacherId);
+    const student = await Student.findById(studentId);
+
+    if (!teacher) {
+      return res.status(404).json({ message: "Teacher not found" });
+    }
+
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    // Check if student already rated this booking
+    const existingReview = teacher.reviews.find(
+      (review) => review.bookingId && review.bookingId.toString() === bookingId
+    );
+
+    if (existingReview) {
+      // Update existing review
+      existingReview.rating = rating;
+      existingReview.comment = comment || existingReview.comment;
+      existingReview.date = new Date();
+    } else {
+      // Add new review
+      teacher.reviews.push({
+        studentId: student._id,
+        studentName: `${student.firstName} ${student.lastName}`,
+        bookingId: booking._id,
+        rating: rating,
+        comment: comment || "",
+        date: new Date(),
+      });
+    }
+
+    // Recalculate teacher's average rating
+    teacher.calculateRating();
+    await teacher.save();
+
+    res.json({
+      message: "Rating submitted successfully",
+      teacher: {
+        rating: teacher.rating,
+        reviewCount: teacher.reviewCount,
+      },
+    });
+  } catch (error) {
+    console.error("Rating submission error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 export default router;
