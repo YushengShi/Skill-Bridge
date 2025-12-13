@@ -47,6 +47,22 @@ const teacherSchema = new mongoose.Schema({
     lowercase: true,
     trim: true,
   },
+  password: {
+    type: String,
+    /**
+     * Password is conditionally required based on authentication method.
+     * If using Google OAuth (googleId is set), password is not required.
+     */
+    required: function () {
+      return !this.googleId;
+    },
+  },
+  // Google OAuth
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true,
+  },
   tagline: {
     type: String,
     trim: true,

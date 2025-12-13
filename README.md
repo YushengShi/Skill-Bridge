@@ -41,6 +41,11 @@ JWT_SECRET=your-super-secure-random-secret-key-here
 # Session Secret (required for production)
 SESSION_SECRET=your-session-secret-key-here
 
+# Google OAuth (optional - for social login)
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+FRONTEND_URL=http://localhost:5173
+
 # Stripe API Key (if using payment features)
 STRIPE_SECRET_KEY=your_stripe_secret_key
 ```
@@ -415,7 +420,7 @@ csd skill bridge/
 - ✅ Server-side logout with session invalidation
 - ✅ Form validation
 - ✅ Password visibility toggle
-- ✅ Social login buttons (Google, Microsoft)
+- ✅ **Google OAuth login** - Free social authentication (see setup guide)
 - ✅ Responsive design
 - ✅ Payment integration (Stripe)
 - ✅ MongoDB database integration
@@ -447,3 +452,127 @@ npm run build
 cd backend
 npm start
 ```
+
+## Google OAuth Setup Guide
+
+### ✅ Assessment: Google OAuth is **100% FREE**
+
+- **Free Tier**: Unlimited users, 100 requests/second
+- **No Credit Card Required**
+- **Paid Only If**: Exceeding 100 req/sec (unlikely for most apps)
+
+### 📋 Setup Steps
+
+#### 1. Install Required Packages
+
+```bash
+cd backend
+npm install passport passport-google-oauth20
+```
+
+#### 2. Create Google OAuth Credentials
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project (or select existing)
+3. Enable **Google+ API** (or **Google Identity Services**)
+4. Go to **Credentials** → **Create Credentials** → **OAuth 2.0 Client ID**
+5. Configure:
+   - **Application type**: Web application
+   - **Name**: SkillBridge (or your app name)
+   - **Authorized JavaScript origins**: 
+     - `http://localhost:3000` (development)
+     - `http://localhost:5173` (development)
+     - Your production domain (when deployed)
+   - **Authorized redirect URIs**:
+     - `http://localhost:3000/api/auth/google/callback` (development)
+     - Your production callback URL (when deployed)
+
+6. Copy **Client ID** and **Client Secret**
+
+#### 3. Add Environment Variables
+
+Add to `backend/.env`:
+
+```env
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+FRONTEND_URL=http://localhost:5173
+```
+
+#### 4. Update Backend CORS (if needed)
+
+Make sure `backend/index.js` allows your frontend origin:
+
+```javascript
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
+```
+
+#### 5. Test the Implementation
+
+1. Start backend: `cd backend && npm start`
+2. Start frontend: `cd frontend && npm run dev`
+3. Go to login page
+4. Click "Google" button
+5. Select role (student/teacher)
+6. Complete Google OAuth flow
+7. Should redirect back and log you in!
+
+### 🔧 How It Works
+
+1. **User clicks "Google" button** → Redirects to `/api/auth/google?role=student`
+2. **Google OAuth flow** → User authenticates with Google
+3. **Callback** → `/api/auth/google/callback` receives Google profile
+4. **User creation/linking**:
+   - If user exists with Google ID → Login
+   - If user exists with email → Link Google account
+   - If new user → Create account
+5. **JWT token generated** → Same as email/password login
+6. **Redirect to frontend** → `/auth/callback?token=...&role=...`
+7. **Frontend stores token** → User is logged in!
+
+### 🎯 Features
+
+- ✅ **Free** - No cost for normal usage
+- ✅ **Secure** - Uses Google's OAuth 2.0
+- ✅ **Seamless** - Works with existing JWT workflow
+- ✅ **Account Linking** - Links Google to existing email accounts
+- ✅ **Role Support** - Supports both student and teacher roles
+
+### ⚠️ Important Notes
+
+1. **Development vs Production**:
+   - Update redirect URIs in Google Console for production
+   - Update `FRONTEND_URL` in `.env` for production
+
+2. **Security**:
+   - Never commit `.env` file with credentials
+   - Use different OAuth credentials for dev/prod
+
+3. **Rate Limits**:
+   - Free tier: 100 requests/second
+   - Monitor usage in Google Cloud Console
+
+### 🐛 Troubleshooting
+
+**Error: "redirect_uri_mismatch"**
+- Check authorized redirect URIs in Google Console
+- Must match exactly: `http://localhost:3000/api/auth/google/callback`
+
+**Error: "invalid_client"**
+- Verify `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env`
+- Make sure credentials are for the correct project
+
+**User not created**
+- Check MongoDB connection
+- Check console logs for errors
+- Verify Student/Teacher models have `googleId` field
+
+### 📚 Resources
+
+- [Google OAuth 2.0 Documentation](https://developers.google.com/identity/protocols/oauth2)
+- [Passport Google Strategy](http://www.passportjs.org/packages/passport-google-oauth20/)

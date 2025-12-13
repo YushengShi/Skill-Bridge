@@ -24,6 +24,7 @@ import Home from "./pages/Home";
 
 import AIRecommendations from "./pages/AIRecommendations";
 import AIChatbot, { ChatbotButton } from "./components/AIChatbot";
+import AuthCallback from "./pages/AuthCallback";
 import "./App.css";
 import StudentBookings from "./pages/StudentBookings";
 
@@ -195,6 +196,16 @@ function App() {
           <Route
             path="/ai-chat"
             element={isAuthenticated ? <AIChatbot isFloating={false} userRole={userRole} /> : <Navigate to="/login" replace />}
+          />
+
+          <Route
+            path="/auth/callback"
+            element={
+              <AuthCallback
+                setIsAuthenticated={setIsAuthenticated}
+                setUserRole={setUserRole}
+              />
+            }
           />
 
           <Route path="*" element={<Navigate to="/login" replace />} />
