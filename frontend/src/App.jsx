@@ -20,6 +20,7 @@ import TeacherDashboard from "./pages/TeacherDashboard";
 
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import Home from "./pages/Home";
 
 import AIRecommendations from "./pages/AIRecommendations";
 import AIChatbot, { ChatbotButton } from "./components/AIChatbot";
@@ -39,11 +40,9 @@ function App() {
       if (token) {
         try {
           const decoded = jwtDecode(token);
-
           if (decoded.exp * 1000 < Date.now()) {
             throw new Error("Token expired");
           }
-
           setIsAuthenticated(true);
           setUserRole(decoded.role);
         } catch (error) {
@@ -59,7 +58,6 @@ function App() {
       }
       setIsCheckingAuth(false);
     };
-
     checkAuth();
   }, []);
 
@@ -85,7 +83,7 @@ function App() {
             : userRole === "teacher" ? "teacher-theme" : "student-theme"
         }`}
       >
-        {!isAdmin && (
+        {isAuthenticated && !isAdmin && (
           <Navbar
             isAuthenticated={isAuthenticated}
             userRole={userRole}
@@ -101,14 +99,10 @@ function App() {
               isAuthenticated && isAdmin ? (
                 <Navigate to="/admin-dashboard" replace />
               ) : (
-                <AdminLogin 
-                  setIsAuthenticated={setIsAuthenticated} 
-                  setUserRole={setUserRole} 
-                />
+                <AdminLogin setIsAuthenticated={setIsAuthenticated} setUserRole={setUserRole} />
               )
             } 
           />
-          
           <Route
             path="/admin-dashboard"
             element={
@@ -137,22 +131,17 @@ function App() {
           <Route
             path="/"
             element={
-              <Navigate
-                to={isAuthenticated ? getHomeRoute() : "/login"}
-                replace
-              />
+              isAuthenticated ? (
+                <Navigate to={getHomeRoute()} replace />
+              ) : (
+                <Home />
+              )
             }
           />
 
           <Route
             path="/teachers"
-            element={
-              isAuthenticated ? (
-                <TeacherHome setIsAuthenticated={setIsAuthenticated} />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
+            element={isAuthenticated ? <TeacherHome setIsAuthenticated={setIsAuthenticated} /> : <Navigate to="/login" replace />}
           />
           <Route path="/teachers/:id" element={<TeacherProfile />} />
           <Route path="/checkout" element={<PaymentForm />} />
@@ -174,14 +163,8 @@ function App() {
             }
           />
           
-          <Route
-            path="/student-dashboard"
-            element={<Navigate to="/dashboard" replace />}
-          />
-          <Route
-            path="/teacher-dashboard"
-            element={<Navigate to="/dashboard" replace />}
-          />
+          <Route path="/student-dashboard" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/teacher-dashboard" element={<Navigate to="/dashboard" replace />} />
 
           <Route
             path="/profile"
@@ -201,35 +184,17 @@ function App() {
           />
           <Route
             path="/my-bookings"
-            element={
-              isAuthenticated && userRole === "student" ? (
-                <StudentBookings />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
+            element={isAuthenticated && userRole === "student" ? <StudentBookings /> : <Navigate to="/login" replace />}
           />
 
           <Route
             path="/recommendations"
-            element={
-              isAuthenticated ? (
-                <AIRecommendations />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
+            element={isAuthenticated ? <AIRecommendations /> : <Navigate to="/login" replace />}
           />
           
           <Route
             path="/ai-chat"
-            element={
-              isAuthenticated ? (
-                <AIChatbot isFloating={false} userRole={userRole} />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
+            element={isAuthenticated ? <AIChatbot isFloating={false} userRole={userRole} /> : <Navigate to="/login" replace />}
           />
 
           <Route path="*" element={<Navigate to="/login" replace />} />
