@@ -26,7 +26,7 @@
   width: 50px;
   height: 50px;
   border: 4px solid #f3f3f3;
-  border-top: 4px solid #ff554b;
+  border-top: 4px solid #4f46e5;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
@@ -43,13 +43,31 @@
 
 /* ==================== HEADER ==================== */
 .dashboard-header {
-  background: linear-gradient(135deg, #ff554b 0%, #ff8a80 100%);
+  background: #4f46e5;
   color: white;
   padding: 1.5rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 4px 12px rgba(255, 85, 75, 0.3);
+}
+
+/* Dashboard Title Section (used with global navbar) */
+.dashboard-title-section {
+  padding: 1.5rem 2rem;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dashboard-title-section h1 {
+  font-size: 1.75rem;
+  margin-bottom: 0.25rem;
+  color: #1f2937;
+}
+
+.dashboard-title-section .welcome-text {
+  color: #6b7280;
+  opacity: 1;
 }
 
 .header-left h1 {
@@ -88,7 +106,7 @@
 
 .logout-btn {
   background: white;
-  color: #ff554b;
+  color: #4f46e5;
 }
 
 .logout-btn:hover {
@@ -198,7 +216,7 @@
 .view-all-btn {
   background: none;
   border: none;
-  color: #ff554b;
+  color: #4f46e5;
   font-size: 0.9rem;
   cursor: pointer;
   font-weight: 500;
@@ -226,7 +244,7 @@
 }
 
 .lesson-card:hover {
-  border-color: #ff554b;
+  border-color: #4f46e5;
   box-shadow: 0 4px 12px rgba(255, 85, 75, 0.1);
 }
 
@@ -292,7 +310,7 @@
 }
 
 .join-btn {
-  background: #ff554b;
+  background: #4f46e5;
   color: white;
   border: none;
   font-weight: 600;
@@ -309,8 +327,8 @@
 }
 
 .reschedule-btn:hover {
-  border-color: #ff554b;
-  color: #ff554b;
+  border-color: #4f46e5;
+  color: #4f46e5;
 }
 
 /* ==================== QUICK ACTIONS ==================== */
@@ -334,7 +352,7 @@
 }
 
 .action-card:hover {
-  border-color: #ff554b;
+  border-color: #4f46e5;
   background: #fff5f5;
 }
 
@@ -368,7 +386,7 @@
 }
 
 .teacher-mini-card:hover {
-  border-color: #ff554b;
+  border-color: #4f46e5;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
@@ -404,12 +422,12 @@
 }
 
 .teacher-mini-meta .price {
-  color: #ff554b;
+  color: #4f46e5;
   font-weight: 600;
 }
 
 .book-mini-btn {
-  background: #ff554b;
+  background: #4f46e5;
   color: white;
   border: none;
   padding: 0.4rem 1rem;
@@ -510,14 +528,14 @@
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #ff554b, #ff8a80);
+  background: #4f46e5;
   border-radius: 4px;
   transition: width 0.3s ease;
 }
 
 /* ==================== AI PROMO ==================== */
 .ai-promo {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #4f46e5;
   color: white;
 }
 
@@ -543,7 +561,7 @@
 
 .ai-btn {
   background: white;
-  color: #667eea;
+  color: #4f46e5;
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
@@ -579,7 +597,7 @@
 }
 
 .empty-state button {
-  background: #ff554b;
+  background: #4f46e5;
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
