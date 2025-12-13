@@ -1,5 +1,6 @@
 import { Router } from "express";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 import Admin from "../models/Admin.js";
 import Student from "../models/Student.js";
 import Teacher from "../models/Teacher.js";
@@ -13,9 +14,13 @@ router.get("/seed", async (req, res) => {
     const exists = await Admin.findOne({ email: "admin@admin.com" });
     if (exists) return res.json({ message: "Admin already exists" });
 
+    // Hash password before saving
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash("adminpassword", saltRounds);
+
     await Admin.create({
       email: "admin@admin.com",
-      password: "adminpassword",
+      password: hashedPassword,
     });
     res.json({ message: "Admin created: admin@admin.com / adminpassword" });
   } catch (error) {
@@ -28,7 +33,13 @@ router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
     const admin = await Admin.findOne({ email });
-    if (!admin || admin.password !== password) {
+    if (!admin) {
+      return res.status(401).json({ message: "Invalid admin credentials" });
+    }
+
+    // Compare password with bcrypt
+    const isPasswordValid = await bcrypt.compare(password, admin.password);
+    if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid admin credentials" });
     }
 

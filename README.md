@@ -184,17 +184,40 @@ localStorage.removeItem('user');
    JWT_SECRET=your-very-secure-random-secret-key
    ```
 
-2. **Password Hashing**: Currently, passwords are stored as plain text. For production, implement bcrypt hashing:
-   - Hash passwords before saving to database
-   - Use `bcrypt.compare()` to verify passwords during login
+2. **Password Hashing with bcrypt**: ✅ **IMPLEMENTED** - Passwords are securely hashed using bcrypt before storage:
+   
+   **How Password Security Works**:
+   
+   - **Registration**: When a user registers (student or teacher), their password is hashed using bcrypt with 10 salt rounds before being saved to the database
+   - **Login**: During login, the provided password is compared against the stored hash using `bcrypt.compare()`, which securely verifies the password without ever storing or transmitting the plain text password
+   - **Implementation**: 
+     ```javascript
+     // During registration
+     const saltRounds = 10;
+     const hashedPassword = await bcrypt.hash(password, saltRounds);
+     
+     // During login
+     const isPasswordValid = await bcrypt.compare(password, user.password);
+     ```
+   
+   **Why bcrypt?**:
+   - **One-way hashing**: Passwords are hashed, not encrypted, meaning they cannot be reversed to reveal the original password
+   - **Salt rounds**: The 10 salt rounds add computational complexity, making brute-force attacks extremely time-consuming
+   - **Adaptive hashing**: bcrypt automatically adapts to increasing computational power, maintaining security over time
+   - **Industry standard**: bcrypt is a widely-used, battle-tested password hashing algorithm
+   
+   **Security Benefits**:
+   - Even if the database is compromised, attackers cannot retrieve original passwords
+   - Each password hash is unique due to salting, preventing rainbow table attacks
+   - Password verification is secure and efficient
 
 3. **Token Expiration**: Tokens expire after 7 days. Consider implementing token refresh for better user experience.
 
 4. **HTTPS**: Always use HTTPS in production to protect tokens during transmission.
 
-5. **Token Validation**: In the future, add middleware to validate tokens on protected routes:
+5. **Token Validation**: Protected routes use JWT authentication middleware to validate tokens:
    ```javascript
-   // Example middleware (to be implemented)
+   // Middleware implementation
    const authenticateToken = (req, res, next) => {
      const token = req.headers['authorization']?.split(' ')[1];
      if (!token) return res.sendStatus(401);
@@ -254,6 +277,7 @@ csd skill bridge/
 
 - ✅ User authentication with JWT tokens (Login/Signup)
 - ✅ Secure token-based authentication
+- ✅ **Password security with bcrypt hashing** - Passwords are hashed before storage
 - ✅ Form validation
 - ✅ Password visibility toggle
 - ✅ Social login buttons (Google, Microsoft)
