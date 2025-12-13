@@ -1,0 +1,172 @@
+/**
+ * ================================================================================
+ * GLOBAL NAVBAR STYLES
+ * ================================================================================
+ *
+ * Custom styles for the Bootstrap-based navigation bar.
+ * Uses CSS variables for role-based theming:
+ * - Students: Indigo (#4f46e5)
+ * - Teachers: Teal (#0d9488)
+ *
+ * KEY DESIGN DECISIONS:
+ * - Slim navbar (0.35rem padding) to maximize content space
+ * - Role-based color scheme using CSS variables
+ * - Semi-transparent hover/active states for visual feedback
+ * - White text on dark background for readability
+ * - Responsive: adjusts for mobile with larger touch targets
+ */
+
+/* ==================== BASE NAVBAR STYLES ==================== */
+
+/* Main navbar container - uses custom class to override Bootstrap defaults */
+.skill-navbar {
+  background-color: var(
+    --primary-color,
+    #4f46e5
+  ); /* Uses theme variable with fallback */
+  padding: 0.35rem 0; /* Slim padding for compact look */
+  transition: background-color 0.3s ease; /* Smooth theme transitions */
+}
+
+/* Brand/logo styling */
+.navbar-brand {
+  font-size: 1.2rem;
+  letter-spacing: 0.5px;
+  color: white !important; /* Override Bootstrap default */
+}
+
+.navbar-brand i {
+  font-size: 1.3rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* ==================== NAV ITEM HOVER FIX ==================== */
+
+/*
+ * Reset nav-item background to prevent Bootstrap's default hover effect
+ * which creates a large hover area. We want hover only on the nav-link.
+ */
+.navbar .nav-item {
+  background: transparent !important;
+}
+
+.navbar .nav-item:hover {
+  background: transparent !important;
+}
+
+/* ==================== NAV LINK STYLES ==================== */
+
+.nav-link {
+  padding: 0.35rem 0.75rem !important;
+  border-radius: 0.375rem; /* Rounded corners for hover effect */
+  transition: background-color 0.2s ease, color 0.2s ease;
+  margin: 0 0.125rem;
+  font-size: 0.9rem;
+  white-space: nowrap; /* Prevent text wrapping to keep navbar slim */
+  display: inline-block;
+}
+
+/* Subtle hover effect with semi-transparent white background */
+.navbar .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Active state - slightly more prominent than hover */
+.navbar .nav-link.active {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  font-weight: 500;
+}
+
+/* ==================== USER DROPDOWN STYLES ==================== */
+
+.user-avatar {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+/* Dropdown menu appears when clicking user avatar */
+.dropdown-menu {
+  border: none;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+}
+
+.dropdown-item {
+  border-radius: 0.375rem;
+  padding: 0.5rem 1rem;
+  transition: background-color 0.15s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+/* Red-tinted hover for logout button to indicate destructive action */
+.dropdown-item.text-danger:hover {
+  background-color: #fee2e2;
+}
+
+/* ==================== ROLE BADGE STYLES ==================== */
+
+/* Badge showing "Student" or "Teacher" next to username */
+.skill-navbar .badge {
+  font-size: 0.7rem;
+  padding: 0.35em 0.6em;
+  font-weight: 500;
+}
+
+/* Semi-transparent white badge that works on the indigo background */
+.skill-navbar .role-badge {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* ==================== MOBILE RESPONSIVE STYLES ==================== */
+
+/*
+ * On screens smaller than 992px (Bootstrap lg breakpoint),
+ * the navbar collapses into a hamburger menu.
+ * These styles adjust the collapsed menu appearance.
+ */
+@media (max-width: 991.98px) {
+  .navbar-nav {
+    padding: 0.5rem 0;
+  }
+
+  /* Larger touch targets for mobile */
+  .nav-link {
+    padding: 0.75rem 1rem !important;
+  }
+
+  /* Make dropdown transparent to blend with navbar */
+  .navbar-nav .dropdown-menu {
+    border: none;
+    box-shadow: none;
+    background-color: transparent;
+    padding-left: 1rem;
+  }
+
+  .navbar-nav .dropdown-item {
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .navbar-nav .dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+  }
+
+  .navbar-nav .dropdown-item.text-danger {
+    color: #fca5a5 !important;
+  }
+
+  .navbar-nav .dropdown-divider {
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* Smooth transitions for collapse */
+.navbar-collapse {
+  transition: height 0.3s ease;
+}
