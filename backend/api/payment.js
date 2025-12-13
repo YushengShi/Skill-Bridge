@@ -9,6 +9,43 @@ const router = Router();
 // This is your test secret API key.
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+/**
+ * @swagger
+ * /api/payment/create-checkout-session:
+ *   post:
+ *     summary: Create Stripe checkout session
+ *     description: |
+ *       Creates a new booking and Stripe checkout session for lesson payment.
+ *       Returns a Stripe checkout URL to redirect the user for payment.
+ *     tags: [Payments]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CheckoutSessionRequest'
+ *     responses:
+ *       200:
+ *         description: Checkout session created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CheckoutSessionResponse'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error or Stripe error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post("/create-checkout-session", protect, async (req, res) => {
   // TODO: replace this url
   const YOUR_DOMAIN = "http://localhost:5173"; // replace with frontend domain

@@ -8,10 +8,47 @@ import Booking from "../models/Booking.js";
 const router = Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET; 
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 
+/**
+ * @swagger
+ * /api/webhook:
+ *   post:
+ *     summary: Stripe webhook handler
+ *     description: |
+ *       Handles Stripe webhook events, particularly `checkout.session.completed`.
+ *       Updates booking status to 'paid' when payment is successful.
+ *
+ *       **Note**: This endpoint requires raw body and Stripe signature verification.
+ *     tags: [Webhooks]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             description: Stripe webhook event payload
+ *     responses:
+ *       200:
+ *         description: Webhook processed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 received:
+ *                   type: boolean
+ *                   example: true
+ *       400:
+ *         description: Webhook signature verification failed
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: "Webhook Error: Invalid signature"
+ */
 router.post("/", async (req, res) => {
-  const sig = req.headers['stripe-signature'];
+  const sig = req.headers["stripe-signature"];
   let event;
 
   try {
@@ -26,9 +63,9 @@ router.post("/", async (req, res) => {
   }
 
   // 处理 Checkout Session 完成事件
-  if (event.type === 'checkout.session.completed') {
+  if (event.type === "checkout.session.completed") {
     const session = event.data.object;
-    
+
     // 🌟 核心修改：直接从 metadata 读取 ID，不需要正则，不需要再次请求 Stripe
     const bookingId = session.metadata?.bookingId;
 
@@ -38,21 +75,22 @@ router.post("/", async (req, res) => {
       try {
         const updatedBooking = await Booking.findByIdAndUpdate(
           bookingId,
-          { status: 'paid' }, // 这里的状态要和你的 Schema 一致
+          { status: "paid" }, // 这里的状态要和你的 Schema 一致
           { new: true }
         );
 
         if (updatedBooking) {
-            console.log(`🎉 Database updated! Booking status: ${updatedBooking.status}`);
+          console.log(
+            `🎉 Database updated! Booking status: ${updatedBooking.status}`
+          );
         } else {
-            console.log(`⚠️ Booking not found for ID: ${bookingId}`);
+          console.log(`⚠️ Booking not found for ID: ${bookingId}`);
         }
-
       } catch (dbError) {
         console.error("Database update failed:", dbError);
       }
     } else {
-      console.log('⚠️ No bookingId found in session metadata.');
+      console.log("⚠️ No bookingId found in session metadata.");
     }
   }
 

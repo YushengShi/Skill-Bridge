@@ -4,13 +4,13 @@ import cors from "cors";
 import "dotenv/config";
 import path from "path";
 import { fileURLToPath } from "url";
+import { setupSwagger } from "./config/swagger.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = 3000;
-
 
 // MongoDB connection
 const mongoDB_URI = "mongodb://localhost:27017/skillbridge";
@@ -36,6 +36,10 @@ app.use(
 );
 
 app.use(express.json());
+
+// Setup Swagger documentation
+setupSwagger(app);
+
 // we write our routes here
 import paymentRoutes from "./api/payment.js";
 import teacherRoutes from "./api/teachers.js";
@@ -47,6 +51,25 @@ app.use("/api/teachers", teacherRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/ai", aiRoutes);
 
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Health check
+ *     description: Returns the health status of the API server.
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: Server is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "ok"
+ */
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
