@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { API_BASE_URL } from "../constants";
 import "./styles.css";
 
 const Header = () => (
@@ -42,7 +43,7 @@ const TeacherListPage = () => {
 
   useEffect(() => {
     const fetchTeachers = async () => {
-      const res = await fetch("/api/teachers");
+      const res = await fetch(`${API_BASE_URL}/api/teachers`);
       const data = await res.json();
       setTeachers(data); // <-- Now we have real MongoDB teachers
     };

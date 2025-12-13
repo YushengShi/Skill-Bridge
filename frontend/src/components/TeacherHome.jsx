@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../constants";
 import BookingModal from "./BookingModal";
 import "../App.css";
 
@@ -54,7 +55,7 @@ export default function TeacherHome({ setIsAuthenticated }) {
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    fetch("/api/teachers", {
+    fetch(`${API_BASE_URL}/api/teachers`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

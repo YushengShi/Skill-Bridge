@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../constants";
 import "./StudentDashboard.css";
 
 /**
@@ -87,7 +88,7 @@ export default function StudentDashboard({ setIsAuthenticated }) {
         const userId = user._id || user.id;
 
         // Fetch dashboard data with auth header
-        const response = await fetch(`/api/students/${userId}/dashboard`, {
+        const response = await fetch(`${API_BASE_URL}/api/students/${userId}/dashboard`, {
           headers: {
             Authorization: `Bearer ${token}`, // JWT for protected route
             "Content-Type": "application/json",
@@ -141,7 +142,7 @@ export default function StudentDashboard({ setIsAuthenticated }) {
    */
   const handleLogout = async () => {
     try {
-      await fetch("/api/students/logout", {
+      await fetch(`${API_BASE_URL}/api/students/logout`, {
         method: "POST",
         credentials: "include",
       });
