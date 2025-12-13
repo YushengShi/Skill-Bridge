@@ -15,7 +15,8 @@ const app = express();
 const PORT = 3000;
 
 // MongoDB connection
-const mongoDB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/skillbridge";
+const mongoDB_URI =
+  process.env.MONGODB_URI || "mongodb://localhost:27017/skillbridge";
 mongoose
   .connect(mongoDB_URI)
   .then(() => console.log("✅ MongoDB connected"))
