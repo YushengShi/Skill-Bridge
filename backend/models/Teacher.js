@@ -70,7 +70,7 @@ const teacherSchema = new mongoose.Schema({
   // Ratings & Stats
   rating: {
     type: Number,
-    default: 5.0,
+    default: 0, // Default to 0 for teachers with no reviews
     min: 0,
     max: 5,
   },
@@ -171,6 +171,7 @@ const teacherSchema = new mongoose.Schema({
     {
       studentId: { type: mongoose.Schema.Types.ObjectId, ref: "Student" },
       studentName: String,
+      bookingId: { type: mongoose.Schema.Types.ObjectId, ref: "Booking" }, // Link review to specific booking
       rating: { type: Number, min: 1, max: 5 },
       comment: String,
       date: { type: Date, default: Date.now },
@@ -232,13 +233,20 @@ teacherSchema.pre("save", function (next) {
  * @returns {number} The calculated average rating (1-5)
  */
 teacherSchema.methods.calculateRating = function () {
-  // Return default rating if no reviews exist
-  if (this.reviews.length === 0) return 5.0;
+  // Return 0 if no reviews exist (teacher with no lessons/ratings)
+  if (this.reviews.length === 0) {
+    this.rating = 0;
+    this.reviewCount = 0;
+    return 0;
+  }
 
   // Sum all ratings and calculate average
-  const sum = this.reviews.reduce((acc, review) => acc + review.rating, 0);
+  const sum = this.reviews.reduce((acc, review) => acc + (review.rating || 0), 0);
   this.rating = sum / this.reviews.length;
   this.reviewCount = this.reviews.length;
+
+  // Round to 1 decimal place
+  this.rating = Math.round(this.rating * 10) / 10;
 
   return this.rating;
 };

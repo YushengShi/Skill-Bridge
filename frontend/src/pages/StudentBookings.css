@@ -243,8 +243,36 @@
   width: 100%;
 }
 
-.join-btn:hover {
+.join-btn:hover:not(:disabled) {
   background-color: #1976D2;
+}
+
+.join-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.rate-btn {
+  background-color: #ffc107;
+  color: #333;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.rate-btn:hover {
+  background-color: #ffb300;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
 }
 
 @media (max-width: 767px) {

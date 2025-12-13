@@ -42,7 +42,11 @@ export default function TeacherDetailPage() {
               <p className="tdp-tagline">{teacher.tagline}</p>
 
               <div className="tdp-meta">
-                <span>⭐ <strong>{teacher.rating ?? "—"}</strong></span>
+                {teacher.reviewCount > 0 ? (
+                  <span>⭐ <strong>{teacher.rating?.toFixed(1) ?? "0.0"}</strong></span>
+                ) : (
+                  <span>⭐ <strong>No ratings</strong></span>
+                )}
                 <span>•</span>
                 <span>{teacher.lessonCount ?? 0} lessons</span>
               </div>

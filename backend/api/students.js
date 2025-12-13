@@ -138,6 +138,77 @@ router.get("/my-bookings", protect, async (req, res) => {
   }
 });
 
+// Test route to verify bookings endpoint is accessible
+router.get("/bookings/test", protect, (req, res) => {
+  res.json({ message: "Bookings route is accessible", studentId: req.userId });
+});
+
+/**
+ * PATCH /api/students/bookings/:bookingId/complete
+ * 
+ * Marks a booking as completed when the student clicks "Complete Lesson" button.
+ * This allows students to mark lessons as complete and then rate the teacher.
+ * 
+ * IMPORTANT: This route must be defined BEFORE /:id route to avoid route conflicts.
+ * 
+ * @param {string} req.params.bookingId - MongoDB ObjectId of the booking
+ * @returns {Object} Updated booking document
+ * @returns {Object} 404 if booking not found
+ * @returns {Object} 403 if booking doesn't belong to student
+ * @returns {Object} 400 if booking is already completed or not in valid status
+ */
+// IMPORTANT: This route must be defined before /:id route to avoid conflicts
+router.patch("/bookings/:bookingId/complete", protect, async (req, res) => {
+  try {
+    console.log("📝 [PATCH] /api/students/bookings/:bookingId/complete - Endpoint hit");
+    console.log("📝 Booking ID:", req.params.bookingId);
+    console.log("📝 Student ID from token:", req.userId);
+    
+    const { bookingId } = req.params;
+    const studentId = req.userId;
+
+    // Find the booking
+    const booking = await Booking.findById(bookingId);
+    
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    // Verify booking belongs to the student
+    if (booking.studentId.toString() !== studentId) {
+      return res.status(403).json({ 
+        message: "You can only complete your own bookings" 
+      });
+    }
+
+    // Check if booking is already completed
+    if (booking.status === "completed") {
+      return res.status(400).json({ 
+        message: "This booking is already marked as completed" 
+      });
+    }
+
+    // Only allow completing bookings that are paid or confirmed
+    if (!["paid", "confirmed"].includes(booking.status)) {
+      return res.status(400).json({ 
+        message: `Cannot complete booking with status: ${booking.status}. Booking must be paid or confirmed first.` 
+      });
+    }
+
+    // Update booking status to completed
+    booking.status = "completed";
+    await booking.save();
+
+    res.json({
+      message: "Booking marked as completed successfully",
+      booking: booking,
+    });
+  } catch (error) {
+    console.error("Error completing booking:", error);
+    res.status(500).json({ message: error.message || "Server Error" });
+  }
+});
+
 /**
  * GET /api/students/:id
  *

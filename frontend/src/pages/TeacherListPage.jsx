@@ -24,8 +24,12 @@ const TeacherCard = ({ teacher }) => (
       <h2>{teacher.name}</h2>
       <p>{teacher.tagline}</p>
       <div className="teacher-stats">
-        <span>⭐ {teacher.rating}</span>
-        <span>📚 {teacher.lessonCount} lessons</span>
+        {teacher.reviewCount > 0 ? (
+          <span>⭐ {teacher.rating?.toFixed(1) || "0.0"}</span>
+        ) : (
+          <span>⭐ No ratings</span>
+        )}
+        <span>📚 {teacher.lessonCount || 0} lessons</span>
       </div>
 
       <p>{teacher.bio.slice(0, 80)}...</p>

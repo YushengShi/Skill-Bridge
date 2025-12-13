@@ -217,6 +217,99 @@ JWT_SECRET=your-super-secure-random-secret-key-here
 
 The backend will use this secret to sign and verify tokens. If not set, it defaults to a development secret (not recommended for production).
 
+## Rating and Review System
+
+Students can rate and review teachers after completing their lessons. Here's how it works:
+
+### How to Give a Rating
+
+1. **Complete a Lesson**:
+   - Go to "My Lessons" page (Student Dashboard → My Bookings)
+   - Find a lesson with status "Paid" or "Confirmed"
+   - Click the **"Complete Lesson"** button (formerly "Join Room")
+   - This marks the lesson as completed
+
+2. **Rate Your Teacher**:
+   - After completing a lesson, the status will change to "Completed"
+   - A **"⭐ Rate Teacher"** button will appear
+   - Click the button to open the rating modal
+
+3. **Submit Your Rating**:
+   - Select a star rating (1-5 stars)
+   - Optionally write a review comment (max 500 characters)
+   - Click **"Submit Rating"** to save your feedback
+
+### Rating Features
+
+- **Star Rating**: Rate from 1 (Poor) to 5 (Excellent) stars
+- **Written Review**: Add optional comments about your experience
+- **One Rating Per Booking**: Each completed booking can only be rated once
+- **Automatic Updates**: Teacher's average rating is automatically recalculated
+- **Public Reviews**: Your ratings help other students choose teachers
+
+### API Endpoints
+
+**Complete a Booking**:
+```
+PATCH /api/students/bookings/:bookingId/complete
+Authorization: Bearer <token>
+```
+
+**Submit a Rating**:
+```
+POST /api/teachers/:teacherId/rate
+Authorization: Bearer <token>
+Body: {
+  "bookingId": "booking_id",
+  "rating": 5,
+  "comment": "Great teacher!"
+}
+```
+
+### Rating Requirements
+
+- ✅ Booking must be in "paid" or "confirmed" status to be completed
+- ✅ Only completed bookings can be rated
+- ✅ Only the student who made the booking can rate it
+- ✅ Rating must be between 1 and 5 stars
+- ✅ Reviews are optional but encouraged
+- ✅ Each booking can only be rated once (updating a rating replaces the previous one)
+
+### How Ratings Work
+
+**Rating Calculation**:
+- Teacher's overall rating is the **average of ALL student ratings**
+- Formula: `averageRating = sum of all ratings / number of reviews`
+- Ratings are rounded to 1 decimal place (e.g., 4.7, 4.8)
+- Teachers with **no reviews** show **0.0 or "No ratings yet"**
+
+**Rating Display in Teacher Dashboard**:
+
+1. **Dashboard Header**:
+   - Shows average rating with star icon: `⭐ 4.5 (12 reviews)`
+   - If no reviews: `⭐ No ratings yet`
+
+2. **Statistics Overview**:
+   - Rating is included in the dashboard stats
+   - Updates automatically when new reviews are submitted
+
+3. **Teacher Profile Page**:
+   - Displays average rating prominently
+   - Shows total number of reviews
+   - Lists all individual student reviews with ratings and comments
+
+**Rating Updates**:
+- When a student submits a rating, the teacher's average is **automatically recalculated**
+- If a student updates their rating for the same booking, it replaces the old rating
+- The new average is calculated from all reviews (including the updated one)
+- Changes are reflected immediately in the teacher's dashboard
+
+**Example**:
+- Teacher has 3 reviews: 5, 4, 5 stars
+- Average = (5 + 4 + 5) / 3 = 4.7 stars
+- New student rates 3 stars
+- New average = (5 + 4 + 5 + 3) / 4 = 4.25 stars
+
 ## Project Structure
 
 ```
@@ -260,6 +353,7 @@ csd skill bridge/
 - ✅ Responsive design
 - ✅ Payment integration (Stripe)
 - ✅ MongoDB database integration
+- ✅ Teacher rating and review system
 
 ## Troubleshooting
 

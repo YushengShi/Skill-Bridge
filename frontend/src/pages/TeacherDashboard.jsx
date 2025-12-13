@@ -77,7 +77,7 @@ function TeacherDashboard() {
     pendingBookings: 0,
     todayLessons: 0,
     monthlyEarnings: 0,
-    averageRating: 5.0,
+    averageRating: 0, // Default to 0 for teachers with no reviews
     totalReviews: 0,
   });
 
@@ -252,7 +252,7 @@ function TeacherDashboard() {
           pendingBookings: 0,
           todayLessons: 0,
           monthlyEarnings: 0,
-          averageRating: 5.0,
+          averageRating: 0, // Default to 0 for teachers with no reviews
           totalReviews: 0,
         });
         setTodaySchedule([]);
@@ -690,7 +690,11 @@ function TeacherDashboard() {
             <div className="profile-info">
               <span className="name">{teacher?.name}</span>
               <span className="rating">
-                ⭐ {stats.averageRating} ({stats.totalReviews} reviews)
+                {stats.totalReviews > 0 ? (
+                  <>⭐ {stats.averageRating.toFixed(1)} ({stats.totalReviews} {stats.totalReviews === 1 ? 'review' : 'reviews'})</>
+                ) : (
+                  <>⭐ No ratings yet</>
+                )}
               </span>
             </div>
           </div>
