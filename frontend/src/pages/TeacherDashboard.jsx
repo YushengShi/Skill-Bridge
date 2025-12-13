@@ -671,40 +671,14 @@ function TeacherDashboard() {
 
   return (
     <div className="teacher-dashboard">
-      {/* Dashboard Header */}
-      <header className="dashboard-header">
-        <div className="header-left">
-          <h1>Teacher Dashboard</h1>
-          <p className="welcome-text">
-            Welcome back, {teacher?.name}! You have {stats.todayLessons} lessons
-            today.
-          </p>
-        </div>
-        <div className="header-right">
-          <div className="teacher-profile-mini">
-            <img
-              src={teacher?.avatar}
-              alt={teacher?.name}
-              className="avatar-mini"
-            />
-            <div className="profile-info">
-              <span className="name">{teacher?.name}</span>
-              <span className="rating">
-                ⭐ {stats.averageRating} ({stats.totalReviews} reviews)
-              </span>
-            </div>
-          </div>
-          <button
-            className="header-btn settings-btn"
-            onClick={() => navigate("/teacher-profile")}
-          >
-            ⚙️ Settings
-          </button>
-          <button className="header-btn logout-btn" onClick={handleLogout}>
-            Logout
-          </button>
-        </div>
-      </header>
+      {/* Page Title Section */}
+      <div className="dashboard-title-section">
+        <h1>Teacher Dashboard</h1>
+        <p className="welcome-text">
+          Welcome back, {teacher?.name}! You have {stats.todayLessons} lessons
+          today.
+        </p>
+      </div>
 
       {/* Navigation Tabs */}
       <nav className="dashboard-tabs">
