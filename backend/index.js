@@ -2,9 +2,15 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import "dotenv/config";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = 3000;
+
 
 // MongoDB connection
 const mongoDB_URI = "mongodb://localhost:27017/skillbridge";
@@ -19,6 +25,7 @@ app.use(
     credentials: true,
   })
 );
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Stripe webhook route
 import webhookRoutes from "./api/webhook.js";
