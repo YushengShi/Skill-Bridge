@@ -147,7 +147,7 @@ function Login({ setIsAuthenticated, setUserRole }) {
       return;
     }
 
-    const baseUrl = "/api";
+    const baseUrl = `${API_BASE_URL}/api`;
     const rolePath = uiRole === "student" ? "students" : "teachers";
 
     // if student register：POST /api/students

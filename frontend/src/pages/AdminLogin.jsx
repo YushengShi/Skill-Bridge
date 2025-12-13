@@ -24,7 +24,7 @@ export default function AdminLogin({ setIsAuthenticated, setUserRole }) {
 
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
-      
+
       setIsAuthenticated(true);
       setUserRole("admin");
       navigate("/admin-dashboard");
@@ -35,8 +35,12 @@ export default function AdminLogin({ setIsAuthenticated, setUserRole }) {
 
   return (
     <div className="login-container">
-      <form className="login-form" onSubmit={handleLogin} style={{borderTop: '5px solid #d32f2f'}}>
-        <h2 style={{color: '#d32f2f'}}>Admin Portal</h2>
+      <form
+        className="login-form"
+        onSubmit={handleLogin}
+        style={{ borderTop: "5px solid #d32f2f" }}
+      >
+        <h2 style={{ color: "#d32f2f" }}>Admin Portal</h2>
         {error && <div className="error-message">{error}</div>}
         <div className="form-group">
           <label>Admin Email</label>
@@ -56,7 +60,11 @@ export default function AdminLogin({ setIsAuthenticated, setUserRole }) {
             required
           />
         </div>
-        <button type="submit" className="login-btn" style={{backgroundColor: '#d32f2f'}}>
+        <button
+          type="submit"
+          className="login-btn"
+          style={{ backgroundColor: "#d32f2f" }}
+        >
           Login to Console
         </button>
       </form>
