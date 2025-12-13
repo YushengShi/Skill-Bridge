@@ -4,6 +4,13 @@
  */
 
 /**
+ * API Base URL
+ * In development: uses Vite proxy (/api -> localhost:3000)
+ * In production: uses VITE_API_URL environment variable
+ */
+export const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+
+/**
  * Default placeholder avatar for users without a profile picture.
  * Uses a data URI SVG to avoid external dependencies.
  * Shows a simple user silhouette icon in a neutral gray color.
