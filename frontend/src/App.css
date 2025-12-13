@@ -188,6 +188,117 @@
   cursor: not-allowed;
 }
 
+/* Time Slot Selection Styles */
+.date-picker-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+}
+
+.date-picker-section h3,
+.time-slots-section h3 {
+  font-size: 1rem;
+  margin: 0 0 12px 0;
+  color: #333;
+}
+
+.date-picker {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #eee;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.date-picker:focus {
+  outline: none;
+  border-color: #4f46e5;
+}
+
+.time-slots-section {
+  margin-top: 20px;
+}
+
+.loading-slots,
+.no-slots,
+.no-calendar-warning {
+  text-align: center;
+  padding: 24px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  color: #666;
+}
+
+.no-calendar-warning {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.no-calendar-warning p {
+  margin: 4px 0;
+}
+
+.slots-container {
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.date-group {
+  margin-bottom: 16px;
+}
+
+.date-group:last-child {
+  margin-bottom: 0;
+}
+
+.date-header {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #eee;
+}
+
+.time-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.time-slot {
+  padding: 8px 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.time-slot:hover {
+  border-color: #4f46e5;
+  background: #f5f3ff;
+}
+
+.time-slot.selected {
+  border-color: #4f46e5;
+  background: #4f46e5;
+  color: white;
+}
+
+.selected-slot-summary {
+  margin-top: 16px;
+  padding: 12px;
+  background: #e8f5e9;
+  border-radius: 8px;
+  color: #2e7d32;
+  text-align: center;
+}
+
 .notification-content {
   text-align: center;
   max-width: 400px;

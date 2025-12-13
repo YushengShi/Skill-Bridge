@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { DEFAULT_AVATAR } from "../constants";
 import "./AIRecommendations.css";
 
 /**
@@ -343,10 +344,7 @@ export default function AIRecommendations() {
                     <div key={teacher.id || index} className="teacher-rec-card">
                       <div className="match-badge">#{index + 1} Match</div>
                       <img
-                        src={
-                          teacher.avatar ||
-                          `https://i.pravatar.cc/150?img=${index + 1}`
-                        }
+                        src={teacher.avatar || DEFAULT_AVATAR}
                         alt={teacher.name}
                         className="teacher-avatar"
                       />

@@ -45,11 +45,15 @@ import paymentRoutes from "./api/payment.js";
 import teacherRoutes from "./api/teachers.js";
 import studentRoutes from "./api/students.js";
 import aiRoutes from "./api/ai-recommendations.js";
+import calendarRoutes from "./api/calendar.js";
+import authRoutes from "./api/auth.js";
 
 app.use("/api/payment", paymentRoutes);
 app.use("/api/teachers", teacherRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/calendar", calendarRoutes);
+app.use("/api/auth", authRoutes);
 
 /**
  * @swagger
@@ -74,6 +78,14 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
+});
+
+// Keep the process alive
+process.on("SIGTERM", () => {
+  server.close(() => {
+    console.log("Server closed");
+    process.exit(0);
+  });
 });

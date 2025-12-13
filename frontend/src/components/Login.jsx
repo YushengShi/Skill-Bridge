@@ -34,7 +34,49 @@ function Login({ setIsAuthenticated, setUserRole }) {
     if (emailInput && !isSignupMode) {
       emailInput.focus();
     }
-  }, [uiRole, isSignupMode]);
+
+    // Check for OAuth callback parameters
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    const error = params.get("error");
+    const newUser = params.get("newUser");
+
+    if (token) {
+      // OAuth login successful
+      localStorage.setItem("token", token);
+
+      try {
+        const decoded = jwtDecode(token);
+        setUserRole(decoded.role);
+        setIsAuthenticated(true);
+
+        // Clear URL parameters
+        window.history.replaceState({}, "", window.location.pathname);
+
+        if (newUser === "true") {
+          setSuccessMessage("Account created successfully! Redirecting...");
+        } else {
+          setSuccessMessage("Login successful! Redirecting...");
+        }
+
+        setTimeout(() => {
+          if (decoded.role === "teacher") {
+            navigate("/teacher-dashboard");
+          } else {
+            navigate("/student-dashboard");
+          }
+        }, 1500);
+      } catch (decodeError) {
+        console.error("Token decode failed", decodeError);
+        setErrorMessage("Login failed: Invalid token received.");
+      }
+    } else if (error) {
+      // OAuth login failed
+      setErrorMessage(`Login failed: ${decodeURIComponent(error)}`);
+      // Clear URL parameters
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [isSignupMode, setIsAuthenticated, setUserRole, navigate]);
 
   // Password toggle functions
   const togglePassword = (field) => {
@@ -48,21 +90,32 @@ function Login({ setIsAuthenticated, setUserRole }) {
   };
 
   // Social login handlers
-  const handleSocialLogin = (provider) => {
+  const handleSocialLogin = async (provider) => {
     setIsLoading(true);
     setErrorMessage("");
     setSuccessMessage("");
 
-    setTimeout(() => {
-      if (provider === "google") {
-        setSuccessMessage("Redirecting to Google login...");
-        // In a real app, redirect to Google OAuth
-      } else if (provider === "microsoft") {
-        setSuccessMessage("Redirecting to Microsoft login...");
-        // In a real app, redirect to Microsoft OAuth
+    if (provider === "google") {
+      try {
+        const response = await fetch(`/api/auth/google/url?role=${uiRole}`);
+        const data = await response.json();
+
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          setErrorMessage("Failed to get Google login URL");
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Error initiating Google login:", error);
+        setErrorMessage("Failed to connect to Google login");
+        setIsLoading(false);
       }
+    } else if (provider === "microsoft") {
+      setSuccessMessage("Redirecting to Microsoft login...");
+      // In a real app, redirect to Microsoft OAuth
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   // Forgot password handler

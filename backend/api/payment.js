@@ -49,9 +49,30 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 router.post("/create-checkout-session", protect, async (req, res) => {
   // TODO: replace this url
   const YOUR_DOMAIN = "http://localhost:5173"; // replace with frontend domain
-  const { teacherId, lessonType, price, teacherName } = req.body;
+  const {
+    teacherId,
+    lessonType,
+    price,
+    teacherName,
+    scheduledDate,
+    scheduledTime,
+    startDateTime,
+    endDateTime,
+  } = req.body;
   const studentId = req.userId;
+
+  // Validate that a time slot was selected
+  if (!startDateTime || !endDateTime) {
+    return res.status(400).json({
+      error: "Please select a time slot for your lesson",
+    });
+  }
+
   try {
+    // Calculate duration from start and end times
+    const duration =
+      (new Date(endDateTime) - new Date(startDateTime)) / (1000 * 60);
+
     // 1. create a new booking in the database with status 'pending'
     const newBooking = await Booking.create({
       teacherId,
@@ -59,6 +80,12 @@ router.post("/create-checkout-session", protect, async (req, res) => {
       lessonType,
       amount: price,
       status: "pending",
+      scheduledDate: new Date(scheduledDate || startDateTime),
+      scheduledTime: scheduledTime,
+      duration: duration,
+      // Store the calendar times for event creation after payment
+      startDateTime,
+      endDateTime,
     });
 
     const session = await stripe.checkout.sessions.create({
@@ -68,7 +95,9 @@ router.post("/create-checkout-session", protect, async (req, res) => {
             currency: "usd",
             product_data: {
               name: `${lessonType.toUpperCase()} Lesson with ${teacherName}`,
-              description: `Booking ID: ${newBooking._id}`,
+              description: `Booking ID: ${newBooking._id} | ${new Date(
+                startDateTime
+              ).toLocaleDateString()} at ${scheduledTime}`,
             },
             unit_amount: Math.round(price * 100),
           },
@@ -79,6 +108,9 @@ router.post("/create-checkout-session", protect, async (req, res) => {
 
       metadata: {
         bookingId: newBooking._id.toString(),
+        startDateTime,
+        endDateTime,
+        lessonType,
       },
 
       success_url: `${YOUR_DOMAIN}/teachers?success=true&bookingId=${newBooking._id}`,

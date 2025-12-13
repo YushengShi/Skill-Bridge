@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { DEFAULT_AVATAR } from "../constants";
 import "./StudentBookings.css";
 
 export default function StudentBookings() {
@@ -122,9 +123,7 @@ export default function StudentBookings() {
               <div className="booking-header">
                 <div className="teacher-info">
                   <img
-                    src={
-                      booking.teacherId?.avatar || "https://i.pravatar.cc/150"
-                    }
+                    src={booking.teacherId?.avatar || DEFAULT_AVATAR}
                     alt="Teacher"
                     className="teacher-avatar-small"
                   />

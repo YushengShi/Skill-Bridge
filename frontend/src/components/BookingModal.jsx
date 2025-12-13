@@ -1,12 +1,129 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../App.css";
 
 export default function BookingModal({ teacher, onClose }) {
   const [lessonType, setLessonType] = useState("trial");
   const [isLoading, setIsLoading] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(true);
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [calendarConnected, setCalendarConnected] = useState(true);
+  const [selectedDate, setSelectedDate] = useState("");
 
   const currentPrice =
     lessonType === "trial" ? teacher.prices.trial : teacher.prices.standard;
+  const lessonDuration = lessonType === "trial" ? 30 : 60;
+
+  // Fetch available slots when component mounts or date changes
+  useEffect(() => {
+    fetchAvailableSlots();
+  }, [teacher._id, selectedDate]);
+
+  const fetchAvailableSlots = async () => {
+    setLoadingSlots(true);
+    try {
+      const startDate = selectedDate || new Date().toISOString().split("T")[0];
+      const endDate = new Date(
+        new Date(startDate).getTime() + 7 * 24 * 60 * 60 * 1000
+      )
+        .toISOString()
+        .split("T")[0];
+
+      const response = await fetch(
+        `/api/calendar/availability/${teacher._id}?startDate=${startDate}&endDate=${endDate}`
+      );
+      const data = await response.json();
+
+      if (data.calendarConnected === false) {
+        setCalendarConnected(false);
+        setAvailableSlots([]);
+      } else {
+        setCalendarConnected(true);
+        // Process slots to generate bookable time slots
+        const processedSlots = processAvailabilitySlots(
+          data.availableSlots || [],
+          lessonDuration
+        );
+        setAvailableSlots(processedSlots);
+      }
+    } catch (error) {
+      console.error("Error fetching slots:", error);
+      setAvailableSlots([]);
+    } finally {
+      setLoadingSlots(false);
+    }
+  };
+
+  // Process availability slots into bookable time slots
+  const processAvailabilitySlots = (slots, duration) => {
+    const bookableSlots = [];
+
+    slots.forEach((slot) => {
+      const start = new Date(slot.start);
+      const end = new Date(slot.end);
+      let current = new Date(start);
+
+      // Generate slots of the specified duration
+      while (current.getTime() + duration * 60 * 1000 <= end.getTime()) {
+        // Skip slots in the past
+        if (current > new Date()) {
+          bookableSlots.push({
+            id: slot.id,
+            start: new Date(current).toISOString(),
+            end: new Date(
+              current.getTime() + duration * 60 * 1000
+            ).toISOString(),
+          });
+        }
+        current = new Date(current.getTime() + duration * 60 * 1000);
+      }
+    });
+
+    // Sort by date/time
+    return bookableSlots.sort((a, b) => new Date(a.start) - new Date(b.start));
+  };
+
+  // Re-process slots when lesson type changes
+  useEffect(() => {
+    if (availableSlots.length > 0) {
+      fetchAvailableSlots();
+    }
+    setSelectedSlot(null);
+  }, [lessonType]);
+
+  const formatSlotDate = (dateStr) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const formatSlotTime = (startStr, endStr) => {
+    const start = new Date(startStr);
+    const end = new Date(endStr);
+    return `${start.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })} - ${end.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}`;
+  };
+
+  // Group slots by date
+  const groupSlotsByDate = (slots) => {
+    const grouped = {};
+    slots.forEach((slot) => {
+      const dateKey = new Date(slot.start).toDateString();
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = [];
+      }
+      grouped[dateKey].push(slot);
+    });
+    return grouped;
+  };
 
   const handlePayment = async () => {
     const token = localStorage.getItem("token");
@@ -14,6 +131,11 @@ export default function BookingModal({ teacher, onClose }) {
     if (!token) {
       alert("You need to be logged in to book a lesson.");
       onClose();
+      return;
+    }
+
+    if (!selectedSlot) {
+      alert("Please select a time slot for your lesson.");
       return;
     }
 
@@ -30,6 +152,13 @@ export default function BookingModal({ teacher, onClose }) {
           teacherName: teacher.name,
           lessonType: lessonType,
           price: currentPrice,
+          scheduledDate: selectedSlot.start,
+          scheduledTime: new Date(selectedSlot.start).toLocaleTimeString(
+            "en-US",
+            { hour: "2-digit", minute: "2-digit", hour12: false }
+          ),
+          startDateTime: selectedSlot.start,
+          endDateTime: selectedSlot.end,
         }),
       });
 
@@ -57,6 +186,8 @@ export default function BookingModal({ teacher, onClose }) {
       setIsLoading(false);
     }
   };
+
+  const groupedSlots = groupSlotsByDate(availableSlots);
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -94,6 +225,70 @@ export default function BookingModal({ teacher, onClose }) {
             </div>
             <div className="price">${teacher.prices.standard}</div>
           </label>
+
+          {/* Date Selection */}
+          <div className="date-picker-section">
+            <h3>📅 Select a Date</h3>
+            <input
+              type="date"
+              value={selectedDate}
+              min={new Date().toISOString().split("T")[0]}
+              onChange={(e) => {
+                setSelectedDate(e.target.value);
+                setSelectedSlot(null);
+              }}
+              className="date-picker"
+            />
+          </div>
+
+          {/* Time Slot Selection */}
+          <div className="time-slots-section">
+            <h3>🕐 Select a Time Slot</h3>
+
+            {!calendarConnected ? (
+              <div className="no-calendar-warning">
+                <p>⚠️ This teacher hasn't set up their availability yet.</p>
+                <p>Please check back later or contact them directly.</p>
+              </div>
+            ) : loadingSlots ? (
+              <div className="loading-slots">Loading available times...</div>
+            ) : availableSlots.length === 0 ? (
+              <div className="no-slots">
+                <p>No available slots for the selected period.</p>
+                <p>Try selecting a different date.</p>
+              </div>
+            ) : (
+              <div className="slots-container">
+                {Object.entries(groupedSlots).map(([dateKey, slots]) => (
+                  <div key={dateKey} className="date-group">
+                    <div className="date-header">
+                      {formatSlotDate(slots[0].start)}
+                    </div>
+                    <div className="time-slots">
+                      {slots.map((slot, index) => (
+                        <button
+                          key={`${slot.id}-${index}`}
+                          className={`time-slot ${
+                            selectedSlot?.start === slot.start ? "selected" : ""
+                          }`}
+                          onClick={() => setSelectedSlot(slot)}
+                        >
+                          {formatSlotTime(slot.start, slot.end)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {selectedSlot && (
+            <div className="selected-slot-summary">
+              <strong>Selected:</strong> {formatSlotDate(selectedSlot.start)} at{" "}
+              {formatSlotTime(selectedSlot.start, selectedSlot.end)}
+            </div>
+          )}
         </div>
 
         <div className="modal-footer">
@@ -103,9 +298,15 @@ export default function BookingModal({ teacher, onClose }) {
           <button
             className="confirm-btn"
             onClick={handlePayment}
-            disabled={isLoading}
+            disabled={isLoading || !selectedSlot || !calendarConnected}
           >
-            {isLoading ? "Loading..." : "Proceed to Payment"}
+            {isLoading
+              ? "Loading..."
+              : !calendarConnected
+              ? "Not Available"
+              : !selectedSlot
+              ? "Select a Time Slot"
+              : "Proceed to Payment"}
           </button>
         </div>
       </div>

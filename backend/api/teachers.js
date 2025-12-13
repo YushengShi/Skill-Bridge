@@ -5,6 +5,7 @@ import Booking from "../models/Booking.js";
 import jwt from "jsonwebtoken";
 import protect from "../middleware/auth.js";
 import upload from "../middleware/upload.js";
+import { DEFAULT_AVATAR } from "../constants/index.js";
 
 const JWT_SECRET =
   process.env.JWT_SECRET || "your-secret-key-change-in-production";
@@ -59,64 +60,6 @@ router.get("/", async (req, res) => {
     res.json(teachers);
   } catch (error) {
     res.status(500).json({ message: error.message });
-  }
-});
-
-/**
- * @swagger
- * /api/teachers/seed:
- *   get:
- *     summary: Seed database with mock teachers
- *     description: |
- *       Development utility route to populate the database with mock teachers.
- *       **WARNING**: This deletes ALL existing teachers before inserting new ones!
- *     tags: [Teachers]
- *     responses:
- *       200:
- *         description: Teachers seeded successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 msg:
- *                   type: string
- *                   example: "✅ Teachers seeded successfully!"
- *       500:
- *         description: Server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-router.get("/seed", async (req, res) => {
-  const mockTeachers = [
-    {
-      name: "English Teacher Roz",
-      tagline: "Professional Teacher",
-      bio: "I am extremely patient and I love working with beginners.",
-      avatar: "https://i.pravatar.cc/150?img=5",
-      rating: 5.0,
-      lessonCount: 1377,
-      prices: { trial: 8, standard: 24 },
-    },
-    {
-      name: "Paul Interview Coach",
-      tagline: "Business & Interview Expert",
-      bio: "Expert in job interview preparation and business English.",
-      avatar: "https://i.pravatar.cc/150?img=11",
-      rating: 4.9,
-      lessonCount: 850,
-      prices: { trial: 10, standard: 30 },
-    },
-  ];
-
-  try {
-    await Teacher.deleteMany({});
-    await Teacher.insertMany(mockTeachers);
-    res.json({ msg: "✅ Teachers seeded successfully!" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
   }
 });
 
@@ -548,9 +491,7 @@ router.get("/:id/dashboard", protect, async (req, res) => {
                 booking.studentId.lastName || ""
               }`
             : "Unknown Student",
-          studentAvatar:
-            booking.studentId?.avatar ||
-            "https://randomuser.me/api/portraits/lego/1.jpg",
+          studentAvatar: booking.studentId?.avatar || DEFAULT_AVATAR,
           subject: booking.lessonType || "General Lesson",
           time: `${booking.scheduledTime || "TBD"} - ${endTime}`,
           status: isLessonInProgress(booking.scheduledTime, booking.duration)
@@ -569,9 +510,7 @@ router.get("/:id/dashboard", protect, async (req, res) => {
         studentName: booking.studentId?.firstName
           ? `${booking.studentId.firstName} ${booking.studentId.lastName || ""}`
           : "Unknown Student",
-        studentAvatar:
-          booking.studentId?.avatar ||
-          "https://randomuser.me/api/portraits/lego/1.jpg",
+        studentAvatar: booking.studentId?.avatar || DEFAULT_AVATAR,
         subject: booking.lessonType || "General Lesson",
         requestedDate: formatDate(booking.scheduledDate),
         requestedTime: booking.scheduledTime || "TBD",

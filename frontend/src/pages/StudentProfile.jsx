@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { DEFAULT_AVATAR } from "../constants";
 import "./StudentProfile.css";
 
 /**
@@ -104,30 +105,7 @@ export default function StudentProfile({ setIsAuthenticated }) {
    * - status: Current booking status
    * - price: Amount paid/to be paid
    */
-  const [bookings, setBookings] = useState([
-    {
-      id: 1,
-      teacherName: "English Teacher Roz",
-      teacherAvatar: "https://i.pravatar.cc/150?img=5",
-      date: "2024-12-15",
-      time: "10:00 AM",
-      duration: 60,
-      type: "Standard Lesson",
-      status: "upcoming",
-      price: 24,
-    },
-    {
-      id: 2,
-      teacherName: "Paul Interview Coach",
-      teacherAvatar: "https://i.pravatar.cc/150?img=11",
-      date: "2024-12-10",
-      time: "2:00 PM",
-      duration: 30,
-      type: "Trial Lesson",
-      status: "completed",
-      price: 10,
-    },
-  ]);
+  const [bookings, setBookings] = useState([]);
 
   // ==================== UPLOADED FILES DATA ====================
 
@@ -150,28 +128,7 @@ export default function StudentProfile({ setIsAuthenticated }) {
    * - feedback: Teacher's comments (null if not yet reviewed)
    */
   const [selectedFile, setSelectedFile] = useState(null);
-  const [uploadedFiles, setUploadedFiles] = useState([
-    {
-      id: 1,
-      name: "Homework_Week1.pdf",
-      type: "application/pdf",
-      size: "2.4 MB",
-      uploadDate: "2024-12-05",
-      teacherName: "English Teacher Roz",
-      status: "reviewed",
-      feedback: "Great work! Keep practicing your grammar.",
-    },
-    {
-      id: 2,
-      name: "Essay_Draft.docx",
-      type: "application/docx",
-      size: "1.1 MB",
-      uploadDate: "2024-12-08",
-      teacherName: "Paul Interview Coach",
-      status: "pending",
-      feedback: null,
-    },
-  ]);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
 
   // Load profile data
   useEffect(() => {
@@ -194,9 +151,7 @@ export default function StudentProfile({ setIsAuthenticated }) {
           lastName: user.lastName || "",
           email: user.email || "",
           phone: user.phone || "",
-          avatar:
-            user.avatar ||
-            "https://i.pravatar.cc/150?u=" + (user._id || user.id),
+          avatar: user.avatar || DEFAULT_AVATAR,
           bio: user.bio || "",
           learningGoals: user.learningGoals || "",
           preferredLanguage: user.preferredLanguage || "English",

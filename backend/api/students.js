@@ -5,6 +5,7 @@ import Teacher from "../models/Teacher.js";
 import Booking from "../models/Booking.js";
 import protect from "../middleware/auth.js";
 import upload from "../middleware/upload.js";
+import { DEFAULT_AVATAR } from "../constants/index.js";
 
 const router = Router();
 
@@ -716,7 +717,7 @@ router.get("/:id/dashboard", protect, async (req, res) => {
       .map((booking) => ({
         id: booking._id,
         teacherName: booking.teacherId?.name || "Unknown Teacher",
-        teacherAvatar: booking.teacherId?.avatar || "https://i.pravatar.cc/150",
+        teacherAvatar: booking.teacherId?.avatar || DEFAULT_AVATAR,
         subject: booking.lessonType || "General Lesson",
         date: booking.scheduledDate,
         time: booking.scheduledTime || "TBD",
@@ -776,7 +777,7 @@ router.get("/:id/dashboard", protect, async (req, res) => {
     const formattedRecommendedTeachers = recommendedTeachers.map((teacher) => ({
       id: teacher._id,
       name: teacher.name,
-      avatar: teacher.avatar || "https://i.pravatar.cc/150",
+      avatar: teacher.avatar || DEFAULT_AVATAR,
       subject: teacher.tagline || "General Tutor",
       rating: teacher.rating || 5.0,
       price: teacher.prices?.standard || 25,
