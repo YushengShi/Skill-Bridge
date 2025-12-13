@@ -315,12 +315,14 @@ export default function AIRecommendations() {
     return (
       <div className="ai-recommendations">
         <div className="ai-container">
-          <header className="ai-header">
+          <div className="header-card">
             <button className="back-btn" onClick={() => navigate(-1)}>
               ← Back
             </button>
-            <h1>🤖 AI Recommendations</h1>
-          </header>
+            <header className="ai-header">
+              <h1>🤖 AI Recommendations</h1>
+            </header>
+          </div>
 
           <div className="results-container">
             {/* AI Insight Card */}
@@ -428,22 +430,24 @@ export default function AIRecommendations() {
     <div className="ai-recommendations">
       <div className="ai-container">
         {/* Header */}
-        <header className="ai-header">
+        <div className="header-card">
           <button className="back-btn" onClick={() => navigate(-1)}>
             ← Back
           </button>
-          <h1>🤖 Find Your Perfect Teacher</h1>
-          <p className="subtitle">
-            Answer a few questions and let our AI recommend the best teachers
-            for you
-          </p>
-          <button
-            className="chat-mode-btn"
-            onClick={() => navigate("/ai-chat")}
-          >
-            💬 Prefer to chat? Try our AI Chatbot
-          </button>
-        </header>
+          <header className="ai-header">
+            <h1>🤖 Find Your Perfect Teacher</h1>
+            <p className="subtitle">
+              Answer a few questions and let our AI recommend the best teachers
+              for you
+            </p>
+            <button
+              className="chat-mode-btn"
+              onClick={() => navigate("/ai-chat")}
+            >
+              💬 Prefer to chat? Try our AI Chatbot
+            </button>
+          </header>
+        </div>
 
         {/* Progress Bar */}
         <div className="progress-container">

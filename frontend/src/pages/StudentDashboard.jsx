@@ -202,24 +202,11 @@ export default function StudentDashboard({ setIsAuthenticated }) {
 
   return (
     <div className="student-dashboard">
-      {/* ==================== HEADER ==================== */}
-      <header className="dashboard-header">
-        <div className="header-left">
-          <h1>Student Dashboard</h1>
-          <p className="welcome-text">Welcome back! Ready to learn today?</p>
-        </div>
-        <div className="header-right">
-          <button
-            className="header-btn profile-btn"
-            onClick={() => navigate("/profile")}
-          >
-            👤 My Profile
-          </button>
-          <button className="header-btn logout-btn" onClick={handleLogout}>
-            Logout
-          </button>
-        </div>
-      </header>
+      {/* ==================== PAGE TITLE ==================== */}
+      <div className="dashboard-title-section">
+        <h1>Student Dashboard</h1>
+        <p className="welcome-text">Welcome back! Ready to learn today?</p>
+      </div>
 
       {/* ==================== STATS CARDS ==================== */}
       <section className="stats-section">
@@ -349,7 +336,7 @@ export default function StudentDashboard({ setIsAuthenticated }) {
               </button>
               <button
                 className="action-card"
-                onClick={() => navigate("/ai-recommendations")}
+                onClick={() => navigate("/recommendations")}
               >
                 <span className="action-icon">🤖</span>
                 <span className="action-text">AI Suggestions</span>
@@ -459,7 +446,7 @@ export default function StudentDashboard({ setIsAuthenticated }) {
               <p>Our AI assistant can recommend the perfect teacher for you!</p>
               <button
                 className="ai-btn"
-                onClick={() => navigate("/ai-recommendations")}
+                onClick={() => navigate("/recommendations")}
               >
                 Get Recommendations
               </button>

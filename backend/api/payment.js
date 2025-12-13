@@ -13,15 +13,17 @@ router.post("/create-checkout-session", protect, async (req, res) => {
   // TODO: replace this url
   const YOUR_DOMAIN = "http://localhost:5173"; // replace with frontend domain
   const { teacherId, lessonType, price, teacherName } = req.body;
+  const studentId = req.userId;
   try {
     // 1. create a new booking in the database with status 'pending'
     const newBooking = await Booking.create({
       teacherId,
+      studentId,
       lessonType,
       amount: price,
       status: "pending",
     });
-    
+
     const session = await stripe.checkout.sessions.create({
       line_items: [
         {
@@ -39,11 +41,11 @@ router.post("/create-checkout-session", protect, async (req, res) => {
       mode: "payment",
 
       metadata: {
-        bookingId: newBooking._id.toString()
+        bookingId: newBooking._id.toString(),
       },
 
-      success_url: `${YOUR_DOMAIN}/teacherhome?success=true&bookingId=${newBooking._id}`,
-      cancel_url: `${YOUR_DOMAIN}/teacherhome?canceled=true`,
+      success_url: `${YOUR_DOMAIN}/teachers?success=true&bookingId=${newBooking._id}`,
+      cancel_url: `${YOUR_DOMAIN}/teachers?canceled=true`,
     });
 
     res.json({ url: session.url });

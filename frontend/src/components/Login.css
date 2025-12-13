@@ -302,7 +302,6 @@
   color: #dc3545;
   font-size: 12px;
   margin-top: 4px;
-}
 
 /* ================================
    RESPONSIVE — LOGIN PAGE
@@ -350,4 +349,27 @@
   .login-container {
     padding: 1rem;
   }
+
+/* Role toggle container styling */
+.role-toggle-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  gap: 10px;
+}
+
+.role-toggle-container button {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.role-toggle-container button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
 }
