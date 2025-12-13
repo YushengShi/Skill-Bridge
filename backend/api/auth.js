@@ -8,13 +8,23 @@ import Teacher from "../models/Teacher.js";
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
+// Validate Google OAuth credentials
+if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+  console.warn("⚠️  Google OAuth credentials not found in environment variables.");
+  console.warn("   Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in your .env file.");
+  console.warn("   Google OAuth login will not work until credentials are configured.");
+}
+
 // Configure Google OAuth Strategy
+const callbackURL = process.env.GOOGLE_CALLBACK_URL || 
+  `${process.env.BACKEND_URL || "http://localhost:3000"}/api/auth/google/callback`;
+
 passport.use(
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "/api/auth/google/callback",
+      callbackURL: callbackURL,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -65,6 +75,13 @@ passport.deserializeUser((user, done) => {
 router.get(
   "/google",
   (req, res, next) => {
+    // Check if credentials are configured
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+      return res.redirect(
+        `${process.env.FRONTEND_URL || "http://localhost:5173"}/login?error=oauth_not_configured`
+      );
+    }
+
     // Store role in session for callback
     if (req.query.role) {
       req.session.oauthRole = req.query.role;
@@ -87,9 +104,27 @@ router.get(
   passport.authenticate("google", { session: false, failureRedirect: "/login?error=google_auth_failed" }),
   async (req, res) => {
     try {
+      console.log("OAuth callback received");
+      console.log("req.user:", req.user);
+      console.log("req.session:", req.session);
+      console.log("req.query:", req.query);
+
+      // Check if Google profile was received
+      if (!req.user) {
+        console.error("No user profile received from Google");
+        return res.redirect(`${process.env.FRONTEND_URL || "http://localhost:5173"}/login?error=no_profile`);
+      }
+
       // Get role from session (stored during initial redirect)
       const role = req.session?.oauthRole || req.query.role || "student";
       const googleProfile = req.user;
+      
+      console.log("Google profile:", {
+        googleId: googleProfile.googleId,
+        email: googleProfile.email,
+        name: googleProfile.name,
+        role: role
+      });
       
       // Clear OAuth role from session
       if (req.session) {
@@ -97,7 +132,17 @@ router.get(
       }
 
       if (!role || !["student", "teacher"].includes(role)) {
+        console.error("Invalid role:", role);
         return res.redirect(`${process.env.FRONTEND_URL || "http://localhost:5173"}/login?error=invalid_role`);
+      }
+
+      // Validate Google profile has required fields
+      if (!googleProfile.googleId || !googleProfile.email) {
+        console.error("Missing required Google profile fields:", {
+          hasGoogleId: !!googleProfile.googleId,
+          hasEmail: !!googleProfile.email
+        });
+        return res.redirect(`${process.env.FRONTEND_URL || "http://localhost:5173"}/login?error=incomplete_profile`);
       }
 
       let user;
@@ -122,27 +167,66 @@ router.get(
 
       // Create new user if doesn't exist
       if (!user) {
+        console.log("Creating new user with role:", role);
         if (role === "student") {
+          // Ensure firstName and lastName exist (required fields)
+          // Handle cases where Google only provides a single name
+          let firstName = googleProfile.firstName || "";
+          let lastName = googleProfile.lastName || "";
+          
+          // If we have the full name, try to split it
+          if (googleProfile.name) {
+            const nameParts = googleProfile.name.trim().split(/\s+/);
+            if (nameParts.length > 0 && !firstName) {
+              firstName = nameParts[0];
+            }
+            if (nameParts.length > 1 && !lastName) {
+              lastName = nameParts.slice(1).join(" ");
+            }
+          }
+          
+          // Fallback: if still no firstName, use email username or "User"
+          if (!firstName || firstName.trim() === "") {
+            firstName = googleProfile.email.split("@")[0] || "User";
+          }
+          
+          // Fallback: if still no lastName, use a default or email domain
+          if (!lastName || lastName.trim() === "") {
+            lastName = "User"; // Default value since it's required
+          }
+          
+          console.log("Creating student with:", { firstName, lastName, email: googleProfile.email });
+          
           user = new Student({
             googleId: googleProfile.googleId,
             email: googleProfile.email.toLowerCase(),
-            firstName: googleProfile.firstName,
-            lastName: googleProfile.lastName,
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
             avatar: googleProfile.avatar || "",
             isActive: true,
             isVerified: true, // Google emails are verified
           });
         } else {
+          // Ensure name exists (required field)
+          const name = googleProfile.name || `${googleProfile.firstName || ""} ${googleProfile.lastName || ""}`.trim() || "Teacher";
+          
           user = new Teacher({
             googleId: googleProfile.googleId,
             email: googleProfile.email.toLowerCase(),
-            name: googleProfile.name,
+            name: name,
             avatar: googleProfile.avatar || "",
             isActive: true,
             isApproved: false, // Teachers need approval
           });
         }
-        await user.save();
+        
+        try {
+          await user.save();
+          console.log("User created successfully:", user._id);
+        } catch (saveError) {
+          console.error("Error saving user:", saveError);
+          throw saveError;
+        }
       }
 
       // Check if account is banned
@@ -190,7 +274,19 @@ router.get(
       res.redirect(`${frontendUrl}/auth/callback?token=${token}&role=${role}&user=${userDataEncoded}`);
     } catch (error) {
       console.error("Google OAuth callback error:", error);
-      res.redirect(`${process.env.FRONTEND_URL || "http://localhost:5173"}/login?error=oauth_error`);
+      console.error("Error stack:", error.stack);
+      console.error("Error message:", error.message);
+      
+      // Provide more specific error information
+      let errorType = "oauth_error";
+      if (error.name === "ValidationError") {
+        errorType = "validation_error";
+        console.error("Validation errors:", error.errors);
+      } else if (error.name === "MongoServerError") {
+        errorType = "database_error";
+      }
+      
+      res.redirect(`${process.env.FRONTEND_URL || "http://localhost:5173"}/login?error=${errorType}`);
     }
   }
 );

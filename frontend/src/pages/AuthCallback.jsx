@@ -7,55 +7,56 @@ function AuthCallback({ setIsAuthenticated, setUserRole }) {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    const token = searchParams.get("token");
-    const role = searchParams.get("role");
-    const error = searchParams.get("error");
+    const processAuth = async () => {
+      const token = searchParams.get("token");
+      const role = searchParams.get("role");
+      const error = searchParams.get("error");
 
-    if (error) {
-      // Handle OAuth errors
-      console.error("OAuth error:", error);
-      navigate(`/login?error=${error}`);
-      return;
-    }
+      console.log("AuthCallback - Processing auth:", { token: token ? "present" : "missing", role, error });
 
-    if (token && role) {
+      if (error) {
+        // Handle OAuth errors
+        console.error("OAuth error:", error);
+        navigate(`/login?error=${error}`);
+        return;
+      }
+
+      if (!token || !role) {
+        console.error("Missing token or role:", { token: !!token, role });
+        navigate("/login?error=missing_token");
+        return;
+      }
+
       try {
         // Decode and validate token
         const decoded = jwtDecode(token);
+        console.log("Token decoded successfully:", { id: decoded.id, role: decoded.role });
         
         // Store token
         localStorage.setItem("token", token);
         
         // Get user data from URL params (sent from backend)
         const userDataParam = searchParams.get("user");
+        let userData = null;
+
         if (userDataParam) {
           try {
-            const userData = JSON.parse(decodeURIComponent(userDataParam));
+            userData = JSON.parse(decodeURIComponent(userDataParam));
+            console.log("User data from URL:", userData);
             localStorage.setItem("user", JSON.stringify(userData));
-            
-            // Update app state
-            setUserRole(role);
-            setIsAuthenticated(true);
-            
-            // Redirect to appropriate dashboard
-            if (role === "teacher") {
-              navigate("/teacher-dashboard");
-            } else {
-              navigate("/student-dashboard");
-            }
-            return;
           } catch (parseError) {
-            console.error("Error parsing user data:", parseError);
+            console.error("Error parsing user data from URL:", parseError);
           }
         }
         
-        // Fallback: Fetch user data from backend if not in URL
-        const fetchUserData = async () => {
+        // If no user data from URL, fetch from backend
+        if (!userData) {
           try {
             const endpoint = role === "teacher" 
               ? `/api/teachers/${decoded.id}` 
               : `/api/students/${decoded.id}`;
             
+            console.log("Fetching user data from:", endpoint);
             const response = await fetch(endpoint, {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -63,36 +64,42 @@ function AuthCallback({ setIsAuthenticated, setUserRole }) {
             });
 
             if (response.ok) {
-              const userData = await response.json();
+              userData = await response.json();
+              console.log("User data fetched:", userData);
               localStorage.setItem("user", JSON.stringify(userData));
-              
-              // Update app state
-              setUserRole(role);
-              setIsAuthenticated(true);
-              
-              // Redirect to appropriate dashboard
-              if (role === "teacher") {
-                navigate("/teacher-dashboard");
-              } else {
-                navigate("/student-dashboard");
-              }
             } else {
-              throw new Error("Failed to fetch user data");
+              const errorText = await response.text();
+              console.error("Failed to fetch user data:", response.status, errorText);
+              throw new Error(`Failed to fetch user data: ${response.status}`);
             }
           } catch (error) {
             console.error("Error fetching user data:", error);
             navigate("/login?error=fetch_user_failed");
+            return;
           }
-        };
+        }
 
-        fetchUserData();
+        // Update app state BEFORE navigation
+        console.log("Setting authentication state:", { role, authenticated: true });
+        
+        // Update state and wait for it to propagate
+        setUserRole(role);
+        setIsAuthenticated(true);
+        
+        // Use window.location for a hard redirect to ensure state is read from localStorage
+        // This ensures the App component's useEffect will pick up the token
+        setTimeout(() => {
+          console.log("Navigating to dashboard...");
+          window.location.href = "/dashboard";
+        }, 200);
+        
       } catch (error) {
         console.error("Token decode error:", error);
         navigate("/login?error=invalid_token");
       }
-    } else {
-      navigate("/login?error=missing_token");
-    }
+    };
+
+    processAuth();
   }, [searchParams, navigate, setIsAuthenticated, setUserRole]);
 
   return (

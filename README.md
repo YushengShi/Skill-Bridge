@@ -420,7 +420,7 @@ csd skill bridge/
 - ✅ Server-side logout with session invalidation
 - ✅ Form validation
 - ✅ Password visibility toggle
-- ✅ **Google OAuth login** - Free social authentication (see setup guide)
+- ✅ **Google OAuth login** - Free social authentication with seamless account linking
 - ✅ Responsive design
 - ✅ Payment integration (Stripe)
 - ✅ MongoDB database integration
@@ -453,9 +453,36 @@ cd backend
 npm start
 ```
 
-## Google OAuth Setup Guide
+## Google OAuth Authentication
+
+### Overview
+
+This application supports **Google OAuth 2.0** for social login, allowing users to sign in with their Google accounts instead of creating a separate password. This feature is **completely free** and provides a seamless authentication experience.
 
 ### ✅ Assessment: Google OAuth is **100% FREE**
+
+- **Free Tier**: Unlimited users, 100 requests/second
+- **No Credit Card Required**
+- **Paid Only If**: Exceeding 100 req/sec (unlikely for most apps)
+
+### How Google OAuth Works
+
+1. **User clicks "Google" button** on login page
+2. **Redirects to Google** for authentication
+3. **User approves** access to their Google profile
+4. **Google redirects back** to your app with user information
+5. **App creates/links account** automatically
+6. **User is logged in** with JWT token (same as email/password login)
+
+### Key Features
+
+- ✅ **Account Linking**: If a user already has an account with the same email, Google OAuth will link to it
+- ✅ **Automatic Account Creation**: New users are created automatically with Google profile data
+- ✅ **Role Support**: Works for both students and teachers
+- ✅ **Seamless Integration**: Uses the same JWT token system as email/password login
+- ✅ **Profile Data**: Automatically imports name, email, and avatar from Google
+
+### Google OAuth Setup Guide
 
 - **Free Tier**: Unlimited users, 100 requests/second
 - **No Credit Card Required**
@@ -497,7 +524,13 @@ Add to `backend/.env`:
 GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 FRONTEND_URL=http://localhost:5173
+BACKEND_URL=http://localhost:3000
 ```
+
+**Important**: 
+- Make sure the `.env` file is in the `backend/` directory
+- Restart your backend server after adding these variables
+- The `BACKEND_URL` is used to construct the callback URL
 
 #### 4. Update Backend CORS (if needed)
 
@@ -522,26 +555,30 @@ app.use(
 6. Complete Google OAuth flow
 7. Should redirect back and log you in!
 
-### 🔧 How It Works
+### 🔧 Technical Flow
 
-1. **User clicks "Google" button** → Redirects to `/api/auth/google?role=student`
-2. **Google OAuth flow** → User authenticates with Google
-3. **Callback** → `/api/auth/google/callback` receives Google profile
-4. **User creation/linking**:
-   - If user exists with Google ID → Login
-   - If user exists with email → Link Google account
-   - If new user → Create account
-5. **JWT token generated** → Same as email/password login
-6. **Redirect to frontend** → `/auth/callback?token=...&role=...`
-7. **Frontend stores token** → User is logged in!
+1. **User clicks "Google" button** → Redirects to `/api/auth/google?role=student` (or `teacher`)
+2. **Google OAuth flow** → User authenticates with Google and grants permissions
+3. **Callback received** → `/api/auth/google/callback` receives Google profile data
+4. **User lookup/creation**:
+   - **If user exists with Google ID** → Direct login
+   - **If user exists with same email** → Link Google account to existing account
+   - **If new user** → Create new account with Google profile data
+5. **JWT token generated** → Same token system as email/password authentication
+6. **Session created** → Token stored in server-side session for logout capability
+7. **Redirect to frontend** → `/auth/callback?token=...&role=...&user=...`
+8. **Frontend processes** → Stores token, updates app state, redirects to dashboard
+9. **User logged in** → Full access to application features
 
-### 🎯 Features
+### 🎯 Benefits
 
-- ✅ **Free** - No cost for normal usage
-- ✅ **Secure** - Uses Google's OAuth 2.0
-- ✅ **Seamless** - Works with existing JWT workflow
-- ✅ **Account Linking** - Links Google to existing email accounts
+- ✅ **Free** - No cost for normal usage (100 requests/second limit)
+- ✅ **Secure** - Uses Google's OAuth 2.0 standard
+- ✅ **Seamless** - Works with existing JWT workflow, no code changes needed
+- ✅ **Account Linking** - Automatically links Google to existing email accounts
 - ✅ **Role Support** - Supports both student and teacher roles
+- ✅ **User-Friendly** - No need to remember another password
+- ✅ **Profile Import** - Automatically imports name, email, and profile picture
 
 ### ⚠️ Important Notes
 
@@ -563,16 +600,43 @@ app.use(
 - Check authorized redirect URIs in Google Console
 - Must match exactly: `http://localhost:3000/api/auth/google/callback`
 
-**Error: "invalid_client"**
-- Verify `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env`
-- Make sure credentials are for the correct project
+**Error: "invalid_client" or "Error 401: invalid_client"**
+- **Most Common Cause**: Environment variables not loaded
+  - Make sure `.env` file is in `backend/` directory (not root)
+  - Restart your backend server after adding/updating `.env` file
+  - Verify variables are set: `echo $GOOGLE_CLIENT_ID` (won't work, but check file directly)
+- **Check credentials**:
+  - Verify `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env` file
+  - Make sure there are no extra spaces or quotes around the values
+  - Example format: `GOOGLE_CLIENT_ID=123456789-abc.apps.googleusercontent.com` (no quotes)
+- **Verify in Google Console**:
+  - Go to [Google Cloud Console](https://console.cloud.google.com/)
+  - Check that the Client ID matches exactly
+  - Make sure the OAuth consent screen is configured
+- **Check callback URL**:
+  - Must match exactly in Google Console: `http://localhost:3000/api/auth/google/callback`
+  - If using production, update `BACKEND_URL` in `.env`
 
 **User not created**
 - Check MongoDB connection
-- Check console logs for errors
+- Check backend console logs for detailed error messages
 - Verify Student/Teacher models have `googleId` field
+- Check that required fields (firstName, lastName for students; name for teachers) are being set
+
+**Validation errors (e.g., "lastName is required")**
+- The OAuth handler automatically provides default values for missing fields
+- If you see validation errors, check backend console for detailed logs
+- The system uses "User" as default lastName if Google doesn't provide one
+
+### 🔐 Security Considerations
+
+- **OAuth Credentials**: Never commit `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to version control
+- **Environment Variables**: Store credentials in `backend/.env` file (already in `.gitignore`)
+- **HTTPS in Production**: Always use HTTPS for OAuth callbacks in production
+- **Token Security**: OAuth uses the same JWT token system as email/password, with same security measures
 
 ### 📚 Resources
 
 - [Google OAuth 2.0 Documentation](https://developers.google.com/identity/protocols/oauth2)
 - [Passport Google Strategy](http://www.passportjs.org/packages/passport-google-oauth20/)
+- [Google Cloud Console](https://console.cloud.google.com/) - Manage OAuth credentials
