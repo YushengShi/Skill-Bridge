@@ -4,6 +4,7 @@ import Student from "../models/Student.js";
 import Teacher from "../models/Teacher.js";
 import Booking from "../models/Booking.js";
 import protect from "../middleware/auth.js";
+import upload from "../middleware/upload.js";
 
 const router = Router();
 
@@ -184,32 +185,40 @@ router.get("/:id",protect, async (req, res) => {
  * @returns {Object} 404 if student not found
  * @returns {Object} 400 for validation errors
  */
-router.put("/:id", protect, async (req, res) => {
+router.put("/:id", protect, upload.single('avatar'), async (req, res) => {
   if (req.userId !== req.params.id) {
-    return res
-      .status(403)
-      .json({ message: "Not authorized to update this profile" });
+    return res.status(403).json({ message: "Not authorized" });
   }
+
   try {
-    // Whitelist of fields that can be updated
-    // Note: email and password are NOT included for security
+    let notifications = req.body.notifications;
+    if (typeof notifications === 'string') {
+        try {
+            notifications = JSON.parse(notifications);
+        } catch (e) {
+            console.error("JSON Parse Error:", e);
+        }
+    }
+
     const updateFields = {
       firstName: req.body.firstName,
       lastName: req.body.lastName,
       phone: req.body.phone,
-      avatar: req.body.avatar,
       bio: req.body.bio,
       learningGoals: req.body.learningGoals,
       preferredLanguage: req.body.preferredLanguage,
       timezone: req.body.timezone,
       skillLevel: req.body.skillLevel,
-      interests: req.body.interests,
-      notifications: req.body.notifications,
+      notifications: notifications, 
     };
 
-    // Remove undefined fields
-    Object.keys(updateFields).forEach(
-      (key) => updateFields[key] === undefined && delete updateFields[key]
+    if (req.file) {
+      const cleanPath = req.file.filename.replace(/\\/g, "/");
+      updateFields.avatar = `http://localhost:3000/uploads/${cleanPath}`;
+    }
+
+    Object.keys(updateFields).forEach(key => 
+      updateFields[key] === undefined && delete updateFields[key]
     );
 
     const updatedStudent = await Student.findByIdAndUpdate(
@@ -218,19 +227,12 @@ router.put("/:id", protect, async (req, res) => {
       { new: true, runValidators: true }
     ).select("-password");
 
-    if (!updatedStudent) {
-      return res.status(404).json({ message: "Student not found" });
-    }
-
     res.json(updatedStudent);
   } catch (error) {
-    if (error.kind === "ObjectId") {
-      return res.status(404).json({ message: "Student not found" });
-    }
-    res.status(400).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: error.message });
   }
 });
-
 /**
  * DELETE /api/students/:id
  *
