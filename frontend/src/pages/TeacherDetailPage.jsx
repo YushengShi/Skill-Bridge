@@ -14,7 +14,7 @@ export default function TeacherDetailPage() {
   useEffect(() => {
     const fetchTeacher = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/api/teachers/${id}`);
+        const res = await fetch(`/api/teachers/${id}`);
         if (!res.ok) throw new Error("Teacher not found");
         const data = await res.json();
         setTeacher(data);
@@ -32,10 +32,6 @@ export default function TeacherDetailPage() {
 
   return (
     <div className="tdp-page">
-      <header className="tdp-header">
-         <div className="tdp-logo" style={{cursor: 'pointer'}} onClick={() => navigate('/teachers')}>← Back to Teachers</div>
-      </header>
-
       <main className="tdp-container">
         {/* Main Content (Left on Desktop, Top on Mobile) */}
         <section className="tdp-main">
@@ -43,10 +39,10 @@ export default function TeacherDetailPage() {
           {/* Profile Header Card */}
           <div className="tdp-profile-card">
             <div className="tdp-avatar-wrap">
-              <img 
-                className="tdp-avatar" 
-                src={teacher.avatar || "https://i.pravatar.cc/150"} 
-                alt={teacher.name} 
+              <img
+                className="tdp-avatar"
+                src={teacher.avatar}
+                alt={teacher.name}
               />
             </div>
 
@@ -55,21 +51,14 @@ export default function TeacherDetailPage() {
               <p className="tdp-tagline">{teacher.tagline || "Professional Teacher"}</p>
 
               <div className="tdp-meta">
-                <span>⭐ <strong>{teacher.rating?.toFixed(1) || "5.0"}</strong></span>
-                <span>•</span>
-                <span>{teacher.reviewCount || 0} reviews</span>
+                <span>
+                  ⭐ <strong>{teacher.rating ?? "—"}</strong>
+                </span>
                 <span>•</span>
                 <span>{teacher.lessonCount || 0} lessons</span>
               </div>
-              
-              <div className="tdp-actions">
-                 {/* Badges / Languages */}
-                 {teacher.languages && teacher.languages.length > 0 && (
-                    <div style={{fontSize: '14px', color: '#4b5563', marginTop: '8px'}}>
-                       <strong>Speaks:</strong> {teacher.languages.join(", ")}
-                    </div>
-                 )}
-              </div>
+
+              <div className="tdp-actions"></div>
             </div>
           </div>
 
@@ -99,23 +88,14 @@ export default function TeacherDetailPage() {
 
           {/* Reviews */}
           <div className="tdp-card">
-            <h2>Student Reviews ({teacher.reviews?.length || 0})</h2>
-            {teacher.reviews && teacher.reviews.length > 0 ? (
-               <div className="reviews-list">
-                  {teacher.reviews.map((review, idx) => (
-                     <div key={idx} className="review-item">
-                        <div className="review-head">
-                           <strong>{review.studentName || "Student"}</strong> 
-                           <span style={{color:'#fbbf24', marginLeft:'6px'}}>{"⭐".repeat(review.rating)}</span>
-                           <span style={{color:'#9ca3af', fontSize:'12px', marginLeft:'auto'}}>{new Date(review.date).toLocaleDateString()}</span>
-                        </div>
-                        <p style={{marginTop:'4px', color:'#4b5563', fontStyle:'italic'}}>"{review.comment}"</p>
-                     </div>
-                  ))}
-               </div>
-            ) : (
-               <p style={{color: '#9ca3af', fontStyle:'italic'}}>No reviews yet.</p>
-            )}
+            <h2>Student Reviews</h2>
+            {/* If you have reviews array, map them. Example below is placeholder */}
+            <div className="review">
+              <div className="review-head">
+                <strong>Michael Chen</strong> • 5.0 • 2 weeks ago
+              </div>
+              <p>"Great teacher..."</p>
+            </div>
           </div>
         </section>
 
@@ -135,35 +115,9 @@ export default function TeacherDetailPage() {
               <div className="price">${teacher.prices?.trial ?? "—"}</div>
             </div>
             <div className="price-row">
-              <div>Standard (60 min)</div>
+              <div>Single (60 min)</div>
               <div className="price">${teacher.prices?.standard ?? "—"}</div>
             </div>
-
-            <button 
-               className="tdp-btn tdp-btn-primary tdp-full"
-               onClick={() => setShowBookingModal(true)}
-            >
-               Check Availability
-            </button>
-            
-            <div style={{textAlign: 'center', fontSize: '13px', color: '#9ca3af', marginTop: '12px'}}>
-               ⚡ Responds within {teacher.responseTime || "24 hours"}
-            </div>
-
-            {/* Available Days Preview */}
-            {teacher.availability && Object.values(teacher.availability).some(d => d.length > 0) && (
-               <div style={{marginTop: '20px', borderTop: '1px dashed #eef2f7', paddingTop: '15px'}}>
-                  <h4 style={{margin: '0 0 10px 0', fontSize: '14px', color: '#6b7280'}}>Available Days</h4>
-                  <div style={{display: 'flex', flexWrap: 'wrap', gap: '6px'}}>
-                     {Object.keys(teacher.availability).filter(day => teacher.availability[day].length > 0).map(day => (
-                        <span key={day} style={{background:'#eff6ff', color:'#1d4ed8', fontSize:'12px', padding:'3px 8px', borderRadius:'4px', textTransform:'capitalize'}}>
-                           {day.slice(0,3)}
-                        </span>
-                     ))}
-                  </div>
-               </div>
-            )}
-
           </div>
         </aside>
       </main>

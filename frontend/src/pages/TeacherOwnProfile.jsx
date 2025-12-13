@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import "./StudentProfile.css"; // 复用样式
+import "./StudentProfile.css";
 
 export default function TeacherOwnProfile({ setIsAuthenticated }) {
   const navigate = useNavigate();
@@ -11,6 +11,8 @@ export default function TeacherOwnProfile({ setIsAuthenticated }) {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  
+  const [selectedFile, setSelectedFile] = useState(null);
 
   // Teacher Data State
   const [profile, setProfile] = useState({
@@ -22,20 +24,17 @@ export default function TeacherOwnProfile({ setIsAuthenticated }) {
     bio: "",
     location: "",
     education: "",
-    
-    // 🌟 新增字段初始化
     teachingStyle: "",
-    specializations: [], // Array
-    
+    videoUrl: "",
     skills: [], 
     languages: [],
+    specializations: [],
     prices: { trial: 0, standard: 0 },
     availability: {
       monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
     }
   });
 
-  // Load Data
   useEffect(() => {
     const fetchProfile = async () => {
       const userStr = localStorage.getItem("user");
@@ -59,10 +58,9 @@ export default function TeacherOwnProfile({ setIsAuthenticated }) {
           setProfile(prev => ({
             ...prev,
             ...data,
-            // 确保数组不为 null
             skills: data.skills || [],
             languages: data.languages || [],
-            specializations: data.specializations || [], // 🌟 加载 specializations
+            specializations: data.specializations || [],
             prices: data.prices || { trial: 10, standard: 25 },
             availability: data.availability || prev.availability
           }));
@@ -75,7 +73,6 @@ export default function TeacherOwnProfile({ setIsAuthenticated }) {
     fetchProfile();
   }, [navigate]);
 
-  // Handle Input Changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setProfile(prev => ({ ...prev, [name]: value }));
@@ -89,7 +86,6 @@ export default function TeacherOwnProfile({ setIsAuthenticated }) {
     }));
   };
 
-  // Handle Array Inputs (Skills, Languages, Specializations)
   const handleArrayChange = (e) => {
     const { name, value } = e.target;
     setProfile(prev => ({
@@ -102,6 +98,7 @@ export default function TeacherOwnProfile({ setIsAuthenticated }) {
     const file = e.target.files?.[0];
     if (file) {
       setProfile(prev => ({ ...prev, avatar: URL.createObjectURL(file) }));
+      setSelectedFile(file);
     }
   };
 
@@ -112,13 +109,34 @@ export default function TeacherOwnProfile({ setIsAuthenticated }) {
       const user = JSON.parse(localStorage.getItem("user"));
       const userId = user._id || user.id;
 
+      // 
+      const formData = new FormData();
+      formData.append("name", profile.name);
+      formData.append("phone", profile.phone);
+      formData.append("tagline", profile.tagline);
+      formData.append("bio", profile.bio);
+      formData.append("location", profile.location);
+      formData.append("education", profile.education);
+      formData.append("teachingStyle", profile.teachingStyle);
+      
+      formData.append("prices", JSON.stringify(profile.prices));
+      formData.append("availability", JSON.stringify(profile.availability));
+      formData.append("skills", JSON.stringify(profile.skills));
+      formData.append("languages", JSON.stringify(profile.languages));
+      formData.append("specializations", JSON.stringify(profile.specializations));
+
+      // 附加文件
+      if (selectedFile) {
+        formData.append("avatar", selectedFile);
+      }
+
+      // 发送请求 (注意：不要设置 'Content-Type': 'application/json'，让浏览器自动设置 multipart/form-data)
       const response = await fetch(`http://localhost:3000/api/teachers/${userId}`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify(profile)
+        body: formData
       });
 
       if (!response.ok) throw new Error("Update failed");
@@ -130,13 +148,13 @@ export default function TeacherOwnProfile({ setIsAuthenticated }) {
       setIsEditing(false);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
+      console.error(error);
       alert("Failed to save profile: " + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Schedule Logic
   const handleAddSlot = (day) => {
     const time = prompt("Enter time (e.g., 09:00):");
     if (time && /^\d{2}:\d{2}$/.test(time)) {
@@ -248,7 +266,6 @@ export default function TeacherOwnProfile({ setIsAuthenticated }) {
                   <textarea name="bio" value={profile.bio} onChange={handleChange} disabled={!isEditing} rows={5} />
                 </div>
 
-                {/* 🌟 新增：Teaching Style */}
                 <div className="form-group full-width">
                   <label>Teaching Style</label>
                   <textarea 
@@ -261,7 +278,6 @@ export default function TeacherOwnProfile({ setIsAuthenticated }) {
                   />
                 </div>
 
-                {/* 🌟 价格设置 */}
                 <div className="form-row highlight-box" style={{background: '#f0f9ff', padding: '15px', borderRadius: '8px', border: '1px solid #bde0fe', marginBottom: '20px'}}>
                   <div className="form-group">
                     <label>Trial Price ($) - 30 min</label>
@@ -273,7 +289,6 @@ export default function TeacherOwnProfile({ setIsAuthenticated }) {
                   </div>
                 </div>
 
-                {/* 技能、语言、专长 */}
                 <div className="form-row">
                   <div className="form-group">
                      <label>Skills (Comma separated)</label>
@@ -299,7 +314,6 @@ export default function TeacherOwnProfile({ setIsAuthenticated }) {
                   </div>
                 </div>
 
-                {/* 🌟 新增：Specializations */}
                 <div className="form-group full-width">
                    <label>Specializations (Comma separated)</label>
                    <input 
@@ -320,7 +334,7 @@ export default function TeacherOwnProfile({ setIsAuthenticated }) {
             </div>
           )}
 
-          {/* Availability Tab 和 Settings Tab 保持原样 */}
+          {/* Availability Tab */}
           {activeTab === "availability" && (
              <div className="profile-section">
                 <div className="section-header">

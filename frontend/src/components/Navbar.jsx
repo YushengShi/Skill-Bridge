@@ -122,6 +122,17 @@ function Navbar({
               <li className="nav-item">
                 <Link
                   className={`nav-link ${
+                    location.pathname === "/my-bookings" ? "active" : ""
+                  }`}
+                  to="/my-bookings"
+                >
+                  <i className="bi bi-calendar-check me-1"></i>
+                  My Bookings
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link
+                  className={`nav-link ${
                     location.pathname === "/recommendations" ? "active" : ""
                   }`}
                   to="/recommendations"
@@ -165,12 +176,12 @@ function Navbar({
               <li className="nav-item">
                 <Link
                   className={`nav-link ${
-                    location.pathname === "/teachers" ? "active" : ""
+                    location.pathname === "/profile" ? "active" : ""
                   }`}
-                  to="/teachers"
+                  to="/profile"
                 >
-                  <i className="bi bi-people me-1"></i>
-                  Browse Teachers
+                  <i className="bi bi-person me-1"></i>
+                  My Profile
                 </Link>
               </li>
             </ul>

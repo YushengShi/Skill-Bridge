@@ -30,7 +30,7 @@ function Login({ setIsAuthenticated, setUserRole }) {
     setErrorMessage("");
     setSuccessMessage("");
     // Auto-focus on email field when page loads
-    const emailInput = document.getElementById('email');
+    const emailInput = document.getElementById("email");
     if (emailInput && !isSignupMode) {
       emailInput.focus();
     }
@@ -38,11 +38,11 @@ function Login({ setIsAuthenticated, setUserRole }) {
 
   // Password toggle functions
   const togglePassword = (field) => {
-    if (field === 'password') {
+    if (field === "password") {
       setShowPassword(!showPassword);
-    } else if (field === 'signupPassword') {
+    } else if (field === "signupPassword") {
       setShowSignupPassword(!showSignupPassword);
-    } else if (field === 'confirmPassword') {
+    } else if (field === "confirmPassword") {
       setShowConfirmPassword(!showConfirmPassword);
     }
   };
@@ -52,13 +52,13 @@ function Login({ setIsAuthenticated, setUserRole }) {
     setIsLoading(true);
     setErrorMessage("");
     setSuccessMessage("");
-    
+
     setTimeout(() => {
-      if (provider === 'google') {
-        setSuccessMessage('Redirecting to Google login...');
+      if (provider === "google") {
+        setSuccessMessage("Redirecting to Google login...");
         // In a real app, redirect to Google OAuth
-      } else if (provider === 'microsoft') {
-        setSuccessMessage('Redirecting to Microsoft login...');
+      } else if (provider === "microsoft") {
+        setSuccessMessage("Redirecting to Microsoft login...");
         // In a real app, redirect to Microsoft OAuth
       }
       setIsLoading(false);
@@ -68,10 +68,10 @@ function Login({ setIsAuthenticated, setUserRole }) {
   // Forgot password handler
   const handleForgotPassword = () => {
     if (!email) {
-      setErrorMessage('Please enter your email address first.');
+      setErrorMessage("Please enter your email address first.");
       return;
     }
-    setSuccessMessage('Password reset instructions sent to your email.');
+    setSuccessMessage("Password reset instructions sent to your email.");
   };
 
   const handleAuth = async (e) => {
@@ -86,7 +86,7 @@ function Login({ setIsAuthenticated, setUserRole }) {
       return;
     }
 
-    const baseUrl = "http://localhost:3000/api";
+    const baseUrl = "/api";
     const rolePath = uiRole === "student" ? "students" : "teachers";
 
     // if student register：POST /api/students
@@ -142,7 +142,7 @@ function Login({ setIsAuthenticated, setUserRole }) {
       } else {
         // Store remembered email if checkbox is checked
         if (rememberMe) {
-          localStorage.setItem('rememberedEmail', email);
+          localStorage.setItem("rememberedEmail", email);
         }
         // Store authentication data in localStorage for persistence across refreshes
         localStorage.setItem("token", data.token); // JWT for API auth
@@ -229,25 +229,25 @@ function Login({ setIsAuthenticated, setUserRole }) {
         <div className="login-header">
           <h1 className="login-title">Skill Bridge</h1>
           <p className="login-subtitle">
-            {isSignupMode ? 'Create your account' : 'Sign in to your account'}
+            {isSignupMode ? "Create your account" : "Sign in to your account"}
           </p>
         </div>
-      
-        {errorMessage && (
-          <div className="error-message">
-            {errorMessage}
-          </div>
-        )}
+
+        {errorMessage && <div className="error-message">{errorMessage}</div>}
         {successMessage && (
-          <div className="success-message">
-            {successMessage}
-          </div>
+          <div className="success-message">{successMessage}</div>
         )}
 
         {/* Login Form */}
-        <form id="loginForm" onSubmit={handleAuth} style={{ display: isSignupMode ? 'none' : 'block' }}>
+        <form
+          id="loginForm"
+          onSubmit={handleAuth}
+          style={{ display: isSignupMode ? "none" : "block" }}
+        >
           <div className="form-group">
-            <label htmlFor="email" className="form-label">Email Address</label>
+            <label htmlFor="email" className="form-label">
+              Email Address
+            </label>
             <input
               type="email"
               id="email"
@@ -259,12 +259,14 @@ function Login({ setIsAuthenticated, setUserRole }) {
               required
             />
           </div>
-          
+
           <div className="form-group">
-            <label htmlFor="password" className="form-label">Password</label>
+            <label htmlFor="password" className="form-label">
+              Password
+            </label>
             <div className="password-container">
               <input
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 id="password"
                 name="password"
                 className="form-input"
@@ -276,20 +278,21 @@ function Login({ setIsAuthenticated, setUserRole }) {
               <button
                 type="button"
                 className="password-toggle"
-                onClick={() => togglePassword('password')}
+                onClick={() => togglePassword("password")}
               >
                 <img
-                  src={showPassword 
-                    ? "https://cdn-icons-png.flaticon.com/128/2767/2767146.png"
-                    : "https://cdn-icons-png.flaticon.com/128/2767/2767194.png"
+                  src={
+                    showPassword
+                      ? "https://cdn-icons-png.flaticon.com/128/2767/2767146.png"
+                      : "https://cdn-icons-png.flaticon.com/128/2767/2767194.png"
                   }
                   alt="Toggle password"
-                  style={{ width: '20px', height: '20px' }}
+                  style={{ width: "20px", height: "20px" }}
                 />
               </button>
             </div>
           </div>
-          
+
           <div className="remember-forgot">
             <label className="remember-me">
               <input
@@ -301,26 +304,36 @@ function Login({ setIsAuthenticated, setUserRole }) {
               />
               Remember me
             </label>
-            <a href="#" className="forgot-password" onClick={(e) => {
-              e.preventDefault();
-              handleForgotPassword();
-            }}>
+            <a
+              href="#"
+              className="forgot-password"
+              onClick={(e) => {
+                e.preventDefault();
+                handleForgotPassword();
+              }}
+            >
               Forgot password?
             </a>
           </div>
-          
+
           <button type="submit" className="login-button" disabled={isLoading}>
-            <div className={`loading ${isLoading ? '' : 'hidden'}`}></div>
-            <span>{isLoading ? 'Signing In...' : 'Sign In'}</span>
+            <div className={`loading ${isLoading ? "" : "hidden"}`}></div>
+            <span>{isLoading ? "Signing In..." : "Sign In"}</span>
           </button>
         </form>
 
         {/* Signup Form */}
-        <form id="signupForm" onSubmit={handleAuth} style={{ display: isSignupMode ? 'block' : 'none' }}>
+        <form
+          id="signupForm"
+          onSubmit={handleAuth}
+          style={{ display: isSignupMode ? "block" : "none" }}
+        >
           {uiRole === "student" ? (
             <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
               <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
-                <label htmlFor="firstName" className="form-label">First Name</label>
+                <label htmlFor="firstName" className="form-label">
+                  First Name
+                </label>
                 <input
                   type="text"
                   id="firstName"
@@ -332,7 +345,9 @@ function Login({ setIsAuthenticated, setUserRole }) {
                 />
               </div>
               <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
-                <label htmlFor="lastName" className="form-label">Last Name</label>
+                <label htmlFor="lastName" className="form-label">
+                  Last Name
+                </label>
                 <input
                   type="text"
                   id="lastName"
@@ -346,7 +361,9 @@ function Login({ setIsAuthenticated, setUserRole }) {
             </div>
           ) : (
             <div className="form-group">
-              <label htmlFor="teacherName" className="form-label">Full Name</label>
+              <label htmlFor="teacherName" className="form-label">
+                Full Name
+              </label>
               <input
                 type="text"
                 id="teacherName"
@@ -360,7 +377,9 @@ function Login({ setIsAuthenticated, setUserRole }) {
           )}
 
           <div className="form-group">
-            <label htmlFor="signupEmail" className="form-label">Email Address</label>
+            <label htmlFor="signupEmail" className="form-label">
+              Email Address
+            </label>
             <input
               type="email"
               id="signupEmail"
@@ -372,12 +391,14 @@ function Login({ setIsAuthenticated, setUserRole }) {
               required
             />
           </div>
-          
+
           <div className="form-group">
-            <label htmlFor="signupPassword" className="form-label">Password</label>
+            <label htmlFor="signupPassword" className="form-label">
+              Password
+            </label>
             <div className="password-container">
               <input
-                type={showSignupPassword ? 'text' : 'password'}
+                type={showSignupPassword ? "text" : "password"}
                 id="signupPassword"
                 name="signupPassword"
                 className="form-input"
@@ -389,25 +410,28 @@ function Login({ setIsAuthenticated, setUserRole }) {
               <button
                 type="button"
                 className="password-toggle"
-                onClick={() => togglePassword('signupPassword')}
+                onClick={() => togglePassword("signupPassword")}
               >
                 <img
-                  src={showSignupPassword
-                    ? "https://cdn-icons-png.flaticon.com/128/2767/2767146.png"
-                    : "https://cdn-icons-png.flaticon.com/128/2767/2767194.png"
+                  src={
+                    showSignupPassword
+                      ? "https://cdn-icons-png.flaticon.com/128/2767/2767146.png"
+                      : "https://cdn-icons-png.flaticon.com/128/2767/2767194.png"
                   }
                   alt="Toggle password"
-                  style={{ width: '20px', height: '20px' }}
+                  style={{ width: "20px", height: "20px" }}
                 />
               </button>
             </div>
           </div>
-          
+
           <div className="form-group">
-            <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
+            <label htmlFor="confirmPassword" className="form-label">
+              Confirm Password
+            </label>
             <div className="password-container">
               <input
-                type={showConfirmPassword ? 'text' : 'password'}
+                type={showConfirmPassword ? "text" : "password"}
                 id="confirmPassword"
                 name="confirmPassword"
                 className="form-input"
@@ -419,20 +443,21 @@ function Login({ setIsAuthenticated, setUserRole }) {
               <button
                 type="button"
                 className="password-toggle"
-                onClick={() => togglePassword('confirmPassword')}
+                onClick={() => togglePassword("confirmPassword")}
               >
                 <img
-                  src={showConfirmPassword
-                    ? "https://cdn-icons-png.flaticon.com/128/2767/2767146.png"
-                    : "https://cdn-icons-png.flaticon.com/128/2767/2767194.png"
+                  src={
+                    showConfirmPassword
+                      ? "https://cdn-icons-png.flaticon.com/128/2767/2767146.png"
+                      : "https://cdn-icons-png.flaticon.com/128/2767/2767194.png"
                   }
                   alt="Toggle password"
-                  style={{ width: '20px', height: '20px' }}
+                  style={{ width: "20px", height: "20px" }}
                 />
               </button>
             </div>
           </div>
-          
+
           <div className="form-group">
             <label className="terms-checkbox">
               <input
@@ -446,10 +471,10 @@ function Login({ setIsAuthenticated, setUserRole }) {
               I agree to the Terms of Service and Privacy Policy
             </label>
           </div>
-          
+
           <button type="submit" className="login-button" disabled={isLoading}>
-            <div className={`loading ${isLoading ? '' : 'hidden'}`}></div>
-            <span>{isLoading ? 'Creating Account...' : 'Create Account'}</span>
+            <div className={`loading ${isLoading ? "" : "hidden"}`}></div>
+            <span>{isLoading ? "Creating Account..." : "Create Account"}</span>
           </button>
         </form>
 
@@ -463,13 +488,13 @@ function Login({ setIsAuthenticated, setUserRole }) {
             className="social-button"
             onClick={(e) => {
               e.preventDefault();
-              handleSocialLogin('google');
+              handleSocialLogin("google");
             }}
           >
             <img
               src="https://img.icons8.com/?size=100&id=17950&format=png"
               alt="Google"
-              style={{ width: '20px', height: '20px' }}
+              style={{ width: "20px", height: "20px" }}
             />
             Google
           </a>
@@ -478,20 +503,24 @@ function Login({ setIsAuthenticated, setUserRole }) {
             className="social-button"
             onClick={(e) => {
               e.preventDefault();
-              handleSocialLogin('microsoft');
+              handleSocialLogin("microsoft");
             }}
           >
             <img
               src="https://img.icons8.com/?size=100&id=22984&format=png"
               alt="Microsoft"
-              style={{ width: '20px', height: '20px' }}
+              style={{ width: "20px", height: "20px" }}
             />
             Microsoft
           </a>
         </div>
 
         <div className="signup-link">
-          <span>{isSignupMode ? "Already have an account?" : "Don't have an account?"}</span>
+          <span>
+            {isSignupMode
+              ? "Already have an account?"
+              : "Don't have an account?"}
+          </span>
           <a
             href="#"
             onClick={(e) => {
@@ -499,10 +528,10 @@ function Login({ setIsAuthenticated, setUserRole }) {
               setIsSignupMode(!isSignupMode);
             }}
           >
-            {isSignupMode ? 'Sign in here' : 'Sign up here'}
+            {isSignupMode ? "Sign in here" : "Sign up here"}
           </a>
         </div>
-    </div>
+      </div>
     </div>
   );
 }

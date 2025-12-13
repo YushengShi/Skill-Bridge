@@ -4,11 +4,13 @@
  * ================================================================================
  *
  * Custom styles for the Bootstrap-based navigation bar.
- * Uses the app's indigo color scheme (#4f46e5) for consistency.
+ * Uses CSS variables for role-based theming:
+ * - Students: Indigo (#4f46e5)
+ * - Teachers: Teal (#0d9488)
  *
  * KEY DESIGN DECISIONS:
  * - Slim navbar (0.35rem padding) to maximize content space
- * - Solid indigo background (#4f46e5) matching app theme
+ * - Role-based color scheme using CSS variables
  * - Semi-transparent hover/active states for visual feedback
  * - White text on dark background for readability
  * - Responsive: adjusts for mobile with larger touch targets
@@ -18,8 +20,12 @@
 
 /* Main navbar container - uses custom class to override Bootstrap defaults */
 .skill-navbar {
-  background-color: #4f46e5; /* App's primary indigo color */
+  background-color: var(
+    --primary-color,
+    #4f46e5
+  ); /* Uses theme variable with fallback */
   padding: 0.35rem 0; /* Slim padding for compact look */
+  transition: background-color 0.3s ease; /* Smooth theme transitions */
 }
 
 /* Brand/logo styling */
