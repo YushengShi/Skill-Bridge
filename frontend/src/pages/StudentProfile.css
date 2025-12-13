@@ -805,3 +805,19 @@
     justify-content: flex-start;
   }
 }
+@media (max-width: 991px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 767px) {
+  .profile-card {
+    padding: 1rem;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+  }
+}

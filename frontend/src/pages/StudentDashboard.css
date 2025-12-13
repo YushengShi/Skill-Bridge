@@ -606,111 +606,24 @@
   font-weight: 600;
 }
 
-/* ==================== RESPONSIVE DESIGN ==================== */
-
-/* Tablet */
-@media (max-width: 1024px) {
-  .stats-section {
-    grid-template-columns: repeat(2, 1fr);
+@media (max-width: 1199px) {
+  .student-dashboard {
+    padding: 1rem;
   }
+}
 
-  .dashboard-content {
-    grid-template-columns: 1fr;
-  }
-
-  .dashboard-sidebar {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-
-  .sidebar-section {
-    flex: 1;
-    min-width: 280px;
-  }
-
-  .quick-actions {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .recommended-teachers {
+@media (max-width: 991px) {
+  .student-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-/* Mobile */
-@media (max-width: 768px) {
-  .dashboard-header {
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
-  }
-
-  .header-left h1 {
-    font-size: 1.5rem;
-  }
-
-  .stats-section {
-    grid-template-columns: 1fr 1fr;
-    padding: 1rem;
-    gap: 1rem;
-  }
-
-  .stat-card {
-    padding: 1rem;
-  }
-
-  .stat-value {
-    font-size: 1.5rem;
-  }
-
-  .dashboard-content {
-    padding: 0 1rem;
-  }
-
-  .dashboard-section {
-    padding: 1rem;
-  }
-
-  .lesson-card {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .lesson-actions {
-    flex-direction: row;
-    width: 100%;
-    justify-content: center;
-  }
-
-  .quick-actions {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .recommended-teachers {
+@media (max-width: 767px) {
+  .student-grid {
     grid-template-columns: 1fr;
   }
 
-  .sidebar-section {
-    min-width: 100%;
-  }
-}
-
-/* Small Mobile */
-@media (max-width: 480px) {
-  .stats-section {
-    grid-template-columns: 1fr;
-  }
-
-  .quick-actions {
-    grid-template-columns: 1fr;
-  }
-
-  .header-right {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .header-btn {
-    width: 100%;
+  .student-card {
+    padding: 1rem;
   }
 }

@@ -171,3 +171,59 @@
   .tdp-name { font-size: 32px; }
   .tdp-tagline { font-size: 18px; margin-bottom: 15px;}
 }
+/* ================================
+   RESPONSIVE — TEACHER DETAIL PAGE
+================================ */
+
+/* Laptop */
+@media (max-width: 1199px) {
+  .detail-container {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+/* Tablet */
+@media (max-width: 991px) {
+  .detail-container {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+  }
+
+  .tdp-profile {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .tdp-avatar {
+    width: 120px;
+    height: 120px;
+  }
+
+  .tdp-actions {
+    justify-content: center;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .content-card {
+    padding: 1rem;
+  }
+
+  .tdp-actions button {
+    width: 100%;
+  }
+
+  .price-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .tdp-avatar {
+    width: 100px;
+    height: 100px;
+  }
+}
