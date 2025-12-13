@@ -1,6 +1,8 @@
 import { Router } from "express";
 import Teacher from "../models/Teacher.js";
+import Booking from "../models/Booking.js";
 import { GoogleGenAI } from "@google/genai";
+import protect from "../middleware/auth.js";
 
 const router = Router();
 
@@ -795,5 +797,284 @@ router.get("/questions", (req, res) => {
     ],
   });
 });
+
+/**
+ * POST /api/ai/teacher-chat
+ *
+ * AI Chatbot endpoint for teachers to get assistance with:
+ * - Upcoming bookings and schedule
+ * - Availability management
+ * - Earnings overview
+ * - Teaching-related questions
+ *
+ * Request body:
+ * - message: string (teacher's chat message)
+ * - conversationHistory: array (previous messages for context)
+ *
+ * @returns {Object} { reply: string, success: boolean }
+ */
+router.post("/teacher-chat", protect, async (req, res) => {
+  try {
+    const { message, conversationHistory = [] } = req.body;
+
+    // Validate that user sent a message
+    if (!message) {
+      return res.status(400).json({ error: "Message is required" });
+    }
+
+    // Verify the user is a teacher
+    if (req.userRole !== "teacher") {
+      return res
+        .status(403)
+        .json({ error: "This endpoint is for teachers only" });
+    }
+
+    const teacherId = req.userId;
+
+    // Fetch teacher's data for context
+    const teacher = await Teacher.findById(teacherId).select("-password");
+    if (!teacher) {
+      return res.status(404).json({ error: "Teacher not found" });
+    }
+
+    // Fetch teacher's bookings for context
+    const bookings = await Booking.find({ teacherId })
+      .populate("studentId", "name email")
+      .sort({ scheduledDate: 1 })
+      .limit(20);
+
+    // Separate bookings by status
+    const now = new Date();
+    const upcomingBookings = bookings.filter(
+      (b) =>
+        b.scheduledDate &&
+        new Date(b.scheduledDate) >= now &&
+        b.status === "confirmed"
+    );
+    const pendingBookings = bookings.filter((b) => b.status === "pending");
+    const completedBookings = bookings.filter((b) => b.status === "completed");
+
+    // Calculate earnings summary
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const thisMonthEarnings = bookings
+      .filter(
+        (b) =>
+          b.status === "completed" &&
+          b.scheduledDate &&
+          new Date(b.scheduledDate) >= thisMonthStart
+      )
+      .reduce((sum, b) => sum + (b.amount || 0), 0);
+
+    const totalEarnings = bookings
+      .filter((b) => b.status === "completed")
+      .reduce((sum, b) => sum + (b.amount || 0), 0);
+
+    // Build context for the AI
+    const teacherContext = {
+      name: teacher.name,
+      subject: teacher.tagline || "General",
+      rating: teacher.rating,
+      totalLessons: teacher.lessonCount,
+      totalStudents: teacher.studentsCount,
+      prices: teacher.prices,
+      availability: teacher.availability,
+      upcomingBookings: upcomingBookings.slice(0, 5).map((b) => ({
+        studentName: b.studentId?.name || "Unknown Student",
+        date: b.scheduledDate,
+        time: b.scheduledTime,
+        lessonType: b.lessonType,
+        amount: b.amount,
+      })),
+      pendingBookingsCount: pendingBookings.length,
+      pendingBookings: pendingBookings.slice(0, 5).map((b) => ({
+        studentName: b.studentId?.name || "Unknown Student",
+        date: b.scheduledDate,
+        time: b.scheduledTime,
+        lessonType: b.lessonType,
+        message: b.message,
+      })),
+      thisMonthEarnings,
+      totalEarnings,
+      completedLessonsCount: completedBookings.length,
+    };
+
+    // Build the prompt for the teacher assistant
+    const chatPrompt = buildTeacherChatPrompt({
+      message,
+      conversationHistory,
+      teacherContext,
+    });
+
+    // Initialize Gemini client
+    const ai = getGeminiClient();
+
+    // Call Gemini API
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: chatPrompt,
+    });
+
+    const aiResponse = response.text;
+
+    // Parse the response
+    const parsedResponse = parseTeacherChatResponse(aiResponse);
+
+    res.json({
+      success: true,
+      ...parsedResponse,
+    });
+  } catch (error) {
+    console.error("Teacher AI Chatbot Error:", error);
+
+    // Return a friendly fallback response
+    res.json({
+      success: true,
+      reply:
+        "I'm having a bit of trouble right now. You can ask me about your upcoming bookings, availability, earnings, or any teaching-related questions. Please try again!",
+    });
+  }
+});
+
+/**
+ * Builds the chatbot prompt for teacher assistance.
+ *
+ * @param {Object} params - Chat parameters
+ * @param {string} params.message - Current teacher message
+ * @param {Array} params.conversationHistory - Previous messages
+ * @param {Object} params.teacherContext - Teacher's data and bookings
+ * @returns {string} Complete prompt for Gemini
+ */
+function buildTeacherChatPrompt({
+  message,
+  conversationHistory,
+  teacherContext,
+}) {
+  const conversationContext =
+    conversationHistory.length > 0
+      ? `\nCONVERSATION HISTORY:\n${conversationHistory
+          .map((m) => `${m.role}: ${m.content}`)
+          .join("\n")}`
+      : "";
+
+  const upcomingBookingsInfo =
+    teacherContext.upcomingBookings.length > 0
+      ? teacherContext.upcomingBookings
+          .map(
+            (b) =>
+              `- ${b.studentName} on ${new Date(
+                b.date
+              ).toLocaleDateString()} at ${b.time || "TBD"} (${
+                b.lessonType
+              }, $${b.amount})`
+          )
+          .join("\n")
+      : "No upcoming bookings scheduled.";
+
+  const pendingBookingsInfo =
+    teacherContext.pendingBookings.length > 0
+      ? teacherContext.pendingBookings
+          .map(
+            (b) =>
+              `- ${b.studentName} requesting ${
+                b.date ? new Date(b.date).toLocaleDateString() : "date TBD"
+              } at ${b.time || "TBD"} (${b.lessonType})${
+                b.message ? ` - Note: "${b.message}"` : ""
+              }`
+          )
+          .join("\n")
+      : "No pending booking requests.";
+
+  return `You are a helpful AI teaching assistant for SkillBridge, an online learning platform. You're helping a teacher manage their teaching activities.
+
+YOUR PERSONALITY:
+- Professional, supportive, and encouraging
+- Provide concise but helpful answers
+- Use emojis occasionally to be friendly 📚
+- Be proactive in offering relevant suggestions
+
+TEACHER INFORMATION:
+- Name: ${teacherContext.name}
+- Subject/Specialty: ${teacherContext.subject}
+- Rating: ${teacherContext.rating}/5 stars
+- Total Lessons Taught: ${teacherContext.totalLessons}
+- Total Students: ${teacherContext.totalStudents}
+- Lesson Prices: Trial $${teacherContext.prices?.trial || 15}, Standard $${
+    teacherContext.prices?.standard || 30
+  }
+
+UPCOMING CONFIRMED BOOKINGS:
+${upcomingBookingsInfo}
+
+PENDING BOOKING REQUESTS (${teacherContext.pendingBookingsCount} total):
+${pendingBookingsInfo}
+
+EARNINGS:
+- This Month: $${teacherContext.thisMonthEarnings}
+- Total Earnings: $${teacherContext.totalEarnings}
+- Completed Lessons: ${teacherContext.completedLessonsCount}
+
+AVAILABILITY (if set):
+${
+  teacherContext.availability
+    ? JSON.stringify(teacherContext.availability, null, 2)
+    : "Not configured yet"
+}
+${conversationContext}
+
+CURRENT TEACHER MESSAGE: "${message}"
+
+TASK:
+Respond helpfully to the teacher's question or request. You can help with:
+1. Upcoming bookings and schedule information
+2. Pending booking requests that need approval
+3. Earnings overview and payment information
+4. Availability management tips
+5. Teaching tips and best practices
+6. Platform usage guidance
+
+RESPONSE FORMAT (JSON only):
+{
+  "reply": "Your helpful response to the teacher"
+}
+
+IMPORTANT:
+- Be specific when discussing bookings - mention student names and dates when relevant
+- If the teacher asks about something not in the context, provide general helpful advice
+- Keep responses concise but informative (2-5 sentences unless more detail is needed)
+- Only return JSON, no additional text`;
+}
+
+/**
+ * Parses the teacher chatbot response from Gemini.
+ *
+ * @param {string} aiResponse - Raw response from Gemini
+ * @returns {Object} Parsed chatbot response
+ */
+function parseTeacherChatResponse(aiResponse) {
+  try {
+    const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      return {
+        reply: parsed.reply || "How can I help you with your teaching today?",
+      };
+    }
+  } catch (e) {
+    console.error("Failed to parse teacher chatbot response:", e);
+  }
+
+  // Fallback: return the raw response if JSON parsing fails
+  // Sometimes the AI might return a plain text response
+  if (aiResponse && aiResponse.trim()) {
+    return {
+      reply: aiResponse.trim(),
+    };
+  }
+
+  return {
+    reply:
+      "How can I help you with your teaching today? You can ask me about your upcoming bookings, earnings, or availability.",
+  };
+}
 
 export default router;
