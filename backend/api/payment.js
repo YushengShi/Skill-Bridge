@@ -13,10 +13,12 @@ router.post("/create-checkout-session", protect, async (req, res) => {
   // TODO: replace this url
   const YOUR_DOMAIN = "http://localhost:5173"; // replace with frontend domain
   const { teacherId, lessonType, price, teacherName } = req.body;
+  const studentId = req.userId;
   try {
     // 1. create a new booking in the database with status 'pending'
     const newBooking = await Booking.create({
       teacherId,
+      studentId,
       lessonType,
       amount: price,
       status: "pending",
