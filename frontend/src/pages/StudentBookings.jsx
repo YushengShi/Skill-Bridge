@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { DEFAULT_AVATAR } from "../constants";
 import RatingModal from "../components/RatingModal";
 import "./StudentBookings.css";
 
@@ -7,7 +8,11 @@ export default function StudentBookings() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [ratingModal, setRatingModal] = useState({ show: false, teacher: null, bookingId: null });
+  const [ratingModal, setRatingModal] = useState({
+    show: false,
+    teacher: null,
+    bookingId: null,
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -42,9 +47,8 @@ export default function StudentBookings() {
         const data = await response.json();
 
         // Show paid, confirmed, and completed bookings
-        const activeBookings = data.filter(
-          (booking) =>
-            ['paid', 'confirmed', 'completed'].includes(booking.status)
+        const activeBookings = data.filter((booking) =>
+          ["paid", "confirmed", "completed"].includes(booking.status)
         );
 
         setBookings(activeBookings);
@@ -172,10 +176,7 @@ export default function StudentBookings() {
           <div className="empty-icon">📅</div>
           <h2>No upcoming lessons</h2>
           <p>You don't have any paid or active lessons currently.</p>
-          <button
-            onClick={() => navigate("/teacherhome")}
-            className="primary-btn"
-          >
+          <button onClick={() => navigate("/teachers")} className="primary-btn">
             Find a Teacher
           </button>
         </div>
@@ -186,9 +187,7 @@ export default function StudentBookings() {
               <div className="booking-header">
                 <div className="teacher-info">
                   <img
-                    src={
-                      booking.teacherId?.avatar || "https://i.pravatar.cc/150"
-                    }
+                    src={booking.teacherId?.avatar || DEFAULT_AVATAR}
                     alt="Teacher"
                     className="teacher-avatar-small"
                   />
@@ -231,7 +230,8 @@ export default function StudentBookings() {
                   {booking.status === "completed" && booking.teacherId ? (
                     booking.userRating ? (
                       <button className="rated-btn" disabled>
-                        You rated {booking.userRating} {booking.userRating === 1 ? 'star' : 'stars'}
+                        You rated {booking.userRating}{" "}
+                        {booking.userRating === 1 ? "star" : "stars"}
                       </button>
                     ) : (
                       <button
@@ -247,8 +247,8 @@ export default function StudentBookings() {
                         ⭐ Rate Teacher
                       </button>
                     )
-                  ) : (booking.status === "paid" ||
-                      booking.status === "confirmed") ? (
+                  ) : booking.status === "paid" ||
+                    booking.status === "confirmed" ? (
                     <button
                       className="join-btn"
                       onClick={() => handleJoinRoom(booking._id)}

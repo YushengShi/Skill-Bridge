@@ -208,6 +208,15 @@ const teacherSchema = new mongoose.Schema({
     default: false,
   },
 
+  // Google Calendar Integration
+  googleCalendar: {
+    accessToken: { type: String },
+    refreshToken: { type: String },
+    expiryDate: { type: Number },
+    connected: { type: Boolean, default: false },
+    connectedAt: { type: Date },
+  },
+
   // Timestamps
   createdAt: {
     type: Date,

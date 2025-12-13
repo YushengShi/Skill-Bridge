@@ -3,6 +3,7 @@ import Student from "../models/Student.js";
 import Booking from "../models/Booking.js";
 import Teacher from "../models/Teacher.js";
 import protect from "../middleware/auth.js";
+import { DEFAULT_AVATAR } from "../constants/index.js";
 
 const router = Router();
 
@@ -146,8 +147,7 @@ router.get("/:id/dashboard", protect, async (req, res) => {
       .map((b) => ({
         id: b._id,
         teacherName: b.teacherId?.name || "N/A",
-        teacherAvatar:
-          b.teacherId?.avatar || "https://i.pravatar.cc/150?img=1",
+        teacherAvatar: b.teacherId?.avatar || DEFAULT_AVATAR,
         subject: b.lessonType || "Lesson",
         date: b.scheduledDate,
         time: b.scheduledTime,
@@ -156,20 +156,10 @@ router.get("/:id/dashboard", protect, async (req, res) => {
         meetingLink: b.meetingLink,
       }));
 
-    // Mock data for other sections until their APIs are built
-    const recentActivity = [
-      {
-        id: 1,
-        icon: "💳",
-        message: "You booked a trial lesson with English Teacher Roz.",
-        time: "2 days ago",
-      },
-    ];
+    // Empty arrays until these features have proper API implementations
+    const recentActivity = [];
     const recommendedTeachers = await Teacher.find().limit(3); // Simple recommendation
-    const learningProgress = [
-      { subject: "Conversational English", progress: 75 },
-      { subject: "Business Vocabulary", progress: 40 },
-    ];
+    const learningProgress = [];
 
     res.json({
       stats,
