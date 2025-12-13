@@ -119,6 +119,7 @@ function Login({ setIsAuthenticated, setUserRole }) {
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // Send session cookie
         body: JSON.stringify(payload),
       });
 

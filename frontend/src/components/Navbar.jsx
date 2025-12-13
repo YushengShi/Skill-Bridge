@@ -39,15 +39,29 @@ function Navbar({
   const location = useLocation();
 
   /**
-   * Handles user logout by clearing all auth data from localStorage
-   * and resetting the app's authentication state
+   * Handles user logout by destroying session and clearing localStorage
    */
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setIsAuthenticated(false);
-    setUserRole(null);
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      // Destroy session on server (JWT workflow remains, but session is cleared)
+      const logoutUrl = userRole === "teacher" 
+        ? "/api/teachers/logout" 
+        : "/api/students/logout";
+      
+      await fetch(logoutUrl, {
+        method: "POST",
+        credentials: "include", // Send session cookie
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // Clear local storage regardless
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setIsAuthenticated(false);
+      setUserRole(null);
+      navigate("/login");
+    }
   };
 
   // Hide navbar on login page since user isn't authenticated yet

@@ -325,12 +325,19 @@ function TeacherDashboard() {
    * Handle user logout
    * Clears authentication state and redirects to home
    */
-  const handleLogout = () => {
-    localStorage.removeItem("isAuth");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("userRole");
-    navigate("/");
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/teachers/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      navigate("/login");
+    }
   };
 
   // ==================== RENDER HELPERS ====================

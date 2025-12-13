@@ -45,10 +45,19 @@ export default function AdminDashboard({ setIsAuthenticated }) {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
       localStorage.clear();
       setIsAuthenticated(false);
-      navigate('/adminlogin');
+      navigate('/admin-login');
+    }
   }
 
   return (

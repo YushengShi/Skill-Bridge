@@ -49,10 +49,30 @@ router.post("/login", async (req, res) => {
       { expiresIn: "1d" }
     );
 
+    // Store JWT in session for server-side management (logout/invalidation)
+    req.session.token = token;
+    req.session.userId = admin._id.toString();
+    req.session.userRole = "admin";
+
     res.json({ token, user: { email: admin.email, role: "admin" } });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
+});
+
+/**
+ * POST /api/admin/logout
+ * Logs out by destroying session (JWT workflow remains unchanged)
+ */
+router.post("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Session destroy error:", err);
+      return res.status(500).json({ message: "Logout failed" });
+    }
+    res.clearCookie("skillbridge.sid");
+    res.json({ message: "Logged out successfully" });
+  });
 });
 
 // GET /api/admin/users
