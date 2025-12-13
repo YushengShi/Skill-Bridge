@@ -41,6 +41,11 @@ JWT_SECRET=your-super-secure-random-secret-key-here
 # Session Secret (required for production)
 SESSION_SECRET=your-session-secret-key-here
 
+# Google OAuth (optional - for social login)
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+FRONTEND_URL=http://localhost:5173
+
 # Stripe API Key (if using payment features)
 STRIPE_SECRET_KEY=your_stripe_secret_key
 ```
@@ -415,7 +420,7 @@ csd skill bridge/
 - ✅ Server-side logout with session invalidation
 - ✅ Form validation
 - ✅ Password visibility toggle
-- ✅ Social login buttons (Google, Microsoft)
+- ✅ **Google OAuth login** - Free social authentication with seamless account linking
 - ✅ Responsive design
 - ✅ Payment integration (Stripe)
 - ✅ MongoDB database integration
@@ -447,3 +452,191 @@ npm run build
 cd backend
 npm start
 ```
+
+## Google OAuth Authentication
+
+### Overview
+
+This application supports **Google OAuth 2.0** for social login, allowing users to sign in with their Google accounts instead of creating a separate password. This feature is **completely free** and provides a seamless authentication experience.
+
+### ✅ Assessment: Google OAuth is **100% FREE**
+
+- **Free Tier**: Unlimited users, 100 requests/second
+- **No Credit Card Required**
+- **Paid Only If**: Exceeding 100 req/sec (unlikely for most apps)
+
+### How Google OAuth Works
+
+1. **User clicks "Google" button** on login page
+2. **Redirects to Google** for authentication
+3. **User approves** access to their Google profile
+4. **Google redirects back** to your app with user information
+5. **App creates/links account** automatically
+6. **User is logged in** with JWT token (same as email/password login)
+
+### Key Features
+
+- ✅ **Account Linking**: If a user already has an account with the same email, Google OAuth will link to it
+- ✅ **Automatic Account Creation**: New users are created automatically with Google profile data
+- ✅ **Role Support**: Works for both students and teachers
+- ✅ **Seamless Integration**: Uses the same JWT token system as email/password login
+- ✅ **Profile Data**: Automatically imports name, email, and avatar from Google
+
+### Google OAuth Setup Guide
+
+- **Free Tier**: Unlimited users, 100 requests/second
+- **No Credit Card Required**
+- **Paid Only If**: Exceeding 100 req/sec (unlikely for most apps)
+
+### 📋 Setup Steps
+
+#### 1. Install Required Packages
+
+```bash
+cd backend
+npm install passport passport-google-oauth20
+```
+
+#### 2. Create Google OAuth Credentials
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project (or select existing)
+3. Enable **Google+ API** (or **Google Identity Services**)
+4. Go to **Credentials** → **Create Credentials** → **OAuth 2.0 Client ID**
+5. Configure:
+   - **Application type**: Web application
+   - **Name**: SkillBridge (or your app name)
+   - **Authorized JavaScript origins**: 
+     - `http://localhost:3000` (development)
+     - `http://localhost:5173` (development)
+     - Your production domain (when deployed)
+   - **Authorized redirect URIs**:
+     - `http://localhost:3000/api/auth/google/callback` (development)
+     - Your production callback URL (when deployed)
+
+6. Copy **Client ID** and **Client Secret**
+
+#### 3. Add Environment Variables
+
+Add to `backend/.env`:
+
+```env
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+FRONTEND_URL=http://localhost:5173
+BACKEND_URL=http://localhost:3000
+```
+
+**Important**: 
+- Make sure the `.env` file is in the `backend/` directory
+- Restart your backend server after adding these variables
+- The `BACKEND_URL` is used to construct the callback URL
+
+#### 4. Update Backend CORS (if needed)
+
+Make sure `backend/index.js` allows your frontend origin:
+
+```javascript
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
+```
+
+#### 5. Test the Implementation
+
+1. Start backend: `cd backend && npm start`
+2. Start frontend: `cd frontend && npm run dev`
+3. Go to login page
+4. Click "Google" button
+5. Select role (student/teacher)
+6. Complete Google OAuth flow
+7. Should redirect back and log you in!
+
+### 🔧 Technical Flow
+
+1. **User clicks "Google" button** → Redirects to `/api/auth/google?role=student` (or `teacher`)
+2. **Google OAuth flow** → User authenticates with Google and grants permissions
+3. **Callback received** → `/api/auth/google/callback` receives Google profile data
+4. **User lookup/creation**:
+   - **If user exists with Google ID** → Direct login
+   - **If user exists with same email** → Link Google account to existing account
+   - **If new user** → Create new account with Google profile data
+5. **JWT token generated** → Same token system as email/password authentication
+6. **Session created** → Token stored in server-side session for logout capability
+7. **Redirect to frontend** → `/auth/callback?token=...&role=...&user=...`
+8. **Frontend processes** → Stores token, updates app state, redirects to dashboard
+9. **User logged in** → Full access to application features
+
+### 🎯 Benefits
+
+- ✅ **Free** - No cost for normal usage (100 requests/second limit)
+- ✅ **Secure** - Uses Google's OAuth 2.0 standard
+- ✅ **Seamless** - Works with existing JWT workflow, no code changes needed
+- ✅ **Account Linking** - Automatically links Google to existing email accounts
+- ✅ **Role Support** - Supports both student and teacher roles
+- ✅ **User-Friendly** - No need to remember another password
+- ✅ **Profile Import** - Automatically imports name, email, and profile picture
+
+### ⚠️ Important Notes
+
+1. **Development vs Production**:
+   - Update redirect URIs in Google Console for production
+   - Update `FRONTEND_URL` in `.env` for production
+
+2. **Security**:
+   - Never commit `.env` file with credentials
+   - Use different OAuth credentials for dev/prod
+
+3. **Rate Limits**:
+   - Free tier: 100 requests/second
+   - Monitor usage in Google Cloud Console
+
+### 🐛 Troubleshooting
+
+**Error: "redirect_uri_mismatch"**
+- Check authorized redirect URIs in Google Console
+- Must match exactly: `http://localhost:3000/api/auth/google/callback`
+
+**Error: "invalid_client" or "Error 401: invalid_client"**
+- **Most Common Cause**: Environment variables not loaded
+  - Make sure `.env` file is in `backend/` directory (not root)
+  - Restart your backend server after adding/updating `.env` file
+  - Verify variables are set: `echo $GOOGLE_CLIENT_ID` (won't work, but check file directly)
+- **Check credentials**:
+  - Verify `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env` file
+  - Make sure there are no extra spaces or quotes around the values
+  - Example format: `GOOGLE_CLIENT_ID=123456789-abc.apps.googleusercontent.com` (no quotes)
+- **Verify in Google Console**:
+  - Go to [Google Cloud Console](https://console.cloud.google.com/)
+  - Check that the Client ID matches exactly
+  - Make sure the OAuth consent screen is configured
+- **Check callback URL**:
+  - Must match exactly in Google Console: `http://localhost:3000/api/auth/google/callback`
+  - If using production, update `BACKEND_URL` in `.env`
+
+**User not created**
+- Check MongoDB connection
+- Check backend console logs for detailed error messages
+- Verify Student/Teacher models have `googleId` field
+- Check that required fields (firstName, lastName for students; name for teachers) are being set
+
+**Validation errors (e.g., "lastName is required")**
+- The OAuth handler automatically provides default values for missing fields
+- If you see validation errors, check backend console for detailed logs
+- The system uses "User" as default lastName if Google doesn't provide one
+
+### 🔐 Security Considerations
+
+- **OAuth Credentials**: Never commit `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to version control
+- **Environment Variables**: Store credentials in `backend/.env` file (already in `.gitignore`)
+- **HTTPS in Production**: Always use HTTPS for OAuth callbacks in production
+- **Token Security**: OAuth uses the same JWT token system as email/password, with same security measures
+
+### 📚 Resources
+
+- [Google OAuth 2.0 Documentation](https://developers.google.com/identity/protocols/oauth2)
+- [Passport Google Strategy](http://www.passportjs.org/packages/passport-google-oauth20/)
+- [Google Cloud Console](https://console.cloud.google.com/) - Manage OAuth credentials
