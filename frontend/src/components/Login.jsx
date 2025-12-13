@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+import { API_BASE_URL } from "../constants";
 import "./Login.css";
 
 function Login({ setIsAuthenticated, setUserRole }) {
@@ -100,14 +101,9 @@ function Login({ setIsAuthenticated, setUserRole }) {
   const handleSocialLogin = (provider) => {
     if (provider === "google") {
       const role = uiRole; // 'student' or 'teacher'
-      const isLocal = window.location.hostname.includes("localhost");
-
-      const backendBaseUrl = isLocal
-        ? "http://localhost:3000"
-        : "https://skill-bridge-d090.onrender.com";
 
       // 1️⃣ Initialize OAuth role in backend session
-      fetch(`${backendBaseUrl}/api/auth/google/init?role=${role}`, {
+      fetch(`${API_BASE_URL}/api/auth/google/init?role=${role}`, {
         method: "GET",
         credentials: "include", // important for session cookie
       })
@@ -115,7 +111,7 @@ function Login({ setIsAuthenticated, setUserRole }) {
         .then((data) => {
           if (data.success) {
             // 2️⃣ Redirect to Google OAuth on backend domain
-            window.location.href = `${backendBaseUrl}/api/auth/google`;
+            window.location.href = `${API_BASE_URL}/api/auth/google`;
           } else {
             console.error("OAuth init failed:", data);
             setErrorMessage("Failed to start Google login. Please try again.");
