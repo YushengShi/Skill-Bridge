@@ -6,6 +6,7 @@ import { jwtDecode } from "jwt-decode";
 
 import Login from "./components/Login";
 import Home from "./components/Home";
+import Navbar from "./components/Navbar";
 import PaymentForm from "./pages/PaymentForm";
 import TeacherHome from "./components/TeacherHome";
 import TeacherProfile from "./pages/TeacherProfile";
@@ -60,13 +61,14 @@ function App() {
 
   /**
    * Determines the appropriate home route based on user role.
-   * Used for redirects after login and when accessing the root path.
+   * Both students and teachers are directed to /dashboard, which
+   * renders the appropriate component based on their role.
    *
-   * @returns {string} Route path for the user's dashboard or login page
+   * @returns {string} Route path - "/dashboard" for authenticated users, "/login" otherwise
    */
   const getHomeRoute = () => {
-    if (userRole === "teacher") return "/teacher-dashboard";
-    if (userRole === "student") return "/student-dashboard";
+    if (userRole === "teacher") return "/dashboard";
+    if (userRole === "student") return "/dashboard";
     return "/login"; // Fallback for unauthenticated or unknown role
   };
 
@@ -76,7 +78,20 @@ function App() {
 
   return (
     <Router>
+      {/*
+        GLOBAL NAVBAR
+        Rendered outside of Routes so it appears on all pages.
+        Receives auth state to show role-appropriate navigation.
+        Hides itself on the login page.
+      */}
+      <Navbar
+        isAuthenticated={isAuthenticated}
+        userRole={userRole}
+        setIsAuthenticated={setIsAuthenticated}
+        setUserRole={setUserRole}
+      />
       <Routes>
+        {/* Login route - redirects to dashboard if already authenticated */}
         <Route
           path="/login"
           element={
@@ -101,9 +116,9 @@ function App() {
           }
         />
 
-        {/* Public Routes */}
+        {/* Teachers browsing page - accessible to both students and teachers */}
         <Route
-          path="/teacherhome"
+          path="/teachers"
           element={
             isAuthenticated ? (
               <TeacherHome setIsAuthenticated={setIsAuthenticated} />
@@ -112,33 +127,47 @@ function App() {
             )
           }
         />
-        
-        <Route path="/teachers" element={<TeacherHome />} />
-        <Route path="/japanese-teachers" element={<TeacherListPage />} />
-        
-        
-        <Route path="/" element={<Navigate to="/login" replace />} />
-
-        <Route
-          path="/teachers"
-          element={<Navigate to="/teacherhome" replace />}
-        />
+        {/* Individual teacher profile page */}
+      
         <Route path="/teachers/:id" element={<TeacherProfile />} />
+        {/* Stripe checkout/payment page */}
         <Route path="/checkout" element={<PaymentForm />} />
 
-        {/* Protected Routes - Student */}
+        {/*
+          UNIFIED DASHBOARD ROUTE
+          Single /dashboard route that renders different components based on user role:
+          - Teachers see TeacherDashboard
+          - Students see StudentDashboard
+          This simplifies navigation and avoids role-specific URLs.
+        */}
         <Route
-          path="/student-dashboard"
+          path="/dashboard"
           element={
-            isAuthenticated && userRole === "student" ? (
-              <StudentDashboard setIsAuthenticated={setIsAuthenticated} />
-            ) : ( <Navigate
-                to={isAuthenticated ? "/teacher-dashboard" : "/login"}
-                replace
-              />
+            isAuthenticated ? (
+              userRole === "teacher" ? (
+                <TeacherDashboard setIsAuthenticated={setIsAuthenticated} />
+              ) : (
+                <StudentDashboard setIsAuthenticated={setIsAuthenticated} />
+              )
+            ) : (
+              <Navigate to="/login" replace />
             )
           }
         />
+        {/*
+          LEGACY ROUTE REDIRECTS
+          Old routes redirect to new unified /dashboard for backwards compatibility.
+          This ensures bookmarks and external links still work.
+        */}
+        <Route
+          path="/student-dashboard"
+          element={<Navigate to="/dashboard" replace />}
+        />
+        <Route
+          path="/teacher-dashboard"
+          element={<Navigate to="/dashboard" replace />}
+        />
+        {/* Student profile page */}
         <Route
           path="/my-bookings"
           element={
@@ -174,8 +203,9 @@ function App() {
             )
           }
         />
+        {/* AI-powered teacher recommendations questionnaire */}
         <Route
-          path="/ai-recommendations"
+          path="/recommendations"
           element={
             isAuthenticated ? (
               <AIRecommendations />
@@ -184,6 +214,7 @@ function App() {
             )
           }
         />
+        {/* Full-page AI chatbot interface */}
         <Route
           path="/ai-chat"
           element={
@@ -195,26 +226,17 @@ function App() {
           }
         />
 
-        {/* Protected Routes - Teacher */}
-        <Route
-          path="/teacher-dashboard"
-          element={
-            isAuthenticated && userRole === "teacher" ? (
-              <TeacherDashboard setIsAuthenticated={setIsAuthenticated} />
-            ) : (
-              <Navigate
-                to={isAuthenticated ? "/teacherhome" : "/login"}
-                replace
-              />
-            )
-          }
-        />
-
+        {/* Catch-all route - redirects unknown paths to login */}
         <Route path="*" element={<Navigate to="/login" replace />} />
 
       </Routes>
 
-      {/* AI Chatbot - Show floating button for authenticated users */}
+      {/*
+        FLOATING AI CHATBOT
+        Appears as a floating action button (FAB) in the bottom-right corner
+        for all authenticated users. Clicking toggles the chat window.
+        Separate from the full-page /ai-chat route.
+      */}
       {isAuthenticated && (
         <>
           <ChatbotButton
