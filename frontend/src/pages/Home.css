@@ -62,11 +62,31 @@ section {
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   margin-top: 60px;
   min-height: 90vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-image-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  opacity: 0.15;
+}
+
+.hero-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .hero-content {
   max-width: 800px;
   padding: 0 1rem;
+  position: relative;
+  z-index: 1;
 }
 
 .hero-content h1 {
@@ -116,18 +136,45 @@ section {
 
 .feature-card {
   background: #f8f9fa;
-  padding: 2.5rem;
+  padding: 0;
   border-radius: 12px;
   width: 300px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   transition: transform 0.3s;
+  overflow: hidden;
 }
 
 .feature-card:hover {
   transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.feature-image-wrapper {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.feature-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.feature-card:hover .feature-image {
+  transform: scale(1.1);
+}
+
+.feature-card h3,
+.feature-card p {
+  padding: 1.5rem 2rem;
+  margin: 0;
 }
 
 .feature-card h3 {
+  padding-bottom: 0.5rem;
   margin-bottom: 1rem;
   color: #333;
 }
@@ -149,7 +196,38 @@ section {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.role-image-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.role-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.4;
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.role-box:hover .role-image {
+  opacity: 0.5;
+  transform: scale(1.05);
+}
+
+.role-content {
+  position: relative;
+  z-index: 1;
   padding: 4rem;
+  text-align: center;
 }
 
 .student-side {
@@ -157,9 +235,17 @@ section {
   color: #333;
 }
 
+.student-side .role-content {
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+}
+
 .teacher-side {
   background-color: #343a40;
   color: #ffffff;
+}
+
+.teacher-side .role-content {
+  background: linear-gradient(to bottom, rgba(52, 58, 64, 0.9), rgba(52, 58, 64, 0.7));
 }
 
 /* --- Footer --- */
@@ -218,6 +304,9 @@ section {
   .role-box {
     width: 100%;
     min-height: 40vh;
+  }
+
+  .role-content {
     padding: 3rem 1rem;
   }
 }
