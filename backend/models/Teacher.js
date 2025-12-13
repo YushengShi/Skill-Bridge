@@ -57,24 +57,7 @@ const teacherSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    /**
-     * Password is conditionally required based on authentication method.
-     *
-     * If the user signs up with Google OAuth (googleId is set),
-     * they don't need a password since they authenticate via Google.
-     *
-     * If using email/password auth (no googleId), password is required.
-     */
-    required: function () {
-      return !this.googleId; // Password required only if not using Google OAuth
-    },
-  },
-
-  // Google OAuth
-  googleId: {
-    type: String,
-    unique: true,
-    sparse: true,
+    required: true,
   },
   bio: {
     type: String,
