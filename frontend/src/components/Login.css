@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: white; /*for image background: url('background.jpg') center center/cover no-repeat fixed;*/
+  background: white;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -133,8 +133,6 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -146,14 +144,9 @@
   box-shadow: 0 10px 20px rgba(184, 0, 0, 0.3);
 }
 
-.login-button:active {
-  transform: translateY(0);
-}
-
 .login-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  transform: none;
 }
 
 .divider {
@@ -172,14 +165,12 @@
   right: 0;
   height: 1px;
   background: #e1e5e9;
-  z-index: 1;
 }
 
 .divider span {
   background: rgba(255, 255, 255, 0.75);
   padding: 0 15px;
   position: relative;
-  z-index: 2;
 }
 
 .social-login {
@@ -198,7 +189,7 @@
   text-decoration: none;
   text-align: center;
   font-weight: 500;
-  transition: all 0.3s ease;
+  transition: 0.3s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -227,7 +218,6 @@
   text-decoration: underline;
 }
 
-/* Terms checkbox styling */
 .terms-checkbox {
   display: flex;
   align-items: flex-start;
@@ -235,7 +225,6 @@
   font-size: 14px;
   color: #666;
   line-height: 1.4;
-  cursor: pointer;
 }
 
 .terms-checkbox input[type="checkbox"] {
@@ -243,7 +232,6 @@
   height: 16px;
   accent-color: #b80000;
   margin-top: 2px;
-  flex-shrink: 0;
   cursor: pointer;
 }
 
@@ -267,17 +255,6 @@
   border-left: 4px solid #363;
 }
 
-@media (max-width: 480px) {
-  .login-container {
-    padding: 30px 20px;
-    margin: 10px;
-  }
-  
-  .login-title {
-    font-size: 24px;
-  }
-}
-
 .loading {
   display: inline-block;
   width: 20px;
@@ -293,15 +270,15 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
+  0% { transform: rotate(0); }
   100% { transform: rotate(360deg); }
 }
 
-/* Field error styling */
 .field-error {
   color: #dc3545;
   font-size: 12px;
   margin-top: 4px;
+}
 
 /* ================================
    RESPONSIVE — LOGIN PAGE
@@ -330,17 +307,12 @@
     padding: 1.2rem;
   }
 
-  .login-container h2 {
-    font-size: 1.3rem;
-  }
-
-  .login-container input {
-    font-size: 0.95rem;
+  .login-title {
+    font-size: 22px;
   }
 
   .login-container button {
     width: 100%;
-    padding: 0.9rem;
   }
 }
 
@@ -349,6 +321,7 @@
   .login-container {
     padding: 1rem;
   }
+}
 
 /* Role toggle container styling */
 .role-toggle-container {
@@ -371,5 +344,4 @@
 .role-toggle-container button:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-
 }
