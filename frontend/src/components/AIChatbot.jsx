@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { DEFAULT_AVATAR } from "../constants";
 import "./AIChatbot.css";
 
 /**
@@ -289,10 +290,7 @@ export default function AIChatbot({
             <div key={teacher.id || index} className="rec-card">
               <div className="rec-card-header">
                 <img
-                  src={
-                    teacher.avatar ||
-                    `https://i.pravatar.cc/150?img=${index + 10}`
-                  }
+                  src={teacher.avatar || DEFAULT_AVATAR}
                   alt={teacher.name}
                   className="rec-avatar"
                 />

@@ -791,6 +791,80 @@
   color: #10b981;
 }
 
+.calendar-status {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.connected-status {
+  background: #f0fdf4;
+  border: 1px solid #10b981;
+  color: #10b981;
+}
+
+.disconnected-status {
+  background: #fef2f2;
+  border: 1px solid #ef4444;
+  color: #ef4444;
+}
+
+.status-icon {
+  font-size: 1.2rem;
+  margin-right: 0.5rem;
+}
+
+.disconnected-status p {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.upcoming-availability h3 {
+  font-size: 1rem;
+  color: #333;
+  margin-bottom: 0.75rem;
+}
+
+.events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.event-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.event-date {
+  font-weight: 500;
+  color: #333;
+}
+
+.event-time {
+  color: #666;
+  margin: 0 1rem;
+}
+
+.event-title {
+  color: #10b981;
+  font-weight: 500;
+}
+
+.no-availability {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+}
+
 /* ==================== EARNINGS SECTION ==================== */
 .earnings-section {
   background: white;

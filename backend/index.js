@@ -31,7 +31,8 @@ app.use(
 // Session management (stores JWT tokens server-side for logout/invalidation)
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "your-session-secret-change-in-production",
+    secret:
+      process.env.SESSION_SECRET || "your-session-secret-change-in-production",
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -67,6 +68,7 @@ import paymentRoutes from "./api/payment.js";
 import teacherRoutes from "./api/teachers.js";
 import studentRoutes from "./api/students.js";
 import aiRoutes from "./api/ai-recommendations.js";
+import calendarRoutes from "./api/calendar.js";
 import adminRoutes from "./api/admin.js";
 import authRoutes from "./api/auth.js";
 
@@ -74,6 +76,7 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/teachers", teacherRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/calendar", calendarRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/auth", authRoutes);
 
@@ -100,6 +103,14 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
+});
+
+// Keep the process alive
+process.on("SIGTERM", () => {
+  server.close(() => {
+    console.log("Server closed");
+    process.exit(0);
+  });
 });

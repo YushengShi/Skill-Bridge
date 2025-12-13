@@ -227,85 +227,40 @@ function Login({ setIsAuthenticated, setUserRole }) {
   };
 
   return (
-    <div className="login-wrapper">
-      {/* Role Conflict Modal */}
-      {showRoleConflictModal && (
-        <div className="role-conflict-modal-overlay" onClick={() => setShowRoleConflictModal(false)}>
-          <div className="role-conflict-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="role-conflict-modal-header">
-              <h3>⚠️ Role Conflict</h3>
-              <button 
-                className="role-conflict-modal-close"
-                onClick={() => setShowRoleConflictModal(false)}
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-            <div className="role-conflict-modal-body">
-              <p>{roleConflictMessage}</p>
-              <div className="role-conflict-modal-actions">
-                <button
-                  className="role-conflict-modal-btn"
-                  onClick={() => {
-                    setShowRoleConflictModal(false);
-                    // Role is already switched by the useEffect, just show success message
-                    setSuccessMessage(`Switched to ${uiRole} role. You can now try logging in with Google again.`);
-                  }}
-                >
-                  Try Again as {uiRole === "student" ? "Student" : "Teacher"}
-                </button>
-                <button
-                  className="role-conflict-modal-btn-secondary"
-                  onClick={() => setShowRoleConflictModal(false)}
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
+    <div className={`login-wrapper ${uiRole}-theme`}>
       <div className="login-container">
-        <div
-          className="role-toggle-container"
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            marginBottom: "20px",
-            gap: "10px",
-          }}
-        >
+        <div className="role-toggle-container">
           <button
             type="button"
+            className={`role-toggle-btn${
+              uiRole === "student" ? " selected" : ""
+            }`}
             onClick={() => setUiRole("student")}
-            style={{
-              padding: "8px 20px",
-              backgroundColor: uiRole === "student" ? "#2196F3" : "#ddd",
-              color: uiRole === "student" ? "white" : "black",
-              border: "none",
-              borderRadius: "10px",
-              cursor: "pointer",
-              fontWeight: "bold",
-              transition: "all 0.3s ease",
-            }}
+            style={
+              uiRole === "student"
+                ? {
+                    background: "var(--primary-color)",
+                    color: "#fff",
+                  }
+                : {}
+            }
           >
             Student
           </button>
           <button
             type="button"
+            className={`role-toggle-btn${
+              uiRole === "teacher" ? " selected" : ""
+            }`}
             onClick={() => setUiRole("teacher")}
-            style={{
-              padding: "8px 20px",
-              backgroundColor: uiRole === "teacher" ? "#4CAF50" : "#ddd",
-              color: uiRole === "teacher" ? "white" : "black",
-              border: "none",
-              borderRadius: "10px",
-              cursor: "pointer",
-              fontWeight: "bold",
-              transition: "all 0.3s ease",
-            }}
+            style={
+              uiRole === "teacher"
+                ? {
+                    background: "var(--primary-color)",
+                    color: "#fff",
+                  }
+                : {}
+            }
           >
             Teacher
           </button>
