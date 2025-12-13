@@ -46,14 +46,12 @@ import teacherRoutes from "./api/teachers.js";
 import studentRoutes from "./api/students.js";
 import aiRoutes from "./api/ai-recommendations.js";
 import calendarRoutes from "./api/calendar.js";
-import authRoutes from "./api/auth.js";
 
 app.use("/api/payment", paymentRoutes);
 app.use("/api/teachers", teacherRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/calendar", calendarRoutes);
-app.use("/api/auth", authRoutes);
 
 /**
  * @swagger
