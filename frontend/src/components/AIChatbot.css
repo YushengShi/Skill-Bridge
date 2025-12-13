@@ -551,3 +551,50 @@
   }
 }
 
+/* ==================== TEACHER THEME OVERRIDES ==================== */
+/* When in teacher-theme, use teal color instead of purple */
+
+.teacher-theme .chatbot-fab {
+  background: #0d9488;
+  box-shadow: 0 4px 20px rgba(13, 148, 136, 0.4);
+}
+
+.teacher-theme .chatbot-fab:hover {
+  box-shadow: 0 6px 25px rgba(13, 148, 136, 0.5);
+}
+
+.teacher-theme .chatbot-header {
+  background: #0d9488;
+}
+
+.teacher-theme .pref-pill {
+  background: #0d9488;
+}
+
+.teacher-theme .chat-message .avatar {
+  background: #0d9488;
+}
+
+.teacher-theme .chat-message.user .message-content {
+  background: #0d9488;
+}
+
+.teacher-theme .send-btn {
+  background: #0d9488;
+}
+
+.teacher-theme .send-btn:hover:not(:disabled) {
+  background: #0f766e;
+}
+
+.teacher-theme .rec-btn.primary {
+  background: #0d9488;
+}
+
+.teacher-theme .rec-btn.primary:hover {
+  background: #0f766e;
+}
+
+.teacher-theme .rec-match {
+  background: #0d9488;
+}

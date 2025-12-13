@@ -185,7 +185,7 @@ function App() {
             path="/ai-chat"
             element={
               isAuthenticated ? (
-                <AIChatbot isFloating={false} />
+                <AIChatbot isFloating={false} userRole={userRole} />
               ) : (
                 <Navigate to="/login" replace />
               )
@@ -195,16 +195,26 @@ function App() {
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
 
+        {/*
+        FLOATING AI CHATBOT
+        Appears as a floating action button (FAB) in the bottom-right corner
+        for all authenticated users. Clicking toggles the chat window.
+        Shows different assistant based on user role:
+        - Students: AI Teacher Finder
+        - Teachers: AI Teaching Assistant
+      */}
         {isAuthenticated && (
           <>
             <ChatbotButton
               onClick={() => setIsChatOpen(!isChatOpen)}
               isOpen={isChatOpen}
+              userRole={userRole}
             />
             <AIChatbot
               isOpen={isChatOpen}
               onClose={() => setIsChatOpen(false)}
               isFloating={true}
+              userRole={userRole}
             />
           </>
         )}
