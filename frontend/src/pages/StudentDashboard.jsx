@@ -139,14 +139,22 @@ export default function StudentDashboard({ setIsAuthenticated }) {
   /**
    * Handles user logout - clears auth state and redirects to login
    */
-  const handleLogout = () => {
-    if (setIsAuthenticated) {
-      setIsAuthenticated(false);
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/students/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      if (setIsAuthenticated) {
+        setIsAuthenticated(false);
+      }
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      navigate("/login");
     }
-    localStorage.removeItem("isAuth");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/login");
   };
 
   /**

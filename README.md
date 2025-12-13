@@ -38,6 +38,9 @@ Create a `.env` file in the `backend` directory for secure configuration:
 # JWT Secret (required for production)
 JWT_SECRET=your-super-secure-random-secret-key-here
 
+# Session Secret (required for production)
+SESSION_SECRET=your-session-secret-key-here
+
 # Stripe API Key (if using payment features)
 STRIPE_SECRET_KEY=your_stripe_secret_key
 ```
@@ -240,6 +243,136 @@ JWT_SECRET=your-super-secure-random-secret-key-here
 
 The backend will use this secret to sign and verify tokens. If not set, it defaults to a development secret (not recommended for production).
 
+## Session Management
+
+This application uses a **hybrid authentication approach** that combines JWT tokens with server-side session management. This provides the benefits of both systems while maintaining minimal code complexity.
+
+### Overview
+
+The application uses:
+- **JWT Tokens** for API authentication (stateless, scalable)
+- **Server-side Sessions** for session management (logout invalidation, server-side control)
+
+### How It Works
+
+#### 1. **Login Process**
+
+When a user logs in:
+
+1. **JWT Token Generation**: A JWT token is created and returned to the frontend (stored in `localStorage`)
+2. **Session Creation**: The same JWT token is also stored in a server-side session
+3. **Session Cookie**: An httpOnly cookie (`skillbridge.sid`) is set to track the session
+
+**Backend Implementation**:
+```javascript
+// JWT token is created (as before)
+const token = jwt.sign({ id: user._id, email: user.email, role: "student" }, JWT_SECRET, { expiresIn: "7d" });
+
+// Token is also stored in session
+req.session.token = token;
+req.session.userId = user._id.toString();
+req.session.userRole = "student";
+
+// Token is returned to frontend
+res.json({ token, user: userData });
+```
+
+#### 2. **API Authentication**
+
+API requests continue to use JWT tokens in the `Authorization` header (no changes to existing workflow):
+
+```javascript
+// Frontend sends JWT token in header
+fetch('/api/students/dashboard', {
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+});
+```
+
+The JWT middleware (`protect`) validates tokens as before - **no changes to authentication logic**.
+
+#### 3. **Session Management Benefits**
+
+**Server-Side Logout**:
+- When a user logs out, the server destroys the session
+- This allows immediate invalidation of sessions
+- JWT tokens remain valid until expiration, but session tracking is cleared
+
+**Logout Endpoints**:
+- `POST /api/students/logout` - Destroys student session
+- `POST /api/teachers/logout` - Destroys teacher session
+- `POST /api/admin/logout` - Destroys admin session
+
+**Frontend Logout**:
+```javascript
+// Logout destroys session on server
+await fetch('/api/students/logout', {
+  method: 'POST',
+  credentials: 'include' // Sends session cookie
+});
+
+// Clear local storage
+localStorage.removeItem('token');
+localStorage.removeItem('user');
+```
+
+### Session Configuration
+
+Sessions are configured in `backend/index.js`:
+
+```javascript
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "your-session-secret-change-in-production",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production", // HTTPS only in production
+      httpOnly: true, // Prevents XSS attacks
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      sameSite: "lax",
+    },
+    name: "skillbridge.sid",
+  })
+);
+```
+
+### Environment Variables
+
+For production, add a session secret to your `.env` file:
+
+```env
+JWT_SECRET=your-super-secure-random-secret-key-here
+SESSION_SECRET=your-session-secret-key-here
+```
+
+### Benefits of Hybrid Approach
+
+✅ **JWT Workflow Unchanged**: All existing API calls and authentication logic work exactly as before
+
+✅ **Server-Side Control**: Sessions can be invalidated immediately on logout
+
+✅ **Minimal Code Changes**: Only added session storage and logout endpoints
+
+✅ **Security**: httpOnly cookies prevent XSS attacks on session cookies
+
+✅ **Scalability**: JWT tokens remain stateless for API authentication
+
+✅ **Backward Compatible**: Existing JWT-based authentication continues to work
+
+### Session vs JWT
+
+| Feature | JWT Token | Session |
+|---------|-----------|---------|
+| **Storage** | Client-side (`localStorage`) | Server-side (memory/database) |
+| **Authentication** | Used for API requests | Used for session tracking |
+| **Logout** | Token remains valid until expiration | Can be immediately destroyed |
+| **Scalability** | Stateless, works across servers | Requires shared session store |
+| **Security** | Vulnerable to XSS if in `localStorage` | httpOnly cookies prevent XSS |
+
+In this hybrid approach, JWT handles authentication while sessions provide server-side management capabilities.
+
 ## Project Structure
 
 ```
@@ -276,8 +409,10 @@ csd skill bridge/
 ## Features
 
 - ✅ User authentication with JWT tokens (Login/Signup)
+- ✅ **Hybrid session management** - JWT tokens + server-side sessions for enhanced security
 - ✅ Secure token-based authentication
 - ✅ **Password security with bcrypt hashing** - Passwords are hashed before storage
+- ✅ Server-side logout with session invalidation
 - ✅ Form validation
 - ✅ Password visibility toggle
 - ✅ Social login buttons (Google, Microsoft)

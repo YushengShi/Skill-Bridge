@@ -4,8 +4,17 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: white; /*for image background: url('background.jpg') center center/cover no-repeat fixed;*/
+  background: 
+    linear-gradient(
+      rgba(255, 255, 255, 0.3),
+      rgba(255, 255, 255, 0.3)
+    ),
+    url('/skillbridge_bg.jpeg') center center/cover no-repeat fixed;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  position: relative;
 }
 
 .login-container {

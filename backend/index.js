@@ -1,6 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
+import session from "express-session";
 import "dotenv/config";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -25,6 +26,23 @@ app.use(
     credentials: true,
   })
 );
+
+// Session management (stores JWT tokens server-side for logout/invalidation)
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "your-session-secret-change-in-production",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      sameSite: "lax",
+    },
+    name: "skillbridge.sid",
+  })
+);
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Stripe webhook route
