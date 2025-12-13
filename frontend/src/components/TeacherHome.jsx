@@ -134,7 +134,6 @@ export default function TeacherHome({ setIsAuthenticated }) {
                   >
                     See Details
                   </button>
-
                   <button
                     className="book-btn"
                     onClick={() => setSelectedTeacher(teacher)}
@@ -162,6 +161,7 @@ export default function TeacherHome({ setIsAuthenticated }) {
           type={notification.type}
           message={notification.message}
           onClose={() => setNotification(null)}
+          onConfirm={() => navigate("/my-bookings")}
         />
       )}
     </div>

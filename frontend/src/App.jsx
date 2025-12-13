@@ -1,11 +1,7 @@
-import React, { useState, useEffect } from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-// 🌟 引入解析库
+
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
 import { jwtDecode } from "jwt-decode";
 
 import Login from "./components/Login";
@@ -17,9 +13,13 @@ import TeacherProfile from "./pages/TeacherProfile";
 import StudentProfile from "./pages/StudentProfile";
 import StudentDashboard from "./pages/StudentDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
+import TeacherDetailPage from "./pages/TeacherDetailPage";
+import TeacherListPage from "./pages/TeacherListPage";
+
 import AIRecommendations from "./pages/AIRecommendations";
 import AIChatbot, { ChatbotButton } from "./components/AIChatbot";
 import "./App.css";
+import StudentBookings from "./pages/StudentBookings";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -167,6 +167,26 @@ function App() {
         />
         {/* Student profile page */}
         <Route
+          path="/my-bookings"
+          element={
+            isAuthenticated && userRole === 'student' ? (
+              <StudentBookings />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/my-bookings"
+          element={
+            isAuthenticated && userRole === 'student' ? (
+              <StudentBookings />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
           path="/profile"
           element={
             isAuthenticated ? (
@@ -201,6 +221,7 @@ function App() {
 
         {/* Catch-all route - redirects unknown paths to login */}
         <Route path="*" element={<Navigate to="/login" replace />} />
+
       </Routes>
 
       {/*
