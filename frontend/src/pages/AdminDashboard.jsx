@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../constants";
 
 export default function AdminDashboard({ setIsAuthenticated }) {
   const [users, setUsers] = useState([]);
@@ -7,7 +8,7 @@ export default function AdminDashboard({ setIsAuthenticated }) {
 
   const fetchUsers = async () => {
     const token = localStorage.getItem("token");
-    const res = await fetch("http://localhost:3000/api/admin/users", {
+    const res = await fetch(`${API_BASE_URL}/api/admin/users`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) {
@@ -25,7 +26,7 @@ export default function AdminDashboard({ setIsAuthenticated }) {
     if(!window.confirm(`Are you sure you want to ${currentStatus ? 'Unban' : 'Ban'} this user?`)) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/api/admin/users/${userId}/ban`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/ban`, {
         method: "PUT",
         headers: { 
             "Content-Type": "application/json",
