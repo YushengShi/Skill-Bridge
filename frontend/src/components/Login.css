@@ -303,3 +303,51 @@
   font-size: 12px;
   margin-top: 4px;
 }
+
+/* ================================
+   RESPONSIVE — LOGIN PAGE
+================================ */
+
+/* Laptop (992px – 1199px) */
+@media (max-width: 1199px) {
+  .login-container {
+    max-width: 450px;
+  }
+}
+
+/* Tablet (768px – 991px) */
+@media (max-width: 991px) {
+  .login-container {
+    max-width: 400px;
+    padding: 1.5rem;
+  }
+}
+
+/* Mobile (≤ 767px) */
+@media (max-width: 767px) {
+  .login-container {
+    width: 90%;
+    margin: 2rem auto;
+    padding: 1.2rem;
+  }
+
+  .login-container h2 {
+    font-size: 1.3rem;
+  }
+
+  .login-container input {
+    font-size: 0.95rem;
+  }
+
+  .login-container button {
+    width: 100%;
+    padding: 0.9rem;
+  }
+}
+
+/* Small Mobile (≤ 480px) */
+@media (max-width: 480px) {
+  .login-container {
+    padding: 1rem;
+  }
+}

@@ -271,10 +271,9 @@ function TeacherDashboard() {
     };
 
     fetchDashboardData();
-  }, [navigate]);
   }, [navigate]); // The navigate dependency is fine, the internal logic was the issue.
 
-  // ==================== EVENT HANDLERS ====================
+  // ==================== EVENT HANDLERS ====================  aichatbot.css, home.css, login.css, profile.css, studentDashboard.css, teacherDashboard.css, airecommendations.css, styles.css, teacherdetailspage.css, teacherprofile.css, app.css, index.css 
 
   /**
    * Handle booking approval
