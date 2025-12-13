@@ -35,15 +35,15 @@ const isProduction = process.env.NODE_ENV === "production";
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "super-secret",
+    secret: process.env.SESSION_SECRET || "some-secret",
     resave: false,
     saveUninitialized: false,
     name: "skillbridge.sid",
     cookie: {
-      secure: isProduction, // HTTPS only in production
+      secure: isProduction, // true on Render, false on localhost
       httpOnly: true,
-      sameSite: isProduction ? "none" : "lax", // cross-site cookies for production
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      sameSite: isProduction ? "none" : "lax", // cross-origin on Render, lax locally
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   })
 );
