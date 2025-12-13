@@ -56,7 +56,7 @@ export default function AIRecommendations() {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/ai/questions");
+        const response = await fetch("/api/ai/questions");
         if (!response.ok) {
           throw new Error("Failed to fetch questions");
         }
@@ -214,7 +214,7 @@ export default function AIRecommendations() {
       const token = localStorage.getItem("token");
 
       // Send answers to AI recommendation endpoint
-      const response = await fetch("http://localhost:3000/api/ai/recommend", {
+      const response = await fetch("/api/ai/recommend", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

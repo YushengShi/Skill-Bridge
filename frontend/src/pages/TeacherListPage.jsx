@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import './styles.css';
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import "./styles.css";
 
 const Header = () => (
   <header>
@@ -42,9 +42,9 @@ const TeacherListPage = () => {
 
   useEffect(() => {
     const fetchTeachers = async () => {
-      const res = await fetch("http://localhost:3000/api/teachers");
+      const res = await fetch("/api/teachers");
       const data = await res.json();
-      setTeachers(data);    // <-- Now we have real MongoDB teachers
+      setTeachers(data); // <-- Now we have real MongoDB teachers
     };
 
     fetchTeachers();
@@ -55,10 +55,10 @@ const TeacherListPage = () => {
       <Header />
 
       <main>
-        <h1 style={{ textAlign: 'center' }}>Japanese Teachers</h1>
+        <h1 style={{ textAlign: "center" }}>Japanese Teachers</h1>
 
         <div className="teacher-list">
-          {teachers.map(teacher => (
+          {teachers.map((teacher) => (
             <TeacherCard key={teacher._id} teacher={teacher} />
           ))}
         </div>

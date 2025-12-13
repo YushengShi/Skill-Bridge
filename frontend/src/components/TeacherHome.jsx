@@ -46,7 +46,7 @@ export default function TeacherHome({ setIsAuthenticated }) {
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    fetch("http://localhost:3000/api/teachers", {
+    fetch("/api/teachers", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

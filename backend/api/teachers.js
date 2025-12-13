@@ -5,7 +5,8 @@ import Booking from "../models/Booking.js";
 import jwt from "jsonwebtoken";
 import protect from "../middleware/auth.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your_jwt";
+const JWT_SECRET =
+  process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 const router = Router();
 
@@ -89,9 +90,8 @@ router.get("/seed", async (req, res) => {
   }
 });
 
-
 // GET /api/teachers/:id  → Fetch one teacher by ID
-router.get('/:id', async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const teacher = await Teacher.findById(req.params.id);
 
