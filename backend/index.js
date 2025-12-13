@@ -12,7 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // MongoDB connection
 const mongoDB_URI =
@@ -32,22 +32,22 @@ app.use(
 // Session management (stores JWT tokens server-side for logout/invalidation)
 app.use(
   session({
-    secret:
-      process.env.SESSION_SECRET || "your-session-secret-change-in-production",
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      sameSite: "lax",
-    },
     name: "skillbridge.sid",
+    cookie: {
+      secure: true, // HTTPS on Render
+      httpOnly: true,
+      sameSite: "none", // REQUIRED for OAuth
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    },
   })
 );
 
 // Initialize Passport for OAuth
 app.use(passport.initialize());
+app.use(passport.session());
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 

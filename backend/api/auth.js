@@ -6,18 +6,28 @@ import Student from "../models/Student.js";
 import Teacher from "../models/Teacher.js";
 
 const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+const JWT_SECRET =
+  process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 // Validate Google OAuth credentials
 if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-  console.warn("⚠️  Google OAuth credentials not found in environment variables.");
-  console.warn("   Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in your .env file.");
-  console.warn("   Google OAuth login will not work until credentials are configured.");
+  console.warn(
+    "⚠️  Google OAuth credentials not found in environment variables."
+  );
+  console.warn(
+    "   Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in your .env file."
+  );
+  console.warn(
+    "   Google OAuth login will not work until credentials are configured."
+  );
 }
 
 // Configure Google OAuth Strategy
-const callbackURL = process.env.GOOGLE_CALLBACK_URL || 
-  `${process.env.BACKEND_URL || "http://localhost:3000"}/api/auth/google/callback`;
+const callbackURL =
+  process.env.GOOGLE_CALLBACK_URL ||
+  `${
+    process.env.BACKEND_URL || "http://localhost:3000"
+  }/api/auth/google/callback`;
 
 passport.use(
   new GoogleStrategy(
@@ -103,14 +113,18 @@ router.get(
     // Check if credentials are configured
     if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
       return res.redirect(
-        `${process.env.FRONTEND_URL || "http://localhost:5173"}/login?error=oauth_not_configured`
+        `${
+          process.env.FRONTEND_URL || "http://localhost:5173"
+        }/login?error=oauth_not_configured`
       );
     }
 
     // Check if role is stored in session (from /init endpoint)
     if (!req.session.oauthRole) {
       return res.redirect(
-        `${process.env.FRONTEND_URL || "http://localhost:5173"}/login?error=oauth_role_not_set`
+        `${
+          process.env.FRONTEND_URL || "http://localhost:5173"
+        }/login?error=oauth_role_not_set`
       );
     }
 
@@ -118,8 +132,7 @@ router.get(
   },
   passport.authenticate("google", {
     scope: ["profile", "email"],
-    session: false,
-    prompt: "select_account", // Force account selection every time
+    session: true,
   })
 );
 
@@ -130,8 +143,8 @@ router.get(
  */
 router.get(
   "/google/callback",
-  passport.authenticate("google", { 
-    session: false, 
+  passport.authenticate("google", {
+    session: true,
     failureRedirect: "/login?error=google_auth_failed",
   }),
   async (req, res) => {
@@ -144,32 +157,42 @@ router.get(
       // Check if Google profile was received
       if (!req.user) {
         console.error("No user profile received from Google");
-        return res.redirect(`${process.env.FRONTEND_URL || "http://localhost:5173"}/login?error=no_profile`);
+        return res.redirect(
+          `${
+            process.env.FRONTEND_URL || "http://localhost:5173"
+          }/login?error=no_profile`
+        );
       }
 
       // Get role from session (stored during /init endpoint)
       const intendedRole = req.session?.oauthRole;
       const googleProfile = req.user;
-      
+
       console.log("Google profile:", {
         googleId: googleProfile.googleId,
         email: googleProfile.email,
         name: googleProfile.name,
-        intendedRole: intendedRole
+        intendedRole: intendedRole,
       });
 
       if (!intendedRole || !["student", "teacher"].includes(intendedRole)) {
         console.error("Invalid or missing role in session:", intendedRole);
-        return res.redirect(`${process.env.FRONTEND_URL || "http://localhost:5173"}/login?error=invalid_role`);
+        return res.redirect(
+          `${
+            process.env.FRONTEND_URL || "http://localhost:5173"
+          }/login?error=invalid_role`
+        );
       }
 
       // Check for role conflicts BEFORE creating/linking account
       const StudentModel = Student;
       const TeacherModel = Teacher;
       const OtherModel = intendedRole === "student" ? Teacher : Student;
-      
+
       // Check if Google account exists in the OTHER role
-      const otherRoleUser = await OtherModel.findOne({ googleId: googleProfile.googleId });
+      const otherRoleUser = await OtherModel.findOne({
+        googleId: googleProfile.googleId,
+      });
       if (otherRoleUser) {
         const existingRole = intendedRole === "student" ? "teacher" : "student";
         console.error(`Google account already used as ${existingRole}`);
@@ -178,12 +201,16 @@ router.get(
           delete req.session.oauthRole;
         }
         return res.redirect(
-          `${process.env.FRONTEND_URL || "http://localhost:5173"}/login?error=account_role_conflict&attempted_role=${intendedRole}&existing_role=${existingRole}`
+          `${
+            process.env.FRONTEND_URL || "http://localhost:5173"
+          }/login?error=account_role_conflict&attempted_role=${intendedRole}&existing_role=${existingRole}`
         );
       }
 
       // Check if email exists in the OTHER role
-      const otherRoleUserByEmail = await OtherModel.findOne({ email: googleProfile.email.toLowerCase() });
+      const otherRoleUserByEmail = await OtherModel.findOne({
+        email: googleProfile.email.toLowerCase(),
+      });
       if (otherRoleUserByEmail) {
         const existingRole = intendedRole === "student" ? "teacher" : "student";
         console.error(`Email already used as ${existingRole}`);
@@ -192,13 +219,15 @@ router.get(
           delete req.session.oauthRole;
         }
         return res.redirect(
-          `${process.env.FRONTEND_URL || "http://localhost:5173"}/login?error=email_role_conflict&attempted_role=${intendedRole}&existing_role=${existingRole}`
+          `${
+            process.env.FRONTEND_URL || "http://localhost:5173"
+          }/login?error=email_role_conflict&attempted_role=${intendedRole}&existing_role=${existingRole}`
         );
       }
 
       // No conflict - proceed with login/registration
       const role = intendedRole;
-      
+
       // Clear OAuth role from session after checking conflicts
       if (req.session) {
         delete req.session.oauthRole;
@@ -208,9 +237,13 @@ router.get(
       if (!googleProfile.googleId || !googleProfile.email) {
         console.error("Missing required Google profile fields:", {
           hasGoogleId: !!googleProfile.googleId,
-          hasEmail: !!googleProfile.email
+          hasEmail: !!googleProfile.email,
         });
-        return res.redirect(`${process.env.FRONTEND_URL || "http://localhost:5173"}/login?error=incomplete_profile`);
+        return res.redirect(
+          `${
+            process.env.FRONTEND_URL || "http://localhost:5173"
+          }/login?error=incomplete_profile`
+        );
       }
 
       let user;
@@ -221,8 +254,10 @@ router.get(
 
       // If not found by Google ID, check by email in the SAME role
       if (!user) {
-        user = await Model.findOne({ email: googleProfile.email.toLowerCase() });
-        
+        user = await Model.findOne({
+          email: googleProfile.email.toLowerCase(),
+        });
+
         if (user) {
           // Link Google account to existing email account (same role)
           user.googleId = googleProfile.googleId;
@@ -241,7 +276,7 @@ router.get(
           // Handle cases where Google only provides a single name
           let firstName = googleProfile.firstName || "";
           let lastName = googleProfile.lastName || "";
-          
+
           // If we have the full name, try to split it
           if (googleProfile.name) {
             const nameParts = googleProfile.name.trim().split(/\s+/);
@@ -252,19 +287,23 @@ router.get(
               lastName = nameParts.slice(1).join(" ");
             }
           }
-          
+
           // Fallback: if still no firstName, use email username or "User"
           if (!firstName || firstName.trim() === "") {
             firstName = googleProfile.email.split("@")[0] || "User";
           }
-          
+
           // Fallback: if still no lastName, use a default or email domain
           if (!lastName || lastName.trim() === "") {
             lastName = "User"; // Default value since it's required
           }
-          
-          console.log("Creating student with:", { firstName, lastName, email: googleProfile.email });
-          
+
+          console.log("Creating student with:", {
+            firstName,
+            lastName,
+            email: googleProfile.email,
+          });
+
           user = new Student({
             googleId: googleProfile.googleId, // Set this first so password validation can see it
             email: googleProfile.email.toLowerCase(),
@@ -278,26 +317,30 @@ router.get(
         } else {
           // Ensure name exists (required field for Teacher)
           let name = googleProfile.name || "";
-          
+
           // If no name from Google, try to construct from firstName/lastName
           if (!name || name.trim() === "") {
             const firstName = googleProfile.firstName || "";
             const lastName = googleProfile.lastName || "";
             name = `${firstName} ${lastName}`.trim();
           }
-          
+
           // Fallback: use email username if still no name
           if (!name || name.trim() === "") {
             name = googleProfile.email.split("@")[0] || "Teacher";
           }
-          
+
           // Ensure name is not empty (required field)
           if (!name || name.trim() === "") {
             name = "Teacher"; // Final fallback
           }
-          
-          console.log("Creating teacher with:", { name, email: googleProfile.email, googleId: googleProfile.googleId });
-          
+
+          console.log("Creating teacher with:", {
+            name,
+            email: googleProfile.email,
+            googleId: googleProfile.googleId,
+          });
+
           // Create teacher object - password is not required when googleId is set
           // Set googleId first, then create object to ensure validation works correctly
           user = new Teacher({
@@ -309,20 +352,20 @@ router.get(
             isApproved: false, // Teachers need approval
             // password is intentionally omitted - not required when googleId is set
           });
-          
-      // Verify googleId is set
-      if (!user.googleId) {
-        throw new Error("googleId must be set for OAuth users");
-      }
-      
-      // Remove password field completely to avoid validation issues
-      // Use delete operator or set to null
-      delete user.password;
-      user.password = undefined;
-      
-      console.log("Teacher object created, googleId:", user.googleId);
+
+          // Verify googleId is set
+          if (!user.googleId) {
+            throw new Error("googleId must be set for OAuth users");
+          }
+
+          // Remove password field completely to avoid validation issues
+          // Use delete operator or set to null
+          delete user.password;
+          user.password = undefined;
+
+          console.log("Teacher object created, googleId:", user.googleId);
         }
-        
+
         try {
           // For OAuth users, the conditional required function should work
           // But if it doesn't, we'll use $unset to remove password from validation
@@ -331,14 +374,22 @@ router.get(
             console.log("User created successfully:", user._id);
           } catch (validationError) {
             // If validation fails due to password, unset it and save without validation
-            if (validationError.name === 'ValidationError' && validationError.errors?.password) {
-              console.log("Password validation failed despite googleId being set, using workaround...");
+            if (
+              validationError.name === "ValidationError" &&
+              validationError.errors?.password
+            ) {
+              console.log(
+                "Password validation failed despite googleId being set, using workaround..."
+              );
               // Remove password field completely
               delete user.password;
               user.password = undefined;
               // Save without validation since we know googleId is set
               await user.save({ validateBeforeSave: false });
-              console.log("User created successfully (password validation bypassed):", user._id);
+              console.log(
+                "User created successfully (password validation bypassed):",
+                user._id
+              );
             } else {
               throw validationError;
             }
@@ -351,7 +402,11 @@ router.get(
 
       // Check if account is banned
       if (user.isBanned) {
-        return res.redirect(`${process.env.FRONTEND_URL || "http://localhost:5173"}/login?error=account_banned`);
+        return res.redirect(
+          `${
+            process.env.FRONTEND_URL || "http://localhost:5173"
+          }/login?error=account_banned`
+        );
       }
 
       // Generate JWT token
@@ -371,32 +426,35 @@ router.get(
       req.session.userRole = role;
 
       // Get user data for frontend
-      const userData = role === "student" 
-        ? {
-            _id: user._id,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            avatar: user.avatar,
-            role: "student",
-          }
-        : {
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            avatar: user.avatar,
-            role: "teacher",
-          };
+      const userData =
+        role === "student"
+          ? {
+              _id: user._id,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              email: user.email,
+              avatar: user.avatar,
+              role: "student",
+            }
+          : {
+              _id: user._id,
+              name: user.name,
+              email: user.email,
+              avatar: user.avatar,
+              role: "teacher",
+            };
 
       // Redirect to frontend with token and user data
       const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
       const userDataEncoded = encodeURIComponent(JSON.stringify(userData));
-      res.redirect(`${frontendUrl}/auth/callback?token=${token}&role=${role}&user=${userDataEncoded}`);
+      res.redirect(
+        `${frontendUrl}/auth/callback?token=${token}&role=${role}&user=${userDataEncoded}`
+      );
     } catch (error) {
       console.error("Google OAuth callback error:", error);
       console.error("Error stack:", error.stack);
       console.error("Error message:", error.message);
-      
+
       // Provide more specific error information
       let errorType = "oauth_error";
       if (error.name === "ValidationError") {
@@ -405,8 +463,12 @@ router.get(
       } else if (error.name === "MongoServerError") {
         errorType = "database_error";
       }
-      
-      res.redirect(`${process.env.FRONTEND_URL || "http://localhost:5173"}/login?error=${errorType}`);
+
+      res.redirect(
+        `${
+          process.env.FRONTEND_URL || "http://localhost:5173"
+        }/login?error=${errorType}`
+      );
     }
   }
 );
