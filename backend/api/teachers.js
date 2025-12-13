@@ -31,13 +31,27 @@ const router = Router();
  */
 
 /**
- * GET /api/teachers
- *
- * Fetches all teachers from the database.
- * Used on the teacher discovery/browse page.
- *
- * @returns {Array} List of all teacher documents
- * @returns {Object} 500 error if database query fails
+ * @swagger
+ * /api/teachers:
+ *   get:
+ *     summary: Get all teachers
+ *     description: Fetches all teachers from the database. Used on the teacher discovery/browse page.
+ *     tags: [Teachers]
+ *     responses:
+ *       200:
+ *         description: List of all teachers
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Teacher'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get("/", async (req, res) => {
   try {
@@ -49,16 +63,31 @@ router.get("/", async (req, res) => {
 });
 
 /**
- * GET /api/teachers/seed
- *
- * Development utility route to populate the database with mock teachers.
- * WARNING: This deletes ALL existing teachers before inserting new ones!
- *
- * NOTE: This route MUST be defined before /:id route, otherwise
- * Express will interpret "seed" as a teacher ID.
- *
- * @returns {Object} Success message confirming seed operation
- * @returns {Object} 500 error if database operation fails
+ * @swagger
+ * /api/teachers/seed:
+ *   get:
+ *     summary: Seed database with mock teachers
+ *     description: |
+ *       Development utility route to populate the database with mock teachers.
+ *       **WARNING**: This deletes ALL existing teachers before inserting new ones!
+ *     tags: [Teachers]
+ *     responses:
+ *       200:
+ *         description: Teachers seeded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 msg:
+ *                   type: string
+ *                   example: "✅ Teachers seeded successfully!"
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get("/seed", async (req, res) => {
   const mockTeachers = [
@@ -91,6 +120,41 @@ router.get("/seed", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/teachers/{id}:
+ *   get:
+ *     summary: Get teacher by ID
+ *     description: Fetches a single teacher by their MongoDB ObjectId. Used on the teacher profile detail page.
+ *     tags: [Teachers]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: MongoDB ObjectId of the teacher
+ *         example: 507f1f77bcf86cd799439011
+ *     responses:
+ *       200:
+ *         description: Teacher found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Teacher'
+ *       404:
+ *         description: Teacher not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 // GET /api/teachers/:id  → Fetch one teacher by ID
 router.get("/:id", async (req, res) => {
   try {
@@ -106,6 +170,63 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/teachers:
+ *   post:
+ *     summary: Create a new teacher
+ *     description: Creates a new teacher profile with basic information.
+ *     tags: [Teachers]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Jane Smith"
+ *               tagline:
+ *                 type: string
+ *                 example: "Professional English Teacher"
+ *               bio:
+ *                 type: string
+ *                 example: "10+ years of teaching experience"
+ *               avatar:
+ *                 type: string
+ *                 example: "https://i.pravatar.cc/150?img=5"
+ *               rating:
+ *                 type: number
+ *                 example: 5.0
+ *               lessonCount:
+ *                 type: integer
+ *                 example: 0
+ *               prices:
+ *                 type: object
+ *                 properties:
+ *                   trial:
+ *                     type: number
+ *                     example: 10
+ *                   standard:
+ *                     type: number
+ *                     example: 25
+ *     responses:
+ *       201:
+ *         description: Teacher created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Teacher'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post("/", async (req, res) => {
   const teacher = new Teacher({
     name: req.body.name,
@@ -160,8 +281,37 @@ router.get("/:id", protect, async (req, res) => {
 });
 
 /**
- * POST /api/teachers/register
- * Public: Teacher Registration
+ * @swagger
+ * /api/teachers/register:
+ *   post:
+ *     summary: Register a new teacher
+ *     description: Public endpoint for teacher registration. Creates a new teacher account with email and password.
+ *     tags: [Teachers]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/TeacherRegistration'
+ *     responses:
+ *       201:
+ *         description: Teacher registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessMessage'
+ *       400:
+ *         description: Email already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post("/register", async (req, res) => {
   try {
@@ -198,8 +348,37 @@ router.post("/register", async (req, res) => {
   }
 });
 /**
- * POST /api/teachers/login
- * Public: Teacher Login
+ * @swagger
+ * /api/teachers/login:
+ *   post:
+ *     summary: Teacher login
+ *     description: Authenticates a teacher and returns a JWT token.
+ *     tags: [Teachers]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/TeacherLogin'
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/LoginResponse'
+ *       401:
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post("/login", async (req, res) => {
   try {
@@ -236,16 +415,57 @@ router.post("/login", async (req, res) => {
 });
 
 /**
- * GET /api/teachers/:id/dashboard
- *
- * Fetches all dashboard data for a teacher:
- * - Stats (total students, pending bookings, today's lessons, monthly earnings)
- * - Today's schedule
- * - Pending booking requests
- * - Recent earnings/transactions
- *
- * @param {string} req.params.id - MongoDB ObjectId of the teacher
- * @returns {Object} Dashboard data object
+ * @swagger
+ * /api/teachers/{id}/dashboard:
+ *   get:
+ *     summary: Get teacher dashboard data
+ *     description: |
+ *       Fetches all dashboard data for a teacher including:
+ *       - Stats (total students, pending bookings, today's lessons, monthly earnings)
+ *       - Today's schedule
+ *       - Pending booking requests
+ *       - Recent earnings/transactions
+ *     tags: [Teachers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: MongoDB ObjectId of the teacher
+ *     responses:
+ *       200:
+ *         description: Dashboard data retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/TeacherDashboard'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Not authorized to access this dashboard
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Teacher not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get("/:id/dashboard", protect, async (req, res) => {
   try {
@@ -487,29 +707,103 @@ function formatShortDate(date) {
 }
 
 /**
- * Updates a teacher's profile.
- * PUT /api/teachers/:id
- * Protected Route - Teacher can only update their own profile
- * @param {string} req.params.id - MongoDB ObjectId of the teacher
- * @returns {Object} Updated teacher document
- * @returns {Object} 403 if not authorized
- * @returns {Object} 404 if teacher not found
- * 
- * 
-
+ * @swagger
+ * /api/teachers/{id}:
+ *   put:
+ *     summary: Update teacher profile
+ *     description: Updates a teacher's profile. Teachers can only update their own profile.
+ *     tags: [Teachers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: MongoDB ObjectId of the teacher
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               tagline:
+ *                 type: string
+ *               bio:
+ *                 type: string
+ *               location:
+ *                 type: string
+ *               education:
+ *                 type: string
+ *               teachingStyle:
+ *                 type: string
+ *               videoUrl:
+ *                 type: string
+ *               prices:
+ *                 type: string
+ *                 description: JSON string of prices object
+ *               availability:
+ *                 type: string
+ *                 description: JSON string of availability object
+ *               skills:
+ *                 type: string
+ *                 description: JSON string of skills array
+ *               languages:
+ *                 type: string
+ *                 description: JSON string of languages array
+ *               specializations:
+ *                 type: string
+ *                 description: JSON string of specializations array
+ *               avatar:
+ *                 type: string
+ *                 format: binary
+ *                 description: Profile picture file
+ *     responses:
+ *       200:
+ *         description: Teacher updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Teacher'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Not authorized to update this profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Teacher not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
-router.put("/:id", protect, upload.single('avatar'), async (req, res) => {
+router.put("/:id", protect, upload.single("avatar"), async (req, res) => {
   try {
     if (req.userId !== req.params.id) {
-      return res.status(403).json({ message: "Not authorized to update this profile" });
+      return res
+        .status(403)
+        .json({ message: "Not authorized to update this profile" });
     }
 
     const parseJSON = (data) => {
-        try {
-            return typeof data === 'string' ? JSON.parse(data) : data;
-        } catch (e) {
-            return data;
-        }
+      try {
+        return typeof data === "string" ? JSON.parse(data) : data;
+      } catch (e) {
+        return data;
+      }
     };
 
     const updateData = {
@@ -521,7 +815,7 @@ router.put("/:id", protect, upload.single('avatar'), async (req, res) => {
       education: req.body.education,
       teachingStyle: req.body.teachingStyle,
       videoUrl: req.body.videoUrl,
-      
+
       prices: parseJSON(req.body.prices),
       availability: parseJSON(req.body.availability),
       skills: parseJSON(req.body.skills),
@@ -530,12 +824,12 @@ router.put("/:id", protect, upload.single('avatar'), async (req, res) => {
     };
 
     if (req.file) {
-        const cleanPath = req.file.filename.replace(/\\/g, "/");
-        updateData.avatar = `http://localhost:3000/uploads/${cleanPath}`;
+      const cleanPath = req.file.filename.replace(/\\/g, "/");
+      updateData.avatar = `http://localhost:3000/uploads/${cleanPath}`;
     }
 
-    Object.keys(updateData).forEach(key => 
-      updateData[key] === undefined && delete updateData[key]
+    Object.keys(updateData).forEach(
+      (key) => updateData[key] === undefined && delete updateData[key]
     );
 
     const updatedTeacher = await Teacher.findByIdAndUpdate(
@@ -554,6 +848,5 @@ router.put("/:id", protect, upload.single('avatar'), async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 });
-
 
 export default router;
