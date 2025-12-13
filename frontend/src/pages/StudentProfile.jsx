@@ -552,8 +552,9 @@ export default function StudentProfile({ setIsAuthenticated }) {
                       type="email"
                       name="email"
                       value={profile.email}
-                      onChange={handleChange}
-                      disabled={!isEditing}
+                      // onChange={handleChange}
+                      disabled={true}
+                      style={{ cursor: "not-allowed", opacity: 0.7 }}
                     />
                   </div>
                   <div className="form-group">
