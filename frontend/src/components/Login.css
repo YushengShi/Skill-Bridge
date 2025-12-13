@@ -5,7 +5,7 @@
   justify-content: center;
   padding: 20px;
   background: white; /*for image background: url('background.jpg') center center/cover no-repeat fixed;*/
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .login-container {
@@ -165,7 +165,7 @@
 }
 
 .divider::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   left: 0;
@@ -272,7 +272,7 @@
     padding: 30px 20px;
     margin: 10px;
   }
-  
+
   .login-title {
     font-size: 24px;
   }
@@ -293,8 +293,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Field error styling */
@@ -302,6 +306,7 @@
   color: #dc3545;
   font-size: 12px;
   margin-top: 4px;
+}
 
 /* ================================
    RESPONSIVE — LOGIN PAGE
@@ -349,6 +354,7 @@
   .login-container {
     padding: 1rem;
   }
+}
 
 /* Role toggle container styling */
 .role-toggle-container {
@@ -371,5 +377,4 @@
 .role-toggle-container button:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-
 }
