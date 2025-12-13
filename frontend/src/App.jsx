@@ -15,6 +15,7 @@ import StudentDashboard from "./pages/StudentDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import TeacherDetailPage from "./pages/TeacherDetailPage";
 import TeacherListPage from "./pages/TeacherListPage";
+import TeacherOwnProfile from "./pages/TeacherOwnProfile";
 
 import AIRecommendations from "./pages/AIRecommendations";
 import AIChatbot, { ChatbotButton } from "./components/AIChatbot";
@@ -127,6 +128,7 @@ function App() {
           }
         />
         {/* Individual teacher profile page */}
+      
         <Route path="/teachers/:id" element={<TeacherProfile />} />
         {/* Stripe checkout/payment page */}
         <Route path="/checkout" element={<PaymentForm />} />
@@ -186,11 +188,16 @@ function App() {
             )
           }
         />
+        {/* student go to student profile, teachers to to teachers profile */}
         <Route
           path="/profile"
           element={
             isAuthenticated ? (
-              <StudentProfile setIsAuthenticated={setIsAuthenticated} />
+              userRole === "student" ? (
+                <StudentProfile setIsAuthenticated={setIsAuthenticated} />
+              ) : (
+                <TeacherOwnProfile setIsAuthenticated={setIsAuthenticated} />
+              )
             ) : (
               <Navigate to="/login" replace />
             )
