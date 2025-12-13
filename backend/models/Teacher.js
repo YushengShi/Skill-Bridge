@@ -186,6 +186,10 @@ const teacherSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  isBanned: {
+    type: Boolean,
+    default: false,
+  },
 
   // Timestamps
   createdAt: {

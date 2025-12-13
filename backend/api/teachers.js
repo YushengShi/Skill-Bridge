@@ -214,6 +214,12 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
+    if (teacher.isBanned) {
+      return res.status(403).json({ 
+          message: "Your account has been banned. Please contact support." 
+      });
+    }
+
     const token = jwt.sign(
       { id: teacher._id, email: teacher.email, role: "teacher" },
       JWT_SECRET,
