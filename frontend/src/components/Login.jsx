@@ -16,6 +16,12 @@ function Login({ setIsAuthenticated, setUserRole }) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [teacherName, setTeacherName] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -23,12 +29,62 @@ function Login({ setIsAuthenticated, setUserRole }) {
   useEffect(() => {
     setErrorMessage("");
     setSuccessMessage("");
+    // Auto-focus on email field when page loads
+    const emailInput = document.getElementById('email');
+    if (emailInput && !isSignupMode) {
+      emailInput.focus();
+    }
   }, [uiRole, isSignupMode]);
+
+  // Password toggle functions
+  const togglePassword = (field) => {
+    if (field === 'password') {
+      setShowPassword(!showPassword);
+    } else if (field === 'signupPassword') {
+      setShowSignupPassword(!showSignupPassword);
+    } else if (field === 'confirmPassword') {
+      setShowConfirmPassword(!showConfirmPassword);
+    }
+  };
+
+  // Social login handlers
+  const handleSocialLogin = (provider) => {
+    setIsLoading(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+    
+    setTimeout(() => {
+      if (provider === 'google') {
+        setSuccessMessage('Redirecting to Google login...');
+        // In a real app, redirect to Google OAuth
+      } else if (provider === 'microsoft') {
+        setSuccessMessage('Redirecting to Microsoft login...');
+        // In a real app, redirect to Microsoft OAuth
+      }
+      setIsLoading(false);
+    }, 1000);
+  };
+
+  // Forgot password handler
+  const handleForgotPassword = () => {
+    if (!email) {
+      setErrorMessage('Please enter your email address first.');
+      return;
+    }
+    setSuccessMessage('Password reset instructions sent to your email.');
+  };
 
   const handleAuth = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMessage("");
+
+    // Validate confirm password for signup
+    if (isSignupMode && password !== confirmPassword) {
+      setErrorMessage("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
 
     const baseUrl = "http://localhost:3000/api";
     const rolePath = uiRole === "student" ? "students" : "teachers";
@@ -74,11 +130,26 @@ function Login({ setIsAuthenticated, setUserRole }) {
 
       if (isSignupMode) {
         setSuccessMessage("Account created successfully! Please log in.");
-        setIsSignupMode(false);
+        setIsLoading(false);
+        // Clear signup form
+        setConfirmPassword("");
+        setAgreeTerms(false);
+        // Wait 1 second before switching to login form
+        setTimeout(() => {
+          setIsSignupMode(false);
+          setSuccessMessage("");
+        }, 1000);
       } else {
+        // Store remembered email if checkbox is checked
+        if (rememberMe) {
+          localStorage.setItem('rememberedEmail', email);
+        }
         // Store authentication data in localStorage for persistence across refreshes
         localStorage.setItem("token", data.token); // JWT for API auth
         localStorage.setItem("user", JSON.stringify(data.user)); // User profile data
+
+        setSuccessMessage("Login successful! Redirecting...");
+        setIsLoading(false);
 
         try {
           // Decode JWT to extract user role for routing decisions
@@ -86,16 +157,20 @@ function Login({ setIsAuthenticated, setUserRole }) {
           setUserRole(decoded.role); // Update app-wide role state
           setIsAuthenticated(true); // Update app-wide auth state
 
-          // Route users to their role-specific dashboard after login
-          // Teachers go to teacher dashboard, students go to student dashboard
-          if (decoded.role === "teacher") {
-            navigate("/teacher-dashboard");
-          } else {
-            navigate("/student-dashboard");
-          }
+          // Wait 0.5-1 second before navigation to show success message
+          setTimeout(() => {
+            // Route users to their role-specific dashboard after login
+            // Teachers go to teacher dashboard, students go to student dashboard
+            if (decoded.role === "teacher") {
+              navigate("/teacher-dashboard");
+            } else {
+              navigate("/student-dashboard");
+            }
+          }, 800);
         } catch (decodeError) {
           console.error("Token decode failed", decodeError);
           setErrorMessage("Login failed: Invalid token received.");
+          setIsLoading(false);
         }
       }
     } catch (err) {
@@ -122,12 +197,13 @@ function Login({ setIsAuthenticated, setUserRole }) {
             onClick={() => setUiRole("student")}
             style={{
               padding: "8px 20px",
-              backgroundColor: uiRole === "student" ? "#4CAF50" : "#ddd",
+              backgroundColor: uiRole === "student" ? "#2196F3" : "#ddd",
               color: uiRole === "student" ? "white" : "black",
               border: "none",
-              borderRadius: "5px",
+              borderRadius: "10px",
               cursor: "pointer",
               fontWeight: "bold",
+              transition: "all 0.3s ease",
             }}
           >
             Student
@@ -137,12 +213,13 @@ function Login({ setIsAuthenticated, setUserRole }) {
             onClick={() => setUiRole("teacher")}
             style={{
               padding: "8px 20px",
-              backgroundColor: uiRole === "teacher" ? "#2196F3" : "#ddd",
+              backgroundColor: uiRole === "teacher" ? "#4CAF50" : "#ddd",
               color: uiRole === "teacher" ? "white" : "black",
               border: "none",
-              borderRadius: "5px",
+              borderRadius: "10px",
               cursor: "pointer",
               fontWeight: "bold",
+              transition: "all 0.3s ease",
             }}
           >
             Teacher
@@ -152,89 +229,269 @@ function Login({ setIsAuthenticated, setUserRole }) {
         <div className="login-header">
           <h1 className="login-title">Skill Bridge</h1>
           <p className="login-subtitle">
-            {uiRole === "teacher" ? "Teacher Portal" : "Student Learning"}{" "}
-            <br />
-            {isSignupMode ? "Create Account" : "Sign In"}
+            {isSignupMode ? 'Create your account' : 'Sign in to your account'}
           </p>
         </div>
-
+      
         {errorMessage && (
-          <div
-            className="error-message"
-            style={{ color: "red", textAlign: "center", margin: "10px 0" }}
-          >
+          <div className="error-message">
             {errorMessage}
           </div>
         )}
         {successMessage && (
-          <div
-            className="success-message"
-            style={{ color: "green", textAlign: "center", margin: "10px 0" }}
-          >
+          <div className="success-message">
             {successMessage}
           </div>
         )}
 
-        <form onSubmit={handleAuth}>
-          {isSignupMode && uiRole === "student" && (
-            <div style={{ display: "flex", gap: "10px" }}>
-              <input
-                className="form-input"
-                placeholder="First Name"
-                required
-                onChange={(e) => setFirstName(e.target.value)}
-              />
-              <input
-                className="form-input"
-                placeholder="Last Name"
-                required
-                onChange={(e) => setLastName(e.target.value)}
-              />
-            </div>
-          )}
-
-          {isSignupMode && uiRole === "teacher" && (
-            <input
-              className="form-input"
-              placeholder="Full Name"
-              required
-              onChange={(e) => setTeacherName(e.target.value)}
-            />
-          )}
-
+        {/* Login Form */}
+        <form id="loginForm" onSubmit={handleAuth} style={{ display: isSignupMode ? 'none' : 'block' }}>
           <div className="form-group">
+            <label htmlFor="email" className="form-label">Email Address</label>
             <input
               type="email"
+              id="email"
+              name="email"
               className="form-input"
-              placeholder="Email Address"
+              placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
-
+          
           <div className="form-group">
-            <input
-              type="password"
-              className="form-input"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <label htmlFor="password" className="form-label">Password</label>
+            <div className="password-container">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                name="password"
+                className="form-input"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => togglePassword('password')}
+              >
+                <img
+                  src={showPassword 
+                    ? "https://cdn-icons-png.flaticon.com/128/2767/2767146.png"
+                    : "https://cdn-icons-png.flaticon.com/128/2767/2767194.png"
+                  }
+                  alt="Toggle password"
+                  style={{ width: '20px', height: '20px' }}
+                />
+              </button>
+            </div>
           </div>
-
+          
+          <div className="remember-forgot">
+            <label className="remember-me">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                name="rememberMe"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+              />
+              Remember me
+            </label>
+            <a href="#" className="forgot-password" onClick={(e) => {
+              e.preventDefault();
+              handleForgotPassword();
+            }}>
+              Forgot password?
+            </a>
+          </div>
+          
           <button type="submit" className="login-button" disabled={isLoading}>
-            {isLoading ? "Processing..." : isSignupMode ? "Sign Up" : "Log In"}
+            <div className={`loading ${isLoading ? '' : 'hidden'}`}></div>
+            <span>{isLoading ? 'Signing In...' : 'Sign In'}</span>
           </button>
         </form>
 
+        {/* Signup Form */}
+        <form id="signupForm" onSubmit={handleAuth} style={{ display: isSignupMode ? 'block' : 'none' }}>
+          {uiRole === "student" ? (
+            <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+              <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+                <label htmlFor="firstName" className="form-label">First Name</label>
+                <input
+                  type="text"
+                  id="firstName"
+                  className="form-input"
+                  placeholder="First Name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+                <label htmlFor="lastName" className="form-label">Last Name</label>
+                <input
+                  type="text"
+                  id="lastName"
+                  className="form-input"
+                  placeholder="Last Name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="form-group">
+              <label htmlFor="teacherName" className="form-label">Full Name</label>
+              <input
+                type="text"
+                id="teacherName"
+                className="form-input"
+                placeholder="Enter your full name"
+                value={teacherName}
+                onChange={(e) => setTeacherName(e.target.value)}
+                required
+              />
+            </div>
+          )}
+
+          <div className="form-group">
+            <label htmlFor="signupEmail" className="form-label">Email Address</label>
+            <input
+              type="email"
+              id="signupEmail"
+              name="signupEmail"
+              className="form-input"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="signupPassword" className="form-label">Password</label>
+            <div className="password-container">
+              <input
+                type={showSignupPassword ? 'text' : 'password'}
+                id="signupPassword"
+                name="signupPassword"
+                className="form-input"
+                placeholder="Create a password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => togglePassword('signupPassword')}
+              >
+                <img
+                  src={showSignupPassword
+                    ? "https://cdn-icons-png.flaticon.com/128/2767/2767146.png"
+                    : "https://cdn-icons-png.flaticon.com/128/2767/2767194.png"
+                  }
+                  alt="Toggle password"
+                  style={{ width: '20px', height: '20px' }}
+                />
+              </button>
+            </div>
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
+            <div className="password-container">
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                id="confirmPassword"
+                name="confirmPassword"
+                className="form-input"
+                placeholder="Confirm your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => togglePassword('confirmPassword')}
+              >
+                <img
+                  src={showConfirmPassword
+                    ? "https://cdn-icons-png.flaticon.com/128/2767/2767146.png"
+                    : "https://cdn-icons-png.flaticon.com/128/2767/2767194.png"
+                  }
+                  alt="Toggle password"
+                  style={{ width: '20px', height: '20px' }}
+                />
+              </button>
+            </div>
+          </div>
+          
+          <div className="form-group">
+            <label className="terms-checkbox">
+              <input
+                type="checkbox"
+                id="agreeTerms"
+                name="agreeTerms"
+                checked={agreeTerms}
+                onChange={(e) => setAgreeTerms(e.target.checked)}
+                required
+              />
+              I agree to the Terms of Service and Privacy Policy
+            </label>
+          </div>
+          
+          <button type="submit" className="login-button" disabled={isLoading}>
+            <div className={`loading ${isLoading ? '' : 'hidden'}`}></div>
+            <span>{isLoading ? 'Creating Account...' : 'Create Account'}</span>
+          </button>
+        </form>
+
+        <div className="divider">
+          <span>or continue with</span>
+        </div>
+
+        <div className="social-login">
+          <a
+            href="#"
+            className="social-button"
+            onClick={(e) => {
+              e.preventDefault();
+              handleSocialLogin('google');
+            }}
+          >
+            <img
+              src="https://img.icons8.com/?size=100&id=17950&format=png"
+              alt="Google"
+              style={{ width: '20px', height: '20px' }}
+            />
+            Google
+          </a>
+          <a
+            href="#"
+            className="social-button"
+            onClick={(e) => {
+              e.preventDefault();
+              handleSocialLogin('microsoft');
+            }}
+          >
+            <img
+              src="https://img.icons8.com/?size=100&id=22984&format=png"
+              alt="Microsoft"
+              style={{ width: '20px', height: '20px' }}
+            />
+            Microsoft
+          </a>
+        </div>
+
         <div className="signup-link">
-          <span>
-            {isSignupMode
-              ? "Already have an account?"
-              : "Don't have an account?"}
-          </span>
+          <span>{isSignupMode ? "Already have an account?" : "Don't have an account?"}</span>
           <a
             href="#"
             onClick={(e) => {
@@ -242,10 +499,10 @@ function Login({ setIsAuthenticated, setUserRole }) {
               setIsSignupMode(!isSignupMode);
             }}
           >
-            {isSignupMode ? "Sign in here" : "Sign up here"}
+            {isSignupMode ? 'Sign in here' : 'Sign up here'}
           </a>
         </div>
-      </div>
+    </div>
     </div>
   );
 }
