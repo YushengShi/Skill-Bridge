@@ -39,19 +39,64 @@ const getGeminiClient = () => {
 };
 
 /**
- * POST /api/ai/recommend
+ * @swagger
+ * /api/ai/recommend:
+ *   post:
+ *     summary: Get AI-powered teacher recommendations
+ *     description: |
+ *       Takes student questionnaire answers and returns AI-powered teacher recommendations
+ *       using Google Gemini API.
  *
- * Takes student questionnaire answers and returns AI-powered teacher recommendations.
- *
- * Request body:
- * - skillLevel: 'beginner' | 'intermediate' | 'advanced'
- * - schedule: 'morning' | 'afternoon' | 'evening' | 'weekend' | 'flexible'
- * - learningStyle: 'structured' | 'conversational' | 'intensive' | 'flexible'
- * - budget: 'low' | 'medium' | 'high' (low: <$20, medium: $20-40, high: >$40)
- * - subject: string (e.g., 'English', 'Business English', 'Interview Prep')
- * - additionalInfo: string (optional - any extra context from the student)
- *
- * @returns {Object} { recommendations: Teacher[], aiInsight: string }
+ *       The AI analyzes student preferences including skill level, schedule, learning style,
+ *       and budget to find the best matching teachers.
+ *     tags: [AI]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AIRecommendationRequest'
+ *     responses:
+ *       200:
+ *         description: Recommendations generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AIRecommendationResponse'
+ *       400:
+ *         description: Missing required fields
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Missing required fields"
+ *                 required:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["skillLevel", "schedule", "learningStyle", "budget"]
+ *       404:
+ *         description: No teachers available
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "No teachers available"
+ *                 recommendations:
+ *                   type: array
+ *                   items: {}
+ *       500:
+ *         description: Server error or AI API error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post("/recommend", async (req, res) => {
   try {
@@ -402,22 +447,74 @@ function getFallbackRecommendations(teachers, { skillLevel, budget }) {
 }
 
 /**
- * GET /api/ai/questions
- *
- * Returns the questionnaire structure for the recommendation form
- */
-/**
- * POST /api/ai/chat
- *
- * AI Chatbot endpoint for conversational teacher recommendations.
- * Maintains conversation context and extracts user preferences through natural dialogue.
- *
- * Request body:
- * - message: string (user's chat message)
- * - conversationHistory: array (previous messages for context)
- * - extractedPreferences: object (preferences gathered so far)
- *
- * @returns {Object} { reply: string, extractedPreferences: object, recommendations?: Teacher[], complete: boolean }
+ * @swagger
+ * /api/ai/chat:
+ *   post:
+ *     summary: AI chatbot for recommendations
+ *     description: |
+ *       AI Chatbot endpoint for conversational teacher recommendations.
+ *       Maintains conversation context and extracts user preferences through natural dialogue.
+ *     tags: [AI]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - message
+ *             properties:
+ *               message:
+ *                 type: string
+ *                 description: User's chat message
+ *                 example: "I want to learn English for business"
+ *               conversationHistory:
+ *                 type: array
+ *                 description: Previous messages for context
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     role:
+ *                       type: string
+ *                       enum: [user, assistant]
+ *                     content:
+ *                       type: string
+ *               extractedPreferences:
+ *                 type: object
+ *                 description: Preferences gathered from previous turns
+ *     responses:
+ *       200:
+ *         description: Chatbot response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 reply:
+ *                   type: string
+ *                   description: AI's response message
+ *                 extractedPreferences:
+ *                   type: object
+ *                   description: Updated preferences from conversation
+ *                 recommendations:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Teacher'
+ *                 complete:
+ *                   type: boolean
+ *                   description: Whether enough info has been gathered
+ *       400:
+ *         description: Message is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post("/chat", async (req, res) => {
   try {
@@ -690,6 +787,47 @@ function parseChatbotResponse(aiResponse, teacherSummaries, fullTeachers) {
   };
 }
 
+/**
+ * @swagger
+ * /api/ai/questions:
+ *   get:
+ *     summary: Get recommendation questionnaire
+ *     description: Returns the questionnaire structure for the recommendation form with all available options.
+ *     tags: [AI]
+ *     responses:
+ *       200:
+ *         description: Questionnaire structure
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 questions:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         example: "skillLevel"
+ *                       question:
+ *                         type: string
+ *                         example: "What is your current skill level?"
+ *                       type:
+ *                         type: string
+ *                         enum: [single, text]
+ *                       options:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             value:
+ *                               type: string
+ *                             label:
+ *                               type: string
+ *                             description:
+ *                               type: string
+ */
 router.get("/questions", (req, res) => {
   res.json({
     questions: [
@@ -799,19 +937,86 @@ router.get("/questions", (req, res) => {
 });
 
 /**
- * POST /api/ai/teacher-chat
- *
- * AI Chatbot endpoint for teachers to get assistance with:
- * - Upcoming bookings and schedule
- * - Availability management
- * - Earnings overview
- * - Teaching-related questions
- *
- * Request body:
- * - message: string (teacher's chat message)
- * - conversationHistory: array (previous messages for context)
- *
- * @returns {Object} { reply: string, success: boolean }
+ * @swagger
+ * /api/ai/teacher-chat:
+ *   post:
+ *     summary: AI chatbot for teachers
+ *     description: |
+ *       AI Chatbot endpoint for teachers to get assistance with:
+ *       - Upcoming bookings and schedule
+ *       - Availability management
+ *       - Earnings overview
+ *       - Teaching-related questions
+ *     tags: [AI]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - message
+ *             properties:
+ *               message:
+ *                 type: string
+ *                 description: Teacher's chat message
+ *                 example: "What are my upcoming lessons?"
+ *               conversationHistory:
+ *                 type: array
+ *                 description: Previous messages for context
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     role:
+ *                       type: string
+ *                       enum: [user, assistant]
+ *                     content:
+ *                       type: string
+ *     responses:
+ *       200:
+ *         description: Chatbot response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 reply:
+ *                   type: string
+ *                   description: AI's response message
+ *                 success:
+ *                   type: boolean
+ *       400:
+ *         description: Message is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: This endpoint is for teachers only
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Teacher not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post("/teacher-chat", protect, async (req, res) => {
   try {

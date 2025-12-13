@@ -278,7 +278,7 @@ export default function StudentProfile({ setIsAuthenticated }) {
       // 1. 生成预览图 (仅用于前端显示，不发给后端)
       const previewUrl = URL.createObjectURL(file);
       setProfile((prev) => ({ ...prev, avatar: previewUrl }));
-      
+
       // 2. 保存原始文件对象 (发送给后端用)
       setSelectedFile(file);
     }
@@ -325,20 +325,23 @@ export default function StudentProfile({ setIsAuthenticated }) {
         formData.append("avatar", selectedFile);
       }
 
-      const response = await fetch(`http://localhost:3000/api/students/${userId}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
+      const response = await fetch(
+        `http://localhost:3000/api/students/${userId}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to save profile");
       }
 
       const updatedUser = await response.json();
-      localStorage.setItem("user", JSON.stringify(updatedUser)); 
+      localStorage.setItem("user", JSON.stringify(updatedUser));
 
       setSaveSuccess(true);
       setIsEditing(false);
@@ -482,20 +485,6 @@ export default function StudentProfile({ setIsAuthenticated }) {
             >
               <span className="nav-icon">👤</span>
               Personal Info
-            </button>
-            <button
-              className={`nav-item ${activeTab === "bookings" ? "active" : ""}`}
-              onClick={() => setActiveTab("bookings")}
-            >
-              <span className="nav-icon">📅</span>
-              My Bookings
-            </button>
-            <button
-              className={`nav-item ${activeTab === "files" ? "active" : ""}`}
-              onClick={() => setActiveTab("files")}
-            >
-              <span className="nav-icon">📁</span>
-              Uploaded Files
             </button>
             <button
               className={`nav-item ${activeTab === "settings" ? "active" : ""}`}

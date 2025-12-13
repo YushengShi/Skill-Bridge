@@ -28,6 +28,8 @@
     "multer": "^2.0.2",
     "path": "^0.12.7",
     "stripe": "^20.0.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "user": "^0.0.0"
   }
 }
