@@ -13,6 +13,8 @@ const NotificationModal = ({ type, message, onClose, onConfirm }) => {
     }
   };
 
+const NotificationModal = ({ type, message, onClose }) => {
+  const isSuccess = type === "success";
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div
