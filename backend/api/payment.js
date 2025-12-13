@@ -49,7 +49,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 router.post("/create-checkout-session", protect, async (req, res) => {
   // TODO: replace this url
   const YOUR_DOMAIN = "http://localhost:5173"; // replace with frontend domain
-  const { teacherId, lessonType, price, teacherName } = req.body;
+  const { teacherId, lessonType, price, teacherName, scheduledDate, scheduledTime } = req.body;
   const studentId = req.userId;
   try {
     // 1. create a new booking in the database with status 'pending'
@@ -59,6 +59,19 @@ router.post("/create-checkout-session", protect, async (req, res) => {
       lessonType,
       amount: price,
       status: "pending",
+      // Store date correctly - when scheduledDate is "YYYY-MM-DD", 
+      // create a date at UTC midnight to avoid timezone issues
+      // This ensures "2024-12-13" is always stored as Dec 13 UTC, regardless of server timezone
+      scheduledDate: scheduledDate 
+        ? (() => {
+            const [year, month, day] = scheduledDate.split('-').map(Number);
+            // Create date at UTC midnight for the selected date
+            // This prevents timezone shifts when MongoDB stores/retrieves the date
+            return new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+          })()
+        : null,
+      scheduledTime: scheduledTime || null,
+      duration: lessonType === "trial" ? 30 : 60,
     });
 
     const session = await stripe.checkout.sessions.create({
