@@ -3,6 +3,7 @@ import Teacher from "../models/Teacher.js";
 import Student from "../models/Student.js";
 import Booking from "../models/Booking.js";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 import protect from "../middleware/auth.js";
 import upload from "../middleware/upload.js";
 
@@ -332,10 +333,14 @@ router.post("/register", async (req, res) => {
       });
     }
 
+    // Hash password before saving
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
     const teacher = new Teacher({
       name,
       email,
-      password,
+      password: hashedPassword,
       role: "teacher",
       prices: { trial: 15, standard: 30 },
     });
@@ -389,7 +394,9 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    if (teacher.password !== password) {
+    // Compare password with bcrypt
+    const isPasswordValid = await bcrypt.compare(password, teacher.password);
+    if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 

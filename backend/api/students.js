@@ -1,5 +1,6 @@
 import { Router } from "express";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 import Student from "../models/Student.js";
 import Teacher from "../models/Teacher.js";
 import Booking from "../models/Booking.js";
@@ -116,11 +117,15 @@ router.post("/", async (req, res) => {
       }
     }
 
+    // Hash password before saving
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
+
     const student = new Student({
       firstName: req.body.firstName,
       lastName: req.body.lastName,
       email: req.body.email,
-      password: req.body.password,
+      password: hashedPassword,
       role: "student",
       notifications: req.body.notifications,
     });
@@ -563,7 +568,9 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
     
-    if (student.password !== password) {
+    // Compare password with bcrypt
+    const isPasswordValid = await bcrypt.compare(password, student.password);
+    if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
     if (student.isBanned) {
