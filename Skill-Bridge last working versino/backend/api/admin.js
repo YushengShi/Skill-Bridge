@@ -5,7 +5,6 @@ import Admin from "../models/Admin.js";
 import Student from "../models/Student.js";
 import Teacher from "../models/Teacher.js";
 import protect from "../middleware/auth.js";
-import upload from "../middleware/upload.js";
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
@@ -115,51 +114,6 @@ router.put("/users/:id/ban", protect, async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
-  }
-});
-
-// PUT /api/admin/teachers/:id - Update teacher information (admin only)
-router.put("/teachers/:id", protect, upload.single("avatar"), async (req, res) => {
-  if (req.userRole !== 'admin') {
-    return res.status(403).json({ message: "Only admins can update teachers" });
-  }
-
-  try {
-    const { id } = req.params;
-    const teacher = await Teacher.findById(id);
-
-    if (!teacher) {
-      return res.status(404).json({ message: "Teacher not found" });
-    }
-
-    // Update fields if provided
-    if (req.body.name !== undefined) {
-      teacher.name = req.body.name;
-    }
-    if (req.body.email !== undefined) {
-      // Check if email is already taken by another teacher
-      const existingTeacher = await Teacher.findOne({ 
-        email: req.body.email.toLowerCase().trim(),
-        _id: { $ne: id }
-      });
-      if (existingTeacher) {
-        return res.status(400).json({ message: "Email already in use" });
-      }
-      teacher.email = req.body.email.toLowerCase().trim();
-    }
-    if (req.file) {
-      // Update avatar if a new file was uploaded
-      const cleanPath = req.file.filename.replace(/\\/g, "/");
-      teacher.avatar = `http://localhost:3000/uploads/${cleanPath}`;
-    }
-
-    await teacher.save();
-
-    const updatedTeacher = await Teacher.findById(id).select("-password");
-    res.json(updatedTeacher);
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ message: error.message });
   }
 });
 

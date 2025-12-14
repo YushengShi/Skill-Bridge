@@ -36,7 +36,7 @@ const upload = multer({
   fileFilter: function (req, file, cb) {
     checkFileType(file, cb);
   },
-  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB limit for profile pictures
+  limits: { fileSize: 5 * 1024 * 1024 }, 
 });
 
 export default upload;

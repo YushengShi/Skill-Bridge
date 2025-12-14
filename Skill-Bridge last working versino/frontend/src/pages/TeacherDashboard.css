@@ -1,0 +1,1136 @@
+/* ================================================================================
+   TEACHER DASHBOARD STYLES
+   ================================================================================
+   Comprehensive dashboard styling for teachers with tabs, stats, schedule,
+   bookings management, materials upload, and earnings overview.
+   Uses CSS Grid and Flexbox for responsive layouts.
+   ================================================================================ */
+
+/* ==================== BASE STYLES ==================== */
+.teacher-dashboard {
+  min-height: 100vh;
+  background-color: #f5f7fa;
+  padding-bottom: 2rem;
+}
+
+/* Loading State */
+.dashboard-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  color: #666;
+}
+
+.dashboard-loading .spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid var(--primary-color, #0d9488);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==================== HEADER ==================== */
+.dashboard-header {
+  background: var(--primary-color, #0d9488);
+  color: white;
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 12px var(--primary-shadow, rgba(13, 148, 136, 0.3));
+}
+
+/* Dashboard Title Section (used with global navbar) */
+.dashboard-title-section {
+  padding: 1.5rem 5rem;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dashboard-title-section h1 {
+  font-size: 1.75rem;
+  margin-bottom: 0.25rem;
+  color: #1f2937;
+}
+
+.dashboard-title-section .welcome-text {
+  color: #6b7280;
+  opacity: 1;
+}
+
+.header-left h1 {
+  font-size: 1.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.welcome-text {
+  opacity: 0.9;
+  font-size: 0.95rem;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.teacher-profile-mini {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+}
+
+.avatar-mini {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-info .name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.profile-info .rating {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+.header-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.settings-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.settings-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.logout-btn {
+  background: white;
+  color: var(--primary-color, #0d9488);
+}
+
+.logout-btn:hover {
+  background: #f5f5f5;
+}
+
+/* ==================== NAVIGATION TABS ==================== */
+.dashboard-tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem 5rem;
+  background: white;
+  border-bottom: 1px solid #eee;
+  overflow-x: auto;
+}
+
+.tab {
+  padding: 0.75rem 1.25rem;
+  border: none;
+  background: none;
+  color: #666;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s;
+  white-space: nowrap;
+  position: relative;
+}
+
+.tab:hover {
+  background: #f5f7fa;
+  color: var(--primary-color, #0d9488);
+}
+
+.tab.active {
+  background: var(--primary-light, rgba(13, 148, 136, 0.1));
+  color: var(--primary-color, #0d9488);
+}
+
+.notification-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+/* ==================== MAIN CONTENT ==================== */
+.dashboard-main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.5rem 5rem;
+}
+
+/* ==================== STATS GRID ==================== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding: 0 2rem 0;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.stat-card .stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.stat-card.primary .stat-icon {
+  background: #e0e7ff;
+}
+.stat-card.warning .stat-icon {
+  background: #fef3c7;
+}
+.stat-card.info .stat-icon {
+  background: #e0f2fe;
+}
+.stat-card.success .stat-icon {
+  background: #d1fae5;
+}
+
+.stat-card .stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-card .stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.stat-card .stat-label {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+/* ==================== TAB CONTENT ==================== */
+.tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: none;
+}
+
+/* ==================== SECTION STYLES ==================== */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.section-header h2 {
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.date-display {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.count-badge {
+  background: #fef3c7;
+  color: #b45309;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* ==================== SCHEDULE SECTION ==================== */
+.schedule-section {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.schedule-item {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem 1.5rem;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.schedule-item:hover {
+  border-color: var(--primary-color, #0d9488);
+  box-shadow: 0 4px 12px var(--primary-light, rgba(13, 148, 136, 0.1));
+}
+
+.schedule-item.in-progress {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.schedule-time {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 140px;
+}
+
+.schedule-time .time {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.status-badge {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  margin-top: 0.25rem;
+}
+
+.status-badge.upcoming {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.status-badge.in-progress {
+  background: #fee2e2;
+  color: #dc2626;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.schedule-details {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.student-avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.lesson-info h4 {
+  font-size: 1rem;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.lesson-info p {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.schedule-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.schedule-actions .join-btn {
+  padding: 0.5rem 1rem;
+  background: var(--primary-color, #0d9488);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.schedule-actions .join-btn:hover,
+.schedule-actions .join-btn.active {
+  background: var(--primary-hover, #0f766e);
+}
+
+.schedule-actions .message-btn {
+  padding: 0.5rem;
+  background: #f5f7fa;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.schedule-actions .message-btn:hover {
+  border-color: var(--primary-color, #0d9488);
+}
+
+.empty-schedule {
+  text-align: center;
+  padding: 2rem;
+  color: #888;
+}
+
+.empty-schedule .empty-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+/* ==================== BOOKINGS SECTION ==================== */
+.bookings-section {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.bookings-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.booking-card {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: all 0.2s;
+}
+
+.booking-card:hover {
+  border-color: var(--primary-color, #0d9488);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.booking-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.booking-info h4 {
+  font-size: 1rem;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.level-badge {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  background: #e0f2fe;
+  color: #0369a1;
+  border-radius: 4px;
+}
+
+.booking-details p {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.booking-details p strong {
+  color: #333;
+}
+
+.booking-message {
+  font-style: italic;
+  background: #f8f9fa;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-top: 0.5rem;
+}
+
+.booking-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.approve-btn,
+.reject-btn {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.approve-btn {
+  background: #10b981;
+  color: white;
+}
+
+.approve-btn:hover {
+  background: #059669;
+}
+
+.reject-btn {
+  background: #f5f7fa;
+  color: #666;
+  border: 1px solid #ddd;
+}
+
+.reject-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+
+.empty-bookings {
+  text-align: center;
+  padding: 2rem;
+  color: #888;
+}
+
+.empty-bookings .empty-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+/* ==================== MATERIALS SECTION ==================== */
+.materials-section {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.upload-btn {
+  background: var(--primary-color, #0d9488);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.upload-btn:hover {
+  background: var(--primary-hover, #0f766e);
+}
+
+.materials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.material-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.material-card:hover {
+  border-color: var(--primary-color, #0d9488);
+}
+
+.material-icon {
+  font-size: 2rem;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f7fa;
+  border-radius: 10px;
+}
+
+.material-info {
+  flex: 1;
+}
+
+.material-info h4 {
+  font-size: 0.9rem;
+  color: #333;
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.material-info p {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.material-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.icon-btn {
+  padding: 0.4rem;
+  background: #f5f7fa;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.icon-btn:hover {
+  background: #e0e7ff;
+}
+
+/* Submissions */
+.submissions-section {
+  border-top: 1px solid #eee;
+  padding-top: 1.5rem;
+}
+
+.submissions-section h3 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.submissions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.submission-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.submission-info {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.submission-info .student-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.submission-info .file-name {
+  color: var(--primary-color, #0d9488);
+  font-size: 0.9rem;
+}
+
+.submission-info .submitted-time {
+  color: #888;
+  font-size: 0.8rem;
+}
+
+.submission-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.view-btn {
+  padding: 0.4rem 0.8rem;
+  background: var(--primary-color, #0d9488);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.view-btn:hover {
+  background: var(--primary-hover, #0f766e);
+}
+
+.submission-actions .status {
+  font-size: 1rem;
+}
+
+.submission-actions .status.pending {
+  color: #f59e0b;
+}
+
+.submission-actions .status.reviewed {
+  color: #10b981;
+}
+
+/* ==================== AVAILABILITY SECTION ==================== */
+.availability-section {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.edit-availability-btn {
+  background: var(--primary-color, #0d9488);
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.edit-availability-btn:hover {
+  background: #4338ca;
+}
+
+.availability-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.75rem;
+}
+
+.day-card {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.day-card h4 {
+  font-size: 0.85rem;
+  color: #333;
+  margin-bottom: 0.75rem;
+}
+
+.time-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.time-slots .slot {
+  font-size: 0.75rem;
+  padding: 0.4rem;
+  background: white;
+  border-radius: 6px;
+}
+
+.time-slots .slot.available {
+  border: 1px solid #10b981;
+  color: #10b981;
+}
+
+/* ==================== EARNINGS SECTION ==================== */
+.earnings-section {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.earnings-overview {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.earnings-card {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.earnings-card.main {
+  background: var(--primary-color, #0d9488);
+  color: white;
+}
+
+.earnings-card h3 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.earnings-card h4 {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.earnings-card .amount {
+  font-size: 2rem;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.earnings-card.main .amount {
+  color: white;
+}
+
+.earnings-card .change {
+  font-size: 0.85rem;
+}
+
+.earnings-card .change.positive {
+  color: #10b981;
+}
+
+.earnings-card .note {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.withdraw-btn {
+  background: white;
+  color: var(--primary-color, #0d9488);
+  border: none;
+  padding: 0.6rem 1.25rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.2s;
+}
+
+.withdraw-btn:hover {
+  transform: scale(1.02);
+}
+
+.transactions-section h3 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.transactions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.transaction-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.transaction-info {
+  display: flex;
+  gap: 1rem;
+}
+
+.transaction-info .student-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.transaction-info .date {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.transaction-amount {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.transaction-amount .amount {
+  font-weight: 600;
+  color: #10b981;
+}
+
+.transaction-amount .status {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.transaction-amount .status.completed {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.transaction-amount .status.pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+/* ==================== QUICK ACTIONS SECTION ==================== */
+.quick-actions-section {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1.5rem;
+}
+
+.quick-actions-section h2 {
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.action-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 1rem;
+  background: #f8f9fa;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.action-card:hover {
+  border-color: var(--primary-color, #0d9488);
+  background: var(--primary-light, rgba(13, 148, 136, 0.05));
+}
+
+.action-icon {
+  font-size: 2rem;
+}
+
+.action-text {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+  text-align: center;
+}
+
+/* ==================== RESPONSIVE DESIGN ==================== */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .availability-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .earnings-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-actions {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .header-right {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .teacher-profile-mini {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .header-btn {
+    width: 100%;
+  }
+
+  .dashboard-tabs {
+    padding: 0.75rem 1rem;
+  }
+
+  .tab {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .dashboard-main {
+    padding: 1rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .stat-card {
+    padding: 1rem;
+  }
+
+  .stat-card .stat-value {
+    font-size: 1.5rem;
+  }
+
+  .schedule-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .schedule-time {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .schedule-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .bookings-list {
+    grid-template-columns: 1fr;
+  }
+
+  .materials-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .availability-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .availability-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-actions {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+/* ================================
+   RESPONSIVE — TEACHER DASHBOARD
+================================ */
+
+/* Laptop */
+@media (max-width: 1199px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Tablet */
+@media (max-width: 991px) {
+  .dashboard-container {
+    padding: 1rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-card,
+  .pending-card,
+  .earnings-card {
+    padding: 1rem;
+  }
+}
+
+/* Small mobile */
+@media (max-width: 480px) {
+  .dashboard-header h2 {
+    font-size: 1.3rem;
+  }
+}
