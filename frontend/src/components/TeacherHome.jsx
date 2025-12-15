@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../constants";
 import BookingModal from "./BookingModal";
 import "../App.css";
 
-const NotificationModal = ({ type, message, onClose }) => {
+const NotificationModal = ({ type, message, onClose, onConfirm }) => {
   const isSuccess = type === "success";
+
+  const handleClick = () => {
+    onClose(); // Close the modal
+    if (isSuccess && onConfirm) {
+      onConfirm(); // Navigate to my-bookings
+    }
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div
@@ -18,7 +27,7 @@ const NotificationModal = ({ type, message, onClose }) => {
         <p>{message}</p>
         <button
           className="confirm-btn"
-          onClick={onClose}
+          onClick={handleClick}
           style={{ marginTop: "20px", width: "100%" }}
         >
           {isSuccess ? "View My Bookings" : "Close"}
@@ -46,7 +55,7 @@ export default function TeacherHome({ setIsAuthenticated }) {
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    fetch("/api/teachers", {
+    fetch(`${API_BASE_URL}/api/teachers`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -95,7 +104,7 @@ export default function TeacherHome({ setIsAuthenticated }) {
     <div className="home-container">
       <header className="home-header">
         <h1>
-          Find your <span>English teacher</span> online
+          Find your <span>teacher</span> online
         </h1>
         <button className="logout-btn" onClick={handleLogout}>
           Logout

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+import { API_BASE_URL } from "../constants";
 import "./Login.css";
 
 function Login({ setIsAuthenticated, setUserRole }) {
@@ -25,6 +26,56 @@ function Login({ setIsAuthenticated, setUserRole }) {
 
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [showRoleConflictModal, setShowRoleConflictModal] = useState(false);
+  const [roleConflictMessage, setRoleConflictMessage] = useState("");
+
+  // Check for error in URL params (from OAuth redirects)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get("error");
+    const attemptedRole = urlParams.get("attempted_role");
+    const existingRole = urlParams.get("existing_role");
+
+    if (error) {
+      if (
+        error === "account_role_conflict" ||
+        error === "email_role_conflict"
+      ) {
+        // Use existing_role from URL if available, otherwise calculate
+        const conflictRole =
+          existingRole || (attemptedRole === "student" ? "teacher" : "student");
+        const conflictType =
+          error === "account_role_conflict"
+            ? "Google account"
+            : "email address";
+
+        setRoleConflictMessage(
+          `This ${conflictType} is already registered as a ${conflictRole}. ` +
+            `Please select "${conflictRole}" role or use email/password login.`
+        );
+        setShowRoleConflictModal(true);
+
+        // Auto-switch to the correct role
+        if (conflictRole) {
+          setUiRole(conflictRole);
+        }
+      } else if (error === "oauth_error") {
+        setErrorMessage(
+          "OAuth authentication failed. Please try again or use email/password login."
+        );
+      } else if (error === "validation_error") {
+        setErrorMessage(
+          "Account creation failed. Please try again or contact support."
+        );
+      } else if (error === "oauth_role_not_set") {
+        setErrorMessage("OAuth session expired. Please try logging in again.");
+      } else {
+        setErrorMessage("Authentication error. Please try again.");
+      }
+      // Clear error from URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   useEffect(() => {
     setErrorMessage("");
@@ -47,22 +98,32 @@ function Login({ setIsAuthenticated, setUserRole }) {
     }
   };
 
-  // Social login handlers
   const handleSocialLogin = (provider) => {
-    setIsLoading(true);
-    setErrorMessage("");
-    setSuccessMessage("");
+    if (provider === "google") {
+      const role = uiRole; // 'student' or 'teacher'
 
-    setTimeout(() => {
-      if (provider === "google") {
-        setSuccessMessage("Redirecting to Google login...");
-        // In a real app, redirect to Google OAuth
-      } else if (provider === "microsoft") {
-        setSuccessMessage("Redirecting to Microsoft login...");
-        // In a real app, redirect to Microsoft OAuth
-      }
-      setIsLoading(false);
-    }, 1000);
+      // 1️⃣ Initialize OAuth role in backend session
+      fetch(`${API_BASE_URL}/api/auth/google/init?role=${role}`, {
+        method: "GET",
+        credentials: "include", // important for session cookie
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            // 2️⃣ Redirect to Google OAuth on backend domain
+            window.location.href = `${API_BASE_URL}/api/auth/google`;
+          } else {
+            console.error("OAuth init failed:", data);
+            setErrorMessage("Failed to start Google login. Please try again.");
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to initialize OAuth:", err);
+          setErrorMessage("Failed to start Google login. Please try again.");
+        });
+    } else if (provider === "microsoft") {
+      setErrorMessage("Microsoft login coming soon!");
+    }
   };
 
   // Forgot password handler
@@ -86,7 +147,7 @@ function Login({ setIsAuthenticated, setUserRole }) {
       return;
     }
 
-    const baseUrl = "/api";
+    const baseUrl = `${API_BASE_URL}/api`;
     const rolePath = uiRole === "student" ? "students" : "teachers";
 
     // if student register：POST /api/students
@@ -119,6 +180,7 @@ function Login({ setIsAuthenticated, setUserRole }) {
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // Send session cookie
         body: JSON.stringify(payload),
       });
 
@@ -181,46 +243,40 @@ function Login({ setIsAuthenticated, setUserRole }) {
   };
 
   return (
-    <div className="login-wrapper">
+    <div className={`login-wrapper ${uiRole}-theme`}>
       <div className="login-container">
-        <div
-          className="role-toggle-container"
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            marginBottom: "20px",
-            gap: "10px",
-          }}
-        >
+        <div className="role-toggle-container">
           <button
             type="button"
+            className={`role-toggle-btn${
+              uiRole === "student" ? " selected" : ""
+            }`}
             onClick={() => setUiRole("student")}
-            style={{
-              padding: "8px 20px",
-              backgroundColor: uiRole === "student" ? "#2196F3" : "#ddd",
-              color: uiRole === "student" ? "white" : "black",
-              border: "none",
-              borderRadius: "10px",
-              cursor: "pointer",
-              fontWeight: "bold",
-              transition: "all 0.3s ease",
-            }}
+            style={
+              uiRole === "student"
+                ? {
+                    background: "var(--primary-color)",
+                    color: "#fff",
+                  }
+                : {}
+            }
           >
             Student
           </button>
           <button
             type="button"
+            className={`role-toggle-btn${
+              uiRole === "teacher" ? " selected" : ""
+            }`}
             onClick={() => setUiRole("teacher")}
-            style={{
-              padding: "8px 20px",
-              backgroundColor: uiRole === "teacher" ? "#4CAF50" : "#ddd",
-              color: uiRole === "teacher" ? "white" : "black",
-              border: "none",
-              borderRadius: "10px",
-              cursor: "pointer",
-              fontWeight: "bold",
-              transition: "all 0.3s ease",
-            }}
+            style={
+              uiRole === "teacher"
+                ? {
+                    background: "var(--primary-color)",
+                    color: "#fff",
+                  }
+                : {}
+            }
           >
             Teacher
           </button>

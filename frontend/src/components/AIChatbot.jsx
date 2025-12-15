@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { DEFAULT_AVATAR } from "../constants";
 import "./AIChatbot.css";
 
 /**
@@ -8,33 +9,53 @@ import "./AIChatbot.css";
  * ================================================================================
  *
  * PURPOSE:
- * Provides a conversational AI interface for finding the perfect teacher.
- * Users can chat naturally with the AI which gathers preferences and
- * recommends matching teachers.
+ * Provides a conversational AI interface that adapts based on user role:
+ * - Students: Helps find the perfect teacher based on preferences
+ * - Teachers: Assists with bookings, availability, earnings, and teaching questions
  *
  * FEATURES:
  * - Natural conversation interface
- * - Collects: skill level, schedule, learning style, budget
- * - AI-powered teacher recommendations via Google Gemini
+ * - Role-aware responses (student vs teacher)
+ * - Students: Collects skill level, schedule, learning style, budget for teacher matching
+ * - Teachers: Helps with upcoming bookings, availability management, earnings info
+ * - AI-powered recommendations via Google Gemini
  * - Floating chat widget that can be opened/closed
  *
  * @component
  */
-export default function AIChatbot({ isOpen, onClose, isFloating = true }) {
+export default function AIChatbot({
+  isOpen,
+  onClose,
+  isFloating = true,
+  userRole = "student",
+}) {
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
+  // Determine if user is a teacher
+  const isTeacher = userRole === "teacher";
+
   // ==================== STATE MANAGEMENT ====================
 
-  // Chat messages array
-  const [messages, setMessages] = useState([
-    {
+  // Initial message based on user role
+  const getInitialMessage = () => {
+    if (isTeacher) {
+      return {
+        role: "assistant",
+        content:
+          "Hi there! 👋 I'm your AI teaching assistant. I can help you with your upcoming bookings, availability management, earnings overview, or any teaching-related questions. What would you like to know?",
+      };
+    }
+    return {
       role: "assistant",
       content:
         "Hi there! 👋 I'm your AI assistant. I'll help you find the perfect teacher based on your preferences. What would you like to learn?",
-    },
-  ]);
+    };
+  };
+
+  // Chat messages array
+  const [messages, setMessages] = useState([getInitialMessage()]);
 
   // Current input text
   const [inputValue, setInputValue] = useState("");
@@ -66,6 +87,9 @@ export default function AIChatbot({ isOpen, onClose, isFloating = true }) {
 
   /**
    * Sends a message to the AI chatbot endpoint
+   * Uses different endpoints based on user role:
+   * - Students: /api/ai/chat (teacher recommendations)
+   * - Teachers: /api/ai/teacher-chat (teaching assistant)
    */
   const handleSendMessage = async () => {
     // Trim whitespace and validate input
@@ -93,8 +117,11 @@ export default function AIChatbot({ isOpen, onClose, isFloating = true }) {
         content: m.content,
       }));
 
+      // Choose endpoint based on user role
+      const endpoint = isTeacher ? "/api/ai/teacher-chat" : "/api/ai/chat";
+
       // Send chat request to backend AI endpoint
-      const response = await fetch("/api/ai/chat", {
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -104,16 +131,16 @@ export default function AIChatbot({ isOpen, onClose, isFloating = true }) {
         body: JSON.stringify({
           message, // Current user message
           conversationHistory, // Previous messages for context
-          extractedPreferences: preferences, // Preferences gathered so far
+          extractedPreferences: isTeacher ? undefined : preferences, // Only for students
         }),
       });
 
       const data = await response.json();
 
-      // Merge newly extracted preferences with existing ones
+      // For students: Merge newly extracted preferences with existing ones
       // Filter out null values to avoid overwriting valid preferences
       // This accumulates preferences across multiple conversation turns
-      if (data.extractedPreferences) {
+      if (!isTeacher && data.extractedPreferences) {
         setPreferences((prev) => ({
           ...prev,
           ...Object.fromEntries(
@@ -130,9 +157,9 @@ export default function AIChatbot({ isOpen, onClose, isFloating = true }) {
         { role: "assistant", content: data.reply },
       ]);
 
-      // Check if AI has gathered enough preferences to recommend teachers
+      // For students: Check if AI has gathered enough preferences to recommend teachers
       // If complete=true, display the teacher recommendation cards
-      if (data.complete && data.recommendations) {
+      if (!isTeacher && data.complete && data.recommendations) {
         setRecommendations(data.recommendations);
       }
     } catch (error) {
@@ -165,10 +192,14 @@ export default function AIChatbot({ isOpen, onClose, isFloating = true }) {
    * Reset chat to start over
    */
   const handleReset = () => {
+    const resetMessage = isTeacher
+      ? "Let's start fresh! 🔄 How can I help you with your teaching today?"
+      : "Let's start fresh! 🔄 What would you like to learn today?";
+
     setMessages([
       {
         role: "assistant",
-        content: "Let's start fresh! 🔄 What would you like to learn today?",
+        content: resetMessage,
       },
     ]);
     setPreferences({});
@@ -195,9 +226,12 @@ export default function AIChatbot({ isOpen, onClose, isFloating = true }) {
   // ==================== RENDER HELPERS ====================
 
   /**
-   * Renders the preference pills showing what's been gathered
+   * Renders the preference pills showing what's been gathered (students only)
    */
   const renderPreferencePills = () => {
+    // Teachers don't have preference pills
+    if (isTeacher) return null;
+
     const prefs = Object.entries(preferences).filter(([_, v]) => v);
     if (prefs.length === 0) return null;
 
@@ -230,11 +264,15 @@ export default function AIChatbot({ isOpen, onClose, isFloating = true }) {
         message.role === "user" ? "user" : "assistant"
       }`}
     >
-      {message.role === "assistant" && <div className="avatar">🤖</div>}
+      {message.role === "assistant" && (
+        <div className="avatar">{isTeacher ? "📚" : "🤖"}</div>
+      )}
       <div className="message-content">
         <p>{message.content}</p>
       </div>
-      {message.role === "user" && <div className="avatar user-avatar">👤</div>}
+      {message.role === "user" && (
+        <div className="avatar user-avatar">{isTeacher ? "👩‍🏫" : "👤"}</div>
+      )}
     </div>
   );
 
@@ -252,10 +290,7 @@ export default function AIChatbot({ isOpen, onClose, isFloating = true }) {
             <div key={teacher.id || index} className="rec-card">
               <div className="rec-card-header">
                 <img
-                  src={
-                    teacher.avatar ||
-                    `https://i.pravatar.cc/150?img=${index + 10}`
-                  }
+                  src={teacher.avatar || DEFAULT_AVATAR}
                   alt={teacher.name}
                   className="rec-avatar"
                 />
@@ -305,6 +340,12 @@ export default function AIChatbot({ isOpen, onClose, isFloating = true }) {
 
   // ==================== MAIN RENDER ====================
 
+  // Get the appropriate title based on user role
+  const chatTitle = isTeacher ? "AI Teaching Assistant" : "AI Teacher Finder";
+  const inputPlaceholder = isTeacher
+    ? "Ask about bookings, availability, earnings..."
+    : "Type your message...";
+
   // Floating chat widget wrapper
   if (isFloating) {
     return (
@@ -314,9 +355,9 @@ export default function AIChatbot({ isOpen, onClose, isFloating = true }) {
           {/* Chat Header */}
           <div className="chatbot-header">
             <div className="header-info">
-              <span className="bot-icon">🤖</span>
+              <span className="bot-icon">{isTeacher ? "📚" : "🤖"}</span>
               <div>
-                <h3>AI Teacher Finder</h3>
+                <h3>{chatTitle}</h3>
                 <span className="status">
                   <span className="status-dot"></span> Online
                 </span>
@@ -335,7 +376,7 @@ export default function AIChatbot({ isOpen, onClose, isFloating = true }) {
             {messages.map(renderMessage)}
             {isLoading && (
               <div className="chat-message assistant">
-                <div className="avatar">🤖</div>
+                <div className="avatar">{isTeacher ? "📚" : "🤖"}</div>
                 <div className="message-content typing">
                   <span></span>
                   <span></span>
@@ -343,7 +384,7 @@ export default function AIChatbot({ isOpen, onClose, isFloating = true }) {
                 </div>
               </div>
             )}
-            {renderRecommendations()}
+            {!isTeacher && renderRecommendations()}
             <div ref={messagesEndRef} />
           </div>
 
@@ -355,7 +396,7 @@ export default function AIChatbot({ isOpen, onClose, isFloating = true }) {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Type your message..."
+              placeholder={inputPlaceholder}
               disabled={isLoading}
             />
             <button
@@ -381,9 +422,9 @@ export default function AIChatbot({ isOpen, onClose, isFloating = true }) {
             ← Back
           </button>
           <div className="header-info">
-            <span className="bot-icon">🤖</span>
+            <span className="bot-icon">{isTeacher ? "📚" : "🤖"}</span>
             <div>
-              <h3>AI Teacher Finder</h3>
+              <h3>{chatTitle}</h3>
               <span className="status">
                 <span className="status-dot"></span> Online
               </span>
@@ -402,7 +443,7 @@ export default function AIChatbot({ isOpen, onClose, isFloating = true }) {
           {messages.map(renderMessage)}
           {isLoading && (
             <div className="chat-message assistant">
-              <div className="avatar">🤖</div>
+              <div className="avatar">{isTeacher ? "📚" : "🤖"}</div>
               <div className="message-content typing">
                 <span></span>
                 <span></span>
@@ -410,7 +451,7 @@ export default function AIChatbot({ isOpen, onClose, isFloating = true }) {
               </div>
             </div>
           )}
-          {renderRecommendations()}
+          {!isTeacher && renderRecommendations()}
           <div ref={messagesEndRef} />
         </div>
 
@@ -422,7 +463,7 @@ export default function AIChatbot({ isOpen, onClose, isFloating = true }) {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Type your message..."
+            placeholder={inputPlaceholder}
             disabled={isLoading}
           />
           <button
@@ -441,14 +482,15 @@ export default function AIChatbot({ isOpen, onClose, isFloating = true }) {
 /**
  * Floating chat button component
  */
-export function ChatbotButton({ onClick, isOpen }) {
+export function ChatbotButton({ onClick, isOpen, userRole = "student" }) {
+  const isTeacher = userRole === "teacher";
   return (
     <button
       className={`chatbot-fab ${isOpen ? "active" : ""}`}
       onClick={onClick}
-      aria-label="Open AI Chat"
+      aria-label={isTeacher ? "Open AI Teaching Assistant" : "Open AI Chat"}
     >
-      {isOpen ? "✕" : "🤖"}
+      {isOpen ? "✕" : isTeacher ? "📚" : "🤖"}
     </button>
   );
 }

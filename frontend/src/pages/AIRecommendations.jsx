@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL, DEFAULT_AVATAR } from "../constants";
 import "./AIRecommendations.css";
 
 /**
@@ -56,7 +57,7 @@ export default function AIRecommendations() {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const response = await fetch("/api/ai/questions");
+        const response = await fetch(`${API_BASE_URL}/api/ai/questions`);
         if (!response.ok) {
           throw new Error("Failed to fetch questions");
         }
@@ -214,7 +215,7 @@ export default function AIRecommendations() {
       const token = localStorage.getItem("token");
 
       // Send answers to AI recommendation endpoint
-      const response = await fetch("/api/ai/recommend", {
+      const response = await fetch(`${API_BASE_URL}/api/ai/recommend`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -343,10 +344,7 @@ export default function AIRecommendations() {
                     <div key={teacher.id || index} className="teacher-rec-card">
                       <div className="match-badge">#{index + 1} Match</div>
                       <img
-                        src={
-                          teacher.avatar ||
-                          `https://i.pravatar.cc/150?img=${index + 1}`
-                        }
+                        src={teacher.avatar || DEFAULT_AVATAR}
                         alt={teacher.name}
                         className="teacher-avatar"
                       />

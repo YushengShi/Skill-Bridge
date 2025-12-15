@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { DEFAULT_AVATAR } from "../constants";
+import RatingModal from "../components/RatingModal";
 import "./StudentBookings.css";
 
 export default function StudentBookings() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [ratingModal, setRatingModal] = useState({
+    show: false,
+    teacher: null,
+    bookingId: null,
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,10 +46,9 @@ export default function StudentBookings() {
 
         const data = await response.json();
 
-        // 🌟 核心修改：只过滤出 'paid' 和 'completed' 的订单
-        const activeBookings = data.filter(
-          (booking) =>
-            booking.status === "paid" || booking.status === "completed"
+        // Show paid, confirmed, and completed bookings
+        const activeBookings = data.filter((booking) =>
+          ["paid", "confirmed", "completed"].includes(booking.status)
         );
 
         setBookings(activeBookings);
@@ -63,8 +69,70 @@ export default function StudentBookings() {
         return <span className="status-badge success">Paid</span>;
       case "completed":
         return <span className="status-badge info">Completed</span>;
+      case "confirmed":
+        return <span className="status-badge warning">Confirmed</span>;
       default:
         return <span className="status-badge">{status}</span>;
+    }
+  };
+
+  const handleJoinRoom = async (bookingId) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      const url = `/api/students/bookings/${bookingId}/complete`;
+
+      // Mark booking as completed
+      const response = await fetch(url, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        navigate("/login");
+        return;
+      }
+
+      if (!response.ok) {
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await response.json();
+          throw new Error(data.message || "Failed to complete booking");
+        } else {
+          const text = await response.text();
+          console.error("Non-JSON error response:", text);
+          throw new Error(
+            `Server error (${response.status}): ${response.statusText}`
+          );
+        }
+      }
+
+      // Parse successful response
+      const data = await response.json();
+
+      // Refresh bookings to show updated status
+      const updatedBookings = bookings.map((booking) =>
+        booking._id === bookingId
+          ? { ...booking, status: "completed" }
+          : booking
+      );
+      setBookings(updatedBookings);
+
+      // Show success message
+      alert("Lesson marked as completed! You can now rate your teacher.");
+    } catch (err) {
+      console.error("Error completing booking:", err);
+      alert(err.message || "Failed to complete booking. Please try again.");
     }
   };
 
@@ -108,10 +176,7 @@ export default function StudentBookings() {
           <div className="empty-icon">📅</div>
           <h2>No upcoming lessons</h2>
           <p>You don't have any paid or active lessons currently.</p>
-          <button
-            onClick={() => navigate("/teacherhome")}
-            className="primary-btn"
-          >
+          <button onClick={() => navigate("/teachers")} className="primary-btn">
             Find a Teacher
           </button>
         </div>
@@ -122,9 +187,7 @@ export default function StudentBookings() {
               <div className="booking-header">
                 <div className="teacher-info">
                   <img
-                    src={
-                      booking.teacherId?.avatar || "https://i.pravatar.cc/150"
-                    }
+                    src={booking.teacherId?.avatar || DEFAULT_AVATAR}
                     alt="Teacher"
                     className="teacher-avatar-small"
                   />
@@ -164,12 +227,78 @@ export default function StudentBookings() {
                 </div>
 
                 <div className="action-buttons">
-                  <button className="join-btn">Join Room</button>
+                  {booking.status === "completed" && booking.teacherId ? (
+                    booking.userRating ? (
+                      <button className="rated-btn" disabled>
+                        You rated {booking.userRating}{" "}
+                        {booking.userRating === 1 ? "star" : "stars"}
+                      </button>
+                    ) : (
+                      <button
+                        className="rate-btn"
+                        onClick={() =>
+                          setRatingModal({
+                            show: true,
+                            teacher: booking.teacherId,
+                            bookingId: booking._id,
+                          })
+                        }
+                      >
+                        ⭐ Rate Teacher
+                      </button>
+                    )
+                  ) : booking.status === "paid" ||
+                    booking.status === "confirmed" ? (
+                    <button
+                      className="join-btn"
+                      onClick={() => handleJoinRoom(booking._id)}
+                    >
+                      Complete Lesson
+                    </button>
+                  ) : (
+                    <button className="join-btn" disabled>
+                      {booking.status}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
           ))}
         </div>
+      )}
+
+      {/* Rating Modal */}
+      {ratingModal.show && ratingModal.teacher && (
+        <RatingModal
+          teacher={ratingModal.teacher}
+          bookingId={ratingModal.bookingId}
+          onClose={() =>
+            setRatingModal({ show: false, teacher: null, bookingId: null })
+          }
+          onSubmit={async (data) => {
+            // Refresh bookings after rating is submitted
+            try {
+              const token = localStorage.getItem("token");
+              const response = await fetch("/api/students/my-bookings", {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+
+              if (response.ok) {
+                const updatedData = await response.json();
+                const activeBookings = updatedData.filter((booking) =>
+                  ["paid", "confirmed", "completed"].includes(booking.status)
+                );
+                setBookings(activeBookings);
+              }
+            } catch (err) {
+              console.error("Error refreshing bookings:", err);
+            }
+          }}
+        />
       )}
     </div>
   );

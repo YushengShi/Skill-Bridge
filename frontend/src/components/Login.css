@@ -5,11 +5,24 @@
   justify-content: center;
   padding: 20px;
 
+
   background: white;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 
   background: white; /*for image background: url('background.jpg') center center/cover no-repeat fixed;*/
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+
+
+  background: linear-gradient(
+      rgba(255, 255, 255, 0.3),
+      rgba(255, 255, 255, 0.3)
+    ),
+    url("/skillbridge_bg.jpeg") center center/cover no-repeat fixed;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  position: relative;
 
 }
 
@@ -67,8 +80,8 @@
 
 .form-input:focus {
   outline: none;
-  border-color: #b80000;
-  box-shadow: 0 0 0 3px rgba(184, 0, 0, 0.1);
+  border-color: var(--primary-color, #4f46e5);
+  box-shadow: 0 0 0 3px var(--primary-light, rgba(79, 70, 229, 0.1));
 }
 
 .form-input::placeholder {
@@ -117,20 +130,20 @@
 }
 
 .forgot-password {
-  color: #b80000;
+  color: var(--primary-color, #4f46e5);
   text-decoration: none;
   transition: color 0.3s ease;
 }
 
 .forgot-password:hover {
-  color: #8b0000;
+  color: var(--primary-hover, #4338ca);
   text-decoration: underline;
 }
 
 .login-button {
   width: 100%;
   padding: 14px;
-  background: #b80000;
+  background: var(--primary-color, #4f46e5);
   color: white;
   border: none;
   border-radius: 10px;
@@ -146,12 +159,39 @@
 
 .login-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(184, 0, 0, 0.3);
+  box-shadow: 0 10px 20px var(--primary-shadow, rgba(79, 70, 229, 0.3));
+  background: var(--primary-hover, #4338ca);
 }
 
 .login-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Role toggle button styling */
+.role-toggle-btn {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  background: #ddd;
+  color: #222;
+  transition: all 0.3s ease;
+}
+.role-toggle-btn.selected {
+  background: var(--primary-color, #4f46e5);
+  color: #fff;
+  box-shadow: 0 2px 8px var(--primary-shadow, rgba(79, 70, 229, 0.15));
+}
+.student-theme .role-toggle-btn.selected {
+  background: var(--primary-color, #4f46e5);
+  color: #fff;
+}
+.teacher-theme .role-toggle-btn.selected {
+  background: var(--primary-color, #0d9488);
+  color: #fff;
 }
 
 .divider {
@@ -213,14 +253,24 @@
 }
 
 .signup-link a {
-  color: #b80000;
+  color: var(--primary-color, #4f46e5);
   text-decoration: none;
   font-weight: 500;
   margin-left: 5px;
+  transition: color 0.3s ease;
 }
 
 .signup-link a:hover {
+  color: var(--primary-hover, #4338ca);
   text-decoration: underline;
+}
+.teacher-theme .forgot-password,
+.teacher-theme .signup-link a {
+  color: var(--primary-color, #0d9488);
+}
+.teacher-theme .forgot-password:hover,
+.teacher-theme .signup-link a:hover {
+  color: var(--primary-hover, #0f766e);
 }
 
 .terms-checkbox {
@@ -372,4 +422,138 @@
 .role-toggle-container button:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Role Conflict Modal */
+.role-conflict-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.role-conflict-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-width: 450px;
+  width: 90%;
+  animation: slideUp 0.3s ease;
+  overflow: hidden;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.role-conflict-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e1e5e9;
+  background: #fff3cd;
+}
+
+.role-conflict-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #856404;
+}
+
+.role-conflict-modal-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #856404;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.role-conflict-modal-close:hover {
+  background: rgba(133, 100, 4, 0.1);
+  transform: rotate(90deg);
+}
+
+.role-conflict-modal-body {
+  padding: 24px;
+}
+
+.role-conflict-modal-body p {
+  margin: 0 0 20px 0;
+  color: #333;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.role-conflict-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.role-conflict-modal-btn {
+  padding: 10px 20px;
+  background: #b80000;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.role-conflict-modal-btn:hover {
+  background: #8b0000;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(184, 0, 0, 0.3);
+}
+
+.role-conflict-modal-btn-secondary {
+  padding: 10px 20px;
+  background: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.role-conflict-modal-btn-secondary:hover {
+  background: #e9e9e9;
+  border-color: #bbb;
 }

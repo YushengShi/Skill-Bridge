@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../constants";
 import "./StudentDashboard.css";
 
 /**
@@ -87,7 +88,7 @@ export default function StudentDashboard({ setIsAuthenticated }) {
         const userId = user._id || user.id;
 
         // Fetch dashboard data with auth header
-        const response = await fetch(`/api/students/${userId}/dashboard`, {
+        const response = await fetch(`${API_BASE_URL}/api/students/${userId}/dashboard`, {
           headers: {
             Authorization: `Bearer ${token}`, // JWT for protected route
             "Content-Type": "application/json",
@@ -139,14 +140,22 @@ export default function StudentDashboard({ setIsAuthenticated }) {
   /**
    * Handles user logout - clears auth state and redirects to login
    */
-  const handleLogout = () => {
-    if (setIsAuthenticated) {
-      setIsAuthenticated(false);
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_BASE_URL}/api/students/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      if (setIsAuthenticated) {
+        setIsAuthenticated(false);
+      }
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      navigate("/login");
     }
-    localStorage.removeItem("isAuth");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/login");
   };
 
   /**
@@ -319,7 +328,7 @@ export default function StudentDashboard({ setIsAuthenticated }) {
               </button>
               <button
                 className="action-card"
-                onClick={() => navigate("/profile")}
+                onClick={() => navigate("/my-bookings")}
               >
                 <span className="action-icon">📅</span>
                 <span className="action-text">My Bookings</span>
@@ -338,45 +347,6 @@ export default function StudentDashboard({ setIsAuthenticated }) {
                 <span className="action-icon">🤖</span>
                 <span className="action-text">AI Suggestions</span>
               </button>
-            </div>
-          </section>
-
-          {/* Recommended Teachers Section */}
-          <section className="dashboard-section">
-            <div className="section-header">
-              <h2>⭐ Recommended For You</h2>
-              <button
-                className="view-all-btn"
-                onClick={() => navigate("/teachers")}
-              >
-                Browse All →
-              </button>
-            </div>
-
-            <div className="recommended-teachers">
-              {recommendedTeachers.map((teacher) => (
-                <div key={teacher.id} className="teacher-mini-card">
-                  <img
-                    src={teacher.avatar}
-                    alt={teacher.name}
-                    className="teacher-mini-avatar"
-                  />
-                  <div className="teacher-mini-info">
-                    <h4>{teacher.name}</h4>
-                    <p>{teacher.subject}</p>
-                    <div className="teacher-mini-meta">
-                      <span className="rating">⭐ {teacher.rating}</span>
-                      <span className="price">${teacher.price}/hr</span>
-                    </div>
-                  </div>
-                  <button
-                    className="book-mini-btn"
-                    onClick={() => navigate(`/teachers/${teacher.id}`)}
-                  >
-                    View
-                  </button>
-                </div>
-              ))}
             </div>
           </section>
         </div>

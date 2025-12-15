@@ -48,6 +48,13 @@ const bookingSchema = new mongoose.Schema({
   // Optional message from student when booking (learning goals, requests, etc.)
   message: { type: String },
 
+  // Google Calendar event ID for the booked lesson
+  calendarEventId: { type: String },
+
+  // ISO datetime strings for calendar integration
+  startDateTime: { type: String },
+  endDateTime: { type: String },
+
   // Timestamp when booking was created
   createdAt: { type: Date, default: Date.now },
 });

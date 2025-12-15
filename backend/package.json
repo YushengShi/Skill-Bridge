@@ -13,6 +13,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@google-cloud/local-auth": "^2.1.0",
     "@google/genai": "^1.33.0",
     "@google/generative-ai": "^0.21.0",
     "bcrypt": "^6.0.0",
@@ -23,11 +24,16 @@
     "express-session": "^1.18.2",
     "express-validator": "^7.3.0",
     "fs": "^0.0.1-security",
+    "googleapis": "^105.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.3",
     "multer": "^2.0.2",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
     "path": "^0.12.7",
     "stripe": "^20.0.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "user": "^0.0.0"
   }
 }

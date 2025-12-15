@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { DEFAULT_AVATAR } from "../constants";
 import BookingModal from "../components/BookingModal";
 import "./TeacherProfile.css";
 
@@ -60,24 +61,24 @@ export default function TeacherProfile() {
    * - Error is caught and stored in state for display
    * - Loading state is always set to false in finally block
    */
-useEffect(() => {
+  useEffect(() => {
     const fetchTeacher = async () => {
       try {
-        const token = localStorage.getItem('token');
-        
+        const token = localStorage.getItem("token");
+
         if (!token) {
-           // navigate('/login'); 
-           // return;
+          // navigate('/login');
+          // return;
         }
 
         const response = await fetch(`/api/teachers/${id}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
 
         if (response.status === 401) {
-            throw new Error("Please login to view teacher details");
+          throw new Error("Please login to view teacher details");
         }
 
         if (!response.ok) {
@@ -143,7 +144,7 @@ useEffect(() => {
         <aside className="profile-sidebar">
           <div className="profile-card">
             <img
-              src={teacher.avatar || "https://i.pravatar.cc/150?img=1"}
+              src={teacher.avatar || DEFAULT_AVATAR}
               alt={teacher.name}
               className="profile-avatar"
             />

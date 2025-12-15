@@ -7,7 +7,7 @@
  * management tools for teaching activities including:
  * - Overview statistics (students, bookings, earnings)
  * - Today's schedule with lesson details
- * - Pending booking requests (approve/reject)
+ * - Upcoming appointments (all confirmed/paid future lessons)
  * - Availability calendar management
  * - Teaching materials upload
  * - Student file submissions view
@@ -26,6 +26,8 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { DEFAULT_AVATAR } from "../constants";
+import CalendarManager from "../components/CalendarManager";
 import "./TeacherDashboard.css";
 
 /**
@@ -70,6 +72,18 @@ function TeacherDashboard() {
   const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
 
   /**
+   * Google Calendar connection status
+   * @type {boolean}
+   */
+  const [calendarConnected, setCalendarConnected] = useState(false);
+
+  /**
+   * Upcoming availability events from Google Calendar
+   * @type {Array}
+   */
+  const [availabilityEvents, setAvailabilityEvents] = useState([]);
+
+  /**
    * Dashboard statistics from backend
    */
   const [stats, setStats] = useState({
@@ -87,9 +101,9 @@ function TeacherDashboard() {
   const [todaySchedule, setTodaySchedule] = useState([]);
 
   /**
-   * Pending booking requests from backend
+   * Upcoming appointments from backend (all confirmed/paid future bookings)
    */
-  const [pendingBookings, setPendingBookings] = useState([]);
+  const [upcomingAppointments, setUpcomingAppointments] = useState([]);
 
   /**
    * Earnings data from backend
@@ -105,74 +119,19 @@ function TeacherDashboard() {
   // Navigation hook for programmatic routing
   const navigate = useNavigate();
 
-  // ==================== STATIC MOCK DATA (for materials until API is ready) ====================
+  // ==================== MATERIALS STATE ====================
 
   /**
-   * Mock teaching materials
-   * TODO: Replace with API call when endpoint is ready
+   * Teaching materials - fetched from API
+   * TODO: Implement API call when endpoint is ready
    */
-  const materials = [
-    {
-      id: 1,
-      name: "Spanish Basics Guide.pdf",
-      type: "PDF",
-      size: "2.4 MB",
-      downloads: 45,
-      uploadDate: "2024-12-01",
-    },
-    {
-      id: 2,
-      name: "Vocabulary Flashcards.pptx",
-      type: "PowerPoint",
-      size: "5.1 MB",
-      downloads: 32,
-      uploadDate: "2024-11-28",
-    },
-    {
-      id: 3,
-      name: "Grammar Exercises.docx",
-      type: "Word",
-      size: "1.2 MB",
-      downloads: 28,
-      uploadDate: "2024-11-25",
-    },
-    {
-      id: 4,
-      name: "Pronunciation Audio.mp3",
-      type: "Audio",
-      size: "8.5 MB",
-      downloads: 19,
-      uploadDate: "2024-11-20",
-    },
-  ];
+  const [materials, setMaterials] = useState([]);
 
   /**
-   * Mock student file submissions
-   * TODO: Replace with API call when endpoint is ready
+   * Student file submissions - fetched from API
+   * TODO: Implement API call when endpoint is ready
    */
-  const studentSubmissions = [
-    {
-      id: 1,
-      studentName: "Emma Wilson",
-      fileName: "Homework_Week5.pdf",
-      submittedAt: "2 hours ago",
-      status: "pending",
-    },
-    {
-      id: 2,
-      studentName: "James Chen",
-      fileName: "Essay_Draft.docx",
-      submittedAt: "5 hours ago",
-      status: "pending",
-    },
-    {
-      id: 3,
-      studentName: "Sophie Brown",
-      fileName: "Practice_Exercises.pdf",
-      submittedAt: "1 day ago",
-      status: "reviewed",
-    },
-  ];
+  const [studentSubmissions, setStudentSubmissions] = useState([]);
 
   // ==================== LIFECYCLE HOOKS ====================
 
@@ -183,7 +142,7 @@ function TeacherDashboard() {
    * - teacher: Basic profile info (name, avatar, subject, verified status)
    * - stats: Summary metrics (students, bookings, lessons, earnings, rating)
    * - todaySchedule: Lessons scheduled for today with student info
-   * - pendingBookings: Booking requests awaiting teacher approval
+   * - pendingBookings: Upcoming appointments (all confirmed/paid future lessons)
    * - earningsData: Financial summary and recent transactions
    *
    * Authentication is validated via JWT token in localStorage.
@@ -233,15 +192,38 @@ function TeacherDashboard() {
         setTeacher(data.teacher);
         setStats(data.stats);
         setTodaySchedule(data.todaySchedule);
-        setPendingBookings(data.pendingBookings);
+        setUpcomingAppointments(data.pendingBookings); // Backend now returns upcoming appointments
         setEarningsData(data.earningsData);
+
+        // Fetch calendar status and events
+        try {
+          const calendarResponse = await fetch("/api/calendar/status", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          const calendarData = await calendarResponse.json();
+          setCalendarConnected(calendarData.connected);
+
+          if (calendarData.connected) {
+            const eventsResponse = await fetch("/api/calendar/events", {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+            const eventsData = await eventsResponse.json();
+            setAvailabilityEvents(eventsData.events || []);
+          }
+        } catch (error) {
+          console.error("Error fetching calendar data:", error);
+        }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
 
         // On error, set sensible defaults to prevent UI crashes
         setTeacher({
           name: "Teacher",
-          avatar: "https://randomuser.me/api/portraits/lego/1.jpg",
+          avatar: DEFAULT_AVATAR,
           subject: "General",
           verified: false,
         });
@@ -254,7 +236,7 @@ function TeacherDashboard() {
           totalReviews: 0,
         });
         setTodaySchedule([]);
-        setPendingBookings([]);
+        setUpcomingAppointments([]);
         setEarningsData({
           thisMonth: 0,
           lastMonth: 0,
@@ -270,7 +252,7 @@ function TeacherDashboard() {
     fetchDashboardData();
   }, [navigate]); // The navigate dependency is fine, the internal logic was the issue.
 
-  // ==================== EVENT HANDLERS ====================  aichatbot.css, home.css, login.css, profile.css, studentDashboard.css, teacherDashboard.css, airecommendations.css, styles.css, teacherdetailspage.css, teacherprofile.css, app.css, index.css 
+  // ==================== EVENT HANDLERS ====================  aichatbot.css, home.css, login.css, profile.css, studentDashboard.css, teacherDashboard.css, airecommendations.css, styles.css, teacherdetailspage.css, teacherprofile.css, app.css, index.css
 
   /**
    * Handle booking approval
@@ -325,15 +307,96 @@ function TeacherDashboard() {
    * Handle user logout
    * Clears authentication state and redirects to home
    */
-  const handleLogout = () => {
-    localStorage.removeItem("isAuth");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("userRole");
-    navigate("/");
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/teachers/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      navigate("/login");
+    }
   };
 
   // ==================== RENDER HELPERS ====================
+
+  /**
+   * Render pending bookings section
+   * Shows all pending booking requests for the teacher
+   */
+  const renderPendingBookings = () => (
+    <div className="bookings-section">
+      <div className="section-header">
+        <h2>📋 Pending Bookings</h2>
+        <span className="count-badge">
+          {upcomingAppointments.filter((b) => b.status === "pending").length}{" "}
+          pending
+        </span>
+      </div>
+      {upcomingAppointments.filter((b) => b.status === "pending").length > 0 ? (
+        <div className="bookings-list">
+          {upcomingAppointments
+            .filter((b) => b.status === "pending")
+            .map((booking) => (
+              <div key={booking.id} className="booking-card">
+                <div className="booking-header">
+                  <img
+                    src={booking.studentAvatar}
+                    alt={booking.studentName}
+                    className="student-avatar"
+                  />
+                  <div className="booking-info">
+                    <h4>{booking.studentName}</h4>
+                    <span className="level-badge">{booking.studentLevel}</span>
+                  </div>
+                </div>
+                <div className="booking-details">
+                  <p>
+                    <strong>Subject:</strong> {booking.subject}
+                  </p>
+                  {booking.scheduledDate && (
+                    <p>
+                      <strong>Date:</strong>{" "}
+                      {new Date(booking.scheduledDate).toLocaleDateString()}{" "}
+                      {booking.scheduledTime && `at ${booking.scheduledTime}`}
+                    </p>
+                  )}
+                  <p>
+                    <strong>Type:</strong> {booking.type}
+                  </p>
+                  <p>
+                    <strong>Price:</strong> ${booking.price}
+                  </p>
+                </div>
+                <div className="booking-actions">
+                  <button
+                    className="join-btn"
+                    onClick={() => handleApproveBooking(booking.id)}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    className="cancel-booking-btn"
+                    onClick={() => handleRejectBooking(booking.id)}
+                  >
+                    Reject
+                  </button>
+                </div>
+              </div>
+            ))}
+        </div>
+      ) : (
+        <div className="empty-schedule">
+          <span className="empty-icon">📭</span>
+          <p>No pending bookings</p>
+        </div>
+      )}
+    </div>
+  );
 
   /**
    * Render the statistics cards section
@@ -407,8 +470,8 @@ function TeacherDashboard() {
                   className="student-avatar"
                 />
                 <div className="lesson-info">
-                  <h4>{lesson.subject}</h4>
-                  <p>with {lesson.studentName}</p>
+                  <h4>{lesson.studentName}</h4>
+                  <p>{lesson.subject}</p>
                 </div>
               </div>
               <div className="schedule-actions">
@@ -435,64 +498,64 @@ function TeacherDashboard() {
   );
 
   /**
-   * Render pending booking requests section
-   * Allows teacher to approve or reject bookings
+   * Render upcoming appointments section
+   * Displays simple cards of students who have signed up for lessons
    */
-  const renderPendingBookings = () => (
+  const renderUpcomingAppointments = () => (
     <div className="bookings-section">
       <div className="section-header">
-        <h2>📋 Pending Booking Requests</h2>
-        <span className="count-badge">{pendingBookings.length} pending</span>
+        <h2>📅 Upcoming Appointments</h2>
+        <span className="count-badge">
+          {upcomingAppointments.length} students
+        </span>
       </div>
 
-      {pendingBookings.length > 0 ? (
+      {upcomingAppointments.length > 0 ? (
         <div className="bookings-list">
-          {pendingBookings.map((booking) => (
-            <div key={booking.id} className="booking-card">
+          {upcomingAppointments.map((appointment) => (
+            <div key={appointment.id} className="booking-card">
               <div className="booking-header">
                 <img
-                  src={booking.studentAvatar}
-                  alt={booking.studentName}
+                  src={appointment.studentAvatar}
+                  alt={appointment.studentName}
                   className="student-avatar"
                 />
                 <div className="booking-info">
-                  <h4>{booking.studentName}</h4>
-                  <span className="level-badge">{booking.studentLevel}</span>
+                  <h4>{appointment.studentName}</h4>
+                  <span className="level-badge">
+                    {appointment.studentLevel}
+                  </span>
                 </div>
               </div>
               <div className="booking-details">
                 <p>
-                  <strong>Subject:</strong> {booking.subject}
+                  <strong>Subject:</strong> {appointment.subject}
                 </p>
+                {appointment.scheduledDate && (
+                  <p>
+                    <strong>Date:</strong> {appointment.scheduledDate}
+                  </p>
+                )}
+                {appointment.scheduledTime && (
+                  <p>
+                    <strong>Time:</strong> {appointment.scheduledTime}
+                  </p>
+                )}
                 <p>
-                  <strong>Date:</strong> {booking.requestedDate}
+                  <strong>Status:</strong>{" "}
+                  <span className={`status-badge ${appointment.status}`}>
+                    {appointment.status.charAt(0).toUpperCase() +
+                      appointment.status.slice(1)}
+                  </span>
                 </p>
-                <p>
-                  <strong>Time:</strong> {booking.requestedTime}
-                </p>
-                <p className="booking-message">"{booking.message}"</p>
-              </div>
-              <div className="booking-actions">
-                <button
-                  className="approve-btn"
-                  onClick={() => handleApproveBooking(booking.id)}
-                >
-                  ✓ Approve
-                </button>
-                <button
-                  className="reject-btn"
-                  onClick={() => handleRejectBooking(booking.id)}
-                >
-                  ✕ Reject
-                </button>
               </div>
             </div>
           ))}
         </div>
       ) : (
         <div className="empty-bookings">
-          <span className="empty-icon">✨</span>
-          <p>No pending booking requests</p>
+          <span className="empty-icon">📅</span>
+          <p>No students have signed up yet</p>
         </div>
       )}
     </div>
@@ -616,7 +679,7 @@ function TeacherDashboard() {
 
   /**
    * Render availability management section
-   * Calendar-based availability settings
+   * Shows Google Calendar connection status and upcoming availability
    */
   const renderAvailability = () => (
     <div className="availability-section">
@@ -624,31 +687,67 @@ function TeacherDashboard() {
         <h2>⏰ Manage Availability</h2>
         <button
           className="edit-availability-btn"
-          onClick={() => setShowAvailabilityModal(true)}
+          onClick={() => setActiveTab("calendar")}
         >
-          Edit Schedule
+          {calendarConnected ? "Manage Calendar" : "Connect Calendar"}
         </button>
       </div>
 
-      <div className="availability-grid">
-        {[
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-          "Friday",
-          "Saturday",
-          "Sunday",
-        ].map((day) => (
-          <div key={day} className="day-card">
-            <h4>{day}</h4>
-            <div className="time-slots">
-              <span className="slot available">9:00 - 12:00</span>
-              <span className="slot available">14:00 - 18:00</span>
-            </div>
+      <div className="calendar-status">
+        {calendarConnected ? (
+          <div className="connected-status">
+            <span className="status-icon">✅</span>
+            <span>Google Calendar Connected</span>
           </div>
-        ))}
+        ) : (
+          <div className="disconnected-status">
+            <span className="status-icon">❌</span>
+            <span>Google Calendar Not Connected</span>
+            <p>
+              Connect your Google Calendar to manage availability and sync
+              bookings.
+            </p>
+          </div>
+        )}
       </div>
+
+      {calendarConnected && availabilityEvents.length > 0 && (
+        <div className="upcoming-availability">
+          <h3>Upcoming Availability</h3>
+          <div className="events-list">
+            {availabilityEvents.slice(0, 5).map((event, index) => (
+              <div key={index} className="event-item">
+                <span className="event-date">
+                  {new Date(
+                    event.start.dateTime || event.start.date
+                  ).toLocaleDateString()}
+                </span>
+                <span className="event-time">
+                  {event.start.dateTime
+                    ? `${new Date(event.start.dateTime).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })} - ${new Date(event.end.dateTime).toLocaleTimeString(
+                        [],
+                        { hour: "2-digit", minute: "2-digit" }
+                      )}`
+                    : "All day"}
+                </span>
+                <span className="event-title">{event.summary}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {calendarConnected && availabilityEvents.length === 0 && (
+        <div className="no-availability">
+          <p>
+            No upcoming availability events found. Add availability slots in
+            your Google Calendar.
+          </p>
+        </div>
+      )}
     </div>
   );
 
@@ -693,6 +792,12 @@ function TeacherDashboard() {
           📅 Schedule
         </button>
         <button
+          className={`tab ${activeTab === "calendar" ? "active" : ""}`}
+          onClick={() => setActiveTab("calendar")}
+        >
+          🗓️ Availability
+        </button>
+        <button
           className={`tab ${activeTab === "bookings" ? "active" : ""}`}
           onClick={() => setActiveTab("bookings")}
         >
@@ -730,7 +835,7 @@ function TeacherDashboard() {
                 <div className="quick-actions">
                   <button
                     className="action-card"
-                    onClick={() => setShowAvailabilityModal(true)}
+                    onClick={() => setActiveTab("calendar")}
                   >
                     <span className="action-icon">⏰</span>
                     <span className="action-text">Add Availability</span>
@@ -759,14 +864,17 @@ function TeacherDashboard() {
                 </div>
               </section>
               {renderSchedule()}
-              {renderPendingBookings()}
+              {renderUpcomingAppointments()}
               {renderAvailability()}
             </>
           )}
 
           {activeTab === "schedule" && renderSchedule()}
 
+          {activeTab === "calendar" && <CalendarManager />}
+
           {activeTab === "bookings" && renderPendingBookings()}
+          {activeTab === "bookings" && renderUpcomingAppointments()}
 
           {activeTab === "materials" && renderMaterials()}
 
